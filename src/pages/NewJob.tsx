@@ -112,6 +112,26 @@ const NewJob = () => {
         <p className="text-sm text-muted-foreground mt-1">Paste a link, text, screenshot, or voice note. We'll extract the details.</p>
       </div>
 
+        {/* Chrome Extension Banner */}
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 flex items-start gap-3">
+          <Chrome className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+          <div className="text-sm">
+            <p className="font-medium text-foreground">Chrome Extension Available</p>
+            <p className="text-muted-foreground mt-0.5">
+              Install our extension to send jobs from LinkedIn (or any site) with one click.{" "}
+              <button onClick={() => {
+                fetch("/ai-job-os-extension.zip").then(r => r.blob()).then(b => {
+                  const a = document.createElement("a");
+                  a.href = URL.createObjectURL(b);
+                  a.download = "ai-job-os-extension.zip";
+                  a.click();
+                  URL.revokeObjectURL(a.href);
+                });
+              }} className="text-primary underline underline-offset-2">Download Extension</button>
+            </p>
+          </div>
+        </div>
+
       {!extracted ? (
         <div className="rounded-xl border border-border bg-card p-6 space-y-6">
           <Tabs value={tab} onValueChange={setTab}>
