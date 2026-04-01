@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { CreditBalance } from "@/components/gamification/CreditWidgets";
 
 const navItems = [
   { to: "/app", icon: LayoutDashboard, label: "Dashboard", end: true },
