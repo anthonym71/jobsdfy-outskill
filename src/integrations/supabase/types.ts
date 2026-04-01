@@ -55,6 +55,36 @@ export type Database = {
           },
         ]
       }
+      credit_transactions: {
+        Row: {
+          action: Database["public"]["Enums"]["credit_action"]
+          amount: number
+          created_at: string
+          expires_at: string | null
+          id: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["credit_action"]
+          amount: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          reason?: string
+          user_id: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["credit_action"]
+          amount?: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       job_blockers: {
         Row: {
           category: string
@@ -233,6 +263,120 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_codes: {
+        Row: {
+          code: string
+          created_at: string
+          credits_earned: number
+          id: string
+          user_id: string
+          uses: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          credits_earned?: number
+          id?: string
+          user_id: string
+          uses?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          credits_earned?: number
+          id?: string
+          user_id?: string
+          uses?: number
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          credits_awarded: number
+          id: string
+          referral_code: string
+          referred_user_id: string
+          referrer_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits_awarded?: number
+          id?: string
+          referral_code: string
+          referred_user_id: string
+          referrer_id: string
+        }
+        Update: {
+          created_at?: string
+          credits_awarded?: number
+          id?: string
+          referral_code?: string
+          referred_user_id?: string
+          referrer_id?: string
+        }
+        Relationships: []
+      }
+      user_achievements: {
+        Row: {
+          achieved_at: string
+          achievement_key: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          achieved_at?: string
+          achievement_key: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          achieved_at?: string
+          achievement_key?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_credits: {
+        Row: {
+          balance: number
+          created_at: string
+          id: string
+          last_active_date: string | null
+          level: number
+          lifetime_earned: number
+          streak_days: number
+          updated_at: string
+          user_id: string
+          xp: number
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          id?: string
+          last_active_date?: string | null
+          level?: number
+          lifetime_earned?: number
+          streak_days?: number
+          updated_at?: string
+          user_id: string
+          xp?: number
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          id?: string
+          last_active_date?: string | null
+          level?: number
+          lifetime_earned?: number
+          streak_days?: number
+          updated_at?: string
+          user_id?: string
+          xp?: number
+        }
+        Relationships: []
+      }
       user_non_negotiables: {
         Row: {
           allowed_countries: string[] | null
@@ -332,6 +476,12 @@ export type Database = {
     }
     Enums: {
       blocker_severity: "confirmed" | "likely" | "unclear"
+      credit_action:
+        | "earned"
+        | "spent"
+        | "expired"
+        | "purchased"
+        | "referral_bonus"
       job_source_type: "url" | "text" | "screenshot" | "voice"
       job_status:
         | "new"
@@ -469,6 +619,13 @@ export const Constants = {
   public: {
     Enums: {
       blocker_severity: ["confirmed", "likely", "unclear"],
+      credit_action: [
+        "earned",
+        "spent",
+        "expired",
+        "purchased",
+        "referral_bonus",
+      ],
       job_source_type: ["url", "text", "screenshot", "voice"],
       job_status: [
         "new",

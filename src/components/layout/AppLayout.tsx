@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { CreditBalance } from "@/components/gamification/CreditWidgets";
 
 const navItems = [
   { to: "/app", icon: LayoutDashboard, label: "Dashboard", end: true },
@@ -26,6 +27,9 @@ const AppLayout = () => {
     <div className="flex h-full flex-col">
       <div className="px-6 py-5 border-b border-border">
         <span className="font-heading text-lg font-bold text-foreground tracking-tight">AI Job OS</span>
+      </div>
+      <div className="px-4 py-3">
+        <CreditBalance />
       </div>
       <nav className="flex-1 px-3 py-4 space-y-1">
         {navItems.map((item) => (
@@ -67,7 +71,10 @@ const AppLayout = () => {
 
       {/* Mobile header */}
       <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between border-b border-border bg-card px-4 py-3 md:hidden">
-        <span className="font-heading text-lg font-bold text-foreground">AI Job OS</span>
+        <div className="flex items-center gap-3">
+          <span className="font-heading text-lg font-bold text-foreground">AI Job OS</span>
+          <CreditBalance compact />
+        </div>
         <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
