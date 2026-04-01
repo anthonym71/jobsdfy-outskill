@@ -6,13 +6,17 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const totalSteps = 4;
 
 const Onboarding = () => {
   const [step, setStep] = useState(1);
+  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const [form, setForm] = useState({
     fullName: "", location: "", headline: "", summary: "",
@@ -29,9 +33,52 @@ const Onboarding = () => {
 
   const next = () => { if (step < totalSteps) setStep(step + 1); };
   const back = () => { if (step > 1) setStep(step - 1); };
-  const finish = () => {
-    toast({ title: "Profile saved", description: "You're ready to check your first job." });
-    navigate("/app");
+
+  const finish = async () => {
+    if (!user) return;
+    setSaving(true);
+
+    try {
+      const splitArray = (s: string) => s.split(",").map((x) => x.trim()).filter(Boolean);
+
+      // Upsert profile
+      const { error: profileError } = await supabase.from("user_profiles").upsert({
+        user_id: user.id,
+        full_name: form.fullName,
+        location: form.location,
+        headline: form.headline,
+        summary: form.summary,
+        years_of_experience: parseInt(form.yearsExp) || 0,
+        top_skills: splitArray(form.topSkills),
+        industries: splitArray(form.industries),
+        languages_spoken: splitArray(form.languages),
+      }, { onConflict: "user_id" });
+
+      if (profileError) throw profileError;
+
+      // Upsert non-negotiables
+      const { error: nonNegError } = await supabase.from("user_non_negotiables").upsert({
+        user_id: user.id,
+        min_salary: parseInt(form.nonNegSalaryMin) || 0,
+        salary_currency: form.salaryCurrency,
+        allowed_countries: splitArray(form.nonNegCountries),
+        remote_preference: form.nonNegRemote || "any",
+        requires_visa_sponsorship: form.nonNegVisa === "yes",
+        employment_type_preferences: splitArray(form.nonNegEmploymentType),
+        max_travel_percent: parseInt(form.nonNegMaxTravel) || 100,
+        industry_exclusions: splitArray(form.nonNegIndustryExclusions),
+      }, { onConflict: "user_id" });
+
+      if (nonNegError) throw nonNegError;
+
+      toast({ title: "Profile saved", description: "You're ready to check your first job." });
+      navigate("/app");
+    } catch (err: any) {
+      console.error("Save error:", err);
+      toast({ title: "Error saving profile", description: err.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const progress = (step / totalSteps) * 100;
@@ -142,7 +189,9 @@ const Onboarding = () => {
             {step < totalSteps ? (
               <Button onClick={next}>Continue</Button>
             ) : (
-              <Button onClick={finish}>Finish Setup</Button>
+              <Button onClick={finish} disabled={saving}>
+                {saving ? "Saving…" : "Finish Setup"}
+              </Button>
             )}
           </div>
         </div>
