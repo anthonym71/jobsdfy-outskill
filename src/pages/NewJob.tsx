@@ -18,26 +18,41 @@ const NewJob = () => {
   const { toast } = useToast();
 
   const handleExtract = async () => {
+    const input = tab === "url" ? url.trim() : text.trim();
+    if (!input) {
+      toast({ title: "Missing input", description: "Please provide a job URL or description text.", variant: "destructive" });
+      return;
+    }
+
     setExtracting(true);
-    // Placeholder: simulate extraction
-    await new Promise((r) => setTimeout(r, 1500));
-    setExtracted({
-      title: "Senior Frontend Engineer",
-      company: "Acme Corp",
-      location: "Berlin, Germany",
-      salaryMin: "70000",
-      salaryMax: "95000",
-      salaryCurrency: "EUR",
-      workModel: "Hybrid",
-      employmentType: "Full-time",
-      visaPolicy: "EU work permit required",
-      languageRequirements: "English (fluent), German (B2+)",
-      recruiterName: "",
-      description: "We're looking for a Senior Frontend Engineer to lead our design system…",
-      requirementsSummary: "5+ years React/TypeScript, design systems, accessibility",
-      applicationUrl: "https://acme.com/careers/123",
-    });
-    setExtracting(false);
+    try {
+      const payload = tab === "url" ? { url: input } : { text: input };
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-job`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        toast({ title: "Extraction failed", description: data.error || "Something went wrong.", variant: "destructive" });
+        return;
+      }
+
+      setExtracted(data.data);
+    } catch (err) {
+      console.error("Extraction error:", err);
+      toast({ title: "Network error", description: "Could not reach the extraction service.", variant: "destructive" });
+    } finally {
+      setExtracting(false);
+    }
   };
 
   const handleContinue = () => {
