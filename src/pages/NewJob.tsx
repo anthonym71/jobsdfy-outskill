@@ -20,6 +20,19 @@ const NewJob = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+
+  // Auto-fill from Chrome extension
+  useEffect(() => {
+    const source = searchParams.get("source");
+    const extText = searchParams.get("text");
+    if (source === "extension" && extText) {
+      setText(decodeURIComponent(extText));
+      setTab("text");
+      // Clean up URL
+      navigate("/app/new-job", { replace: true });
+    }
+  }, [searchParams, navigate]);
 
   const handleExtract = async () => {
     const input = tab === "url" ? url.trim() : text.trim();
