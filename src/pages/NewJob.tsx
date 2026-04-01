@@ -123,10 +123,24 @@ const NewJob = () => {
             </TabsList>
 
             <TabsContent value="url" className="space-y-4 mt-4">
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 flex items-start gap-2.5">
+                <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">LinkedIn, Indeed & some sites block scraping.</span>{" "}
+                  If a URL doesn't work, use the <button onClick={() => setTab("text")} className="text-primary underline underline-offset-2">Smart Paste</button> tab instead — just Ctrl+A, Ctrl+C the page and paste it here.
+                </p>
+              </div>
               <div><Label>Job URL</Label><Input placeholder="https://company.com/careers/role-id" value={url} onChange={(e) => setUrl(e.target.value)} /></div>
             </TabsContent>
             <TabsContent value="text" className="space-y-4 mt-4">
-              <div><Label>Job Description</Label><Textarea placeholder="Paste the full job description here…" rows={8} value={text} onChange={(e) => setText(e.target.value)} /></div>
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 flex items-start gap-2.5">
+                <ClipboardPaste className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">Works with any site including LinkedIn.</span>{" "}
+                  Go to the job page → Select All (Ctrl+A) → Copy (Ctrl+C) → Paste below. Our AI will extract only the job details.
+                </p>
+              </div>
+              <div><Label>Job Description</Label><Textarea placeholder="Paste everything from the job page here — headers, footers, and all. AI will find the job details automatically…" rows={10} value={text} onChange={(e) => setText(e.target.value)} /></div>
             </TabsContent>
             <TabsContent value="screenshot" className="mt-4">
               <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center">
