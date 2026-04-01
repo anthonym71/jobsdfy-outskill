@@ -25,6 +25,20 @@ serve(async (req) => {
 
     // If URL provided, scrape it with Firecrawl
     if (url) {
+      // Check for unsupported sites
+      const unsupportedDomains = ["linkedin.com", "www.linkedin.com"];
+      try {
+        let checkUrl = url.trim();
+        if (!checkUrl.startsWith("http")) checkUrl = `https://${checkUrl}`;
+        const hostname = new URL(checkUrl).hostname;
+        if (unsupportedDomains.some(d => hostname === d || hostname.endsWith(`.${d}`))) {
+          return new Response(
+            JSON.stringify({ error: "LinkedIn blocks automated scraping. Please copy the job description text from LinkedIn and paste it in the Text tab instead." }),
+            { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      } catch (_) { /* URL parsing failed, let it proceed */ }
+
       const firecrawlKey = Deno.env.get("FIRECRAWL_API_KEY");
       if (!firecrawlKey) {
         return new Response(
