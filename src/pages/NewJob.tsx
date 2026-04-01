@@ -45,8 +45,12 @@ const NewJob = () => {
 
       const data = await resp.json();
 
-      if (!resp.ok) {
-        toast({ title: "Extraction failed", description: data.error || "Something went wrong.", variant: "destructive" });
+      if (!resp.ok || data?.success === false) {
+        toast({
+          title: data?.unsupported ? "Unsupported URL" : "Extraction failed",
+          description: data.error || "Something went wrong.",
+          variant: data?.unsupported ? "default" : "destructive",
+        });
         return;
       }
 
