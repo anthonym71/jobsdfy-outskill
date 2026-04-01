@@ -33,8 +33,12 @@ serve(async (req) => {
         const hostname = new URL(checkUrl).hostname;
         if (unsupportedDomains.some(d => hostname === d || hostname.endsWith(`.${d}`))) {
           return new Response(
-            JSON.stringify({ error: "LinkedIn blocks automated scraping. Please copy the job description text from LinkedIn and paste it in the Text tab instead." }),
-            { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            JSON.stringify({
+              success: false,
+              unsupported: true,
+              error: "LinkedIn blocks automated scraping. Please copy the job description text from LinkedIn and paste it in the Text tab instead.",
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
       } catch (_) { /* URL parsing failed, let it proceed */ }
