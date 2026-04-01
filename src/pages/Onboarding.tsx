@@ -8,15 +8,27 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useCredits, CREDIT_REWARDS } from "@/hooks/useCredits";
+import { Coins, Zap, Trophy } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 const totalSteps = 4;
+
+const STEP_REWARDS: Record<number, string> = {
+  1: "profile_basic",
+  2: "profile_preferences",
+  3: "profile_skills",
+  4: "profile_nonneg",
+};
 
 const Onboarding = () => {
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
+  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { credits, earnCredits, unlockAchievement } = useCredits();
 
   const [form, setForm] = useState({
     fullName: "", location: "", headline: "", summary: "",
@@ -31,7 +43,26 @@ const Onboarding = () => {
 
   const update = (key: string, value: string) => setForm((p) => ({ ...p, [key]: value }));
 
-  const next = () => { if (step < totalSteps) setStep(step + 1); };
+  const awardStepCredits = async (stepNum: number) => {
+    if (completedSteps.has(stepNum)) return;
+    const rewardKey = STEP_REWARDS[stepNum];
+    if (!rewardKey) return;
+    const reward = CREDIT_REWARDS[rewardKey];
+    const earned = await earnCredits(rewardKey);
+    if (earned && reward) {
+      setCompletedSteps(prev => new Set(prev).add(stepNum));
+      toast({
+        title: `+${reward.credits} credits earned! 🎉`,
+        description: `${reward.label} • +${reward.xp} XP`,
+      });
+    }
+  };
+
+  const next = async () => {
+    await awardStepCredits(step);
+    if (step < totalSteps) setStep(step + 1);
+  };
+
   const back = () => { if (step > 1) setStep(step - 1); };
 
   const finish = async () => {
@@ -41,7 +72,6 @@ const Onboarding = () => {
     try {
       const splitArray = (s: string) => s.split(",").map((x) => x.trim()).filter(Boolean);
 
-      // Upsert profile
       const { error: profileError } = await supabase.from("user_profiles").upsert({
         user_id: user.id,
         full_name: form.fullName,
@@ -56,7 +86,6 @@ const Onboarding = () => {
 
       if (profileError) throw profileError;
 
-      // Upsert non-negotiables
       const { error: nonNegError } = await supabase.from("user_non_negotiables").upsert({
         user_id: user.id,
         min_salary: parseInt(form.nonNegSalaryMin) || 0,
@@ -71,7 +100,11 @@ const Onboarding = () => {
 
       if (nonNegError) throw nonNegError;
 
-      toast({ title: "Profile saved", description: "You're ready to check your first job." });
+      // Award final step + first_steps achievement
+      await awardStepCredits(4);
+      await unlockAchievement("first_steps");
+
+      toast({ title: "🏆 Profile saved!", description: "Achievement unlocked: First Steps. You're ready to go!" });
       navigate("/app");
     } catch (err: any) {
       console.error("Save error:", err);
@@ -82,10 +115,25 @@ const Onboarding = () => {
   };
 
   const progress = (step / totalSteps) * 100;
+  const currentReward = CREDIT_REWARDS[STEP_REWARDS[step]];
+  const totalEarnable = Object.values(STEP_REWARDS).reduce((sum, key) => sum + (CREDIT_REWARDS[key]?.credits || 0), 0);
+  const earnedSoFar = Array.from(completedSteps).reduce((sum, s) => sum + (CREDIT_REWARDS[STEP_REWARDS[s]]?.credits || 0), 0);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-6 py-12">
       <div className="w-full max-w-lg">
+        {/* Reward banner */}
+        <div className="mb-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm">
+            <Coins className="h-4 w-4 text-amber-500" />
+            <span className="text-foreground font-medium">{earnedSoFar} / {totalEarnable} credits earned</span>
+          </div>
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Trophy className="h-3 w-3" />
+            Complete all steps for bonus XP
+          </div>
+        </div>
+
         <div className="mb-8">
           <h1 className="font-heading text-2xl font-bold text-foreground">Set up your profile</h1>
           <p className="mt-1 text-sm text-muted-foreground">Step {step} of {totalSteps}</p>
@@ -95,6 +143,19 @@ const Onboarding = () => {
         </div>
 
         <div className="rounded-xl border border-border bg-card p-8 shadow-sm space-y-5">
+          {/* Step reward indicator */}
+          {currentReward && !completedSteps.has(step) && (
+            <div className="flex items-center gap-2 rounded-lg bg-primary/5 px-3 py-2 text-xs text-primary">
+              <Zap className="h-3 w-3" />
+              <span>Complete this step to earn <strong>+{currentReward.credits} credits</strong> & <strong>+{currentReward.xp} XP</strong></span>
+            </div>
+          )}
+          {completedSteps.has(step) && (
+            <div className="flex items-center gap-2 rounded-lg bg-green-500/10 px-3 py-2 text-xs text-green-600">
+              <span>✅ Credits earned for this step!</span>
+            </div>
+          )}
+
           {step === 1 && (
             <>
               <h2 className="font-heading text-lg font-semibold text-foreground">Basic Info</h2>
@@ -187,10 +248,17 @@ const Onboarding = () => {
           <div className="flex justify-between pt-2">
             <Button variant="outline" onClick={back} disabled={step === 1}>Back</Button>
             {step < totalSteps ? (
-              <Button onClick={next}>Continue</Button>
+              <Button onClick={next}>
+                Continue
+                {currentReward && !completedSteps.has(step) && (
+                  <span className="ml-2 flex items-center gap-1 text-xs opacity-80">
+                    <Coins className="h-3 w-3" />+{currentReward.credits}
+                  </span>
+                )}
+              </Button>
             ) : (
               <Button onClick={finish} disabled={saving}>
-                {saving ? "Saving…" : "Finish Setup"}
+                {saving ? "Saving…" : "Finish Setup 🏆"}
               </Button>
             )}
           </div>
