@@ -1,11 +1,11 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link2, FileText, Image, Mic, ArrowRight, Sparkles } from "lucide-react";
+import { Link2, FileText, Image, Mic, ArrowRight, Sparkles, AlertTriangle, ClipboardPaste, Chrome } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +20,19 @@ const NewJob = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+
+  // Auto-fill from Chrome extension
+  useEffect(() => {
+    const source = searchParams.get("source");
+    const extText = searchParams.get("text");
+    if (source === "extension" && extText) {
+      setText(decodeURIComponent(extText));
+      setTab("text");
+      // Clean up URL
+      navigate("/app/new-job", { replace: true });
+    }
+  }, [searchParams, navigate]);
 
   const handleExtract = async () => {
     const input = tab === "url" ? url.trim() : text.trim();
@@ -112,6 +125,26 @@ const NewJob = () => {
         <p className="text-sm text-muted-foreground mt-1">Paste a link, text, screenshot, or voice note. We'll extract the details.</p>
       </div>
 
+        {/* Chrome Extension Banner */}
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 flex items-start gap-3">
+          <Chrome className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+          <div className="text-sm">
+            <p className="font-medium text-foreground">Chrome Extension Available</p>
+            <p className="text-muted-foreground mt-0.5">
+              Install our extension to send jobs from LinkedIn (or any site) with one click.{" "}
+              <button onClick={() => {
+                fetch("/ai-job-os-extension.zip").then(r => r.blob()).then(b => {
+                  const a = document.createElement("a");
+                  a.href = URL.createObjectURL(b);
+                  a.download = "ai-job-os-extension.zip";
+                  a.click();
+                  URL.revokeObjectURL(a.href);
+                });
+              }} className="text-primary underline underline-offset-2">Download Extension</button>
+            </p>
+          </div>
+        </div>
+
       {!extracted ? (
         <div className="rounded-xl border border-border bg-card p-6 space-y-6">
           <Tabs value={tab} onValueChange={setTab}>
@@ -123,10 +156,24 @@ const NewJob = () => {
             </TabsList>
 
             <TabsContent value="url" className="space-y-4 mt-4">
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 flex items-start gap-2.5">
+                <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">LinkedIn, Indeed & some sites block scraping.</span>{" "}
+                  If a URL doesn't work, use the <button onClick={() => setTab("text")} className="text-primary underline underline-offset-2">Smart Paste</button> tab instead — just Ctrl+A, Ctrl+C the page and paste it here.
+                </p>
+              </div>
               <div><Label>Job URL</Label><Input placeholder="https://company.com/careers/role-id" value={url} onChange={(e) => setUrl(e.target.value)} /></div>
             </TabsContent>
             <TabsContent value="text" className="space-y-4 mt-4">
-              <div><Label>Job Description</Label><Textarea placeholder="Paste the full job description here…" rows={8} value={text} onChange={(e) => setText(e.target.value)} /></div>
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 flex items-start gap-2.5">
+                <ClipboardPaste className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">Works with any site including LinkedIn.</span>{" "}
+                  Go to the job page → Select All (Ctrl+A) → Copy (Ctrl+C) → Paste below. Our AI will extract only the job details.
+                </p>
+              </div>
+              <div><Label>Job Description</Label><Textarea placeholder="Paste everything from the job page here — headers, footers, and all. AI will find the job details automatically…" rows={10} value={text} onChange={(e) => setText(e.target.value)} /></div>
             </TabsContent>
             <TabsContent value="screenshot" className="mt-4">
               <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center">
