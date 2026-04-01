@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link2, FileText, Image, Mic, ArrowRight, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const NewJob = () => {
   const [tab, setTab] = useState("url");
@@ -14,8 +16,10 @@ const NewJob = () => {
   const [text, setText] = useState("");
   const [extracting, setExtracting] = useState(false);
   const [extracted, setExtracted] = useState<any>(null);
+  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleExtract = async () => {
     const input = tab === "url" ? url.trim() : text.trim();
@@ -55,10 +59,46 @@ const NewJob = () => {
     }
   };
 
-  const handleContinue = () => {
-    // In production: save to DB, then navigate to dealbreaker check
-    const mockJobId = "mock-1";
-    navigate(`/app/dealbreakers/${mockJobId}`);
+  const handleContinue = async () => {
+    if (!user || !extracted) return;
+    setSaving(true);
+
+    try {
+      // Collect edited values from the form
+      const formEl = document.getElementById("extraction-form") as HTMLFormElement;
+      const formData = new FormData(formEl);
+      const edited: Record<string, string> = {};
+      formData.forEach((val, key) => { edited[key] = val as string; });
+
+      const { data: job, error } = await supabase.from("jobs").insert({
+        user_id: user.id,
+        title: edited.title || extracted.title || "",
+        company: edited.company || extracted.company || "",
+        location: edited.location || extracted.location || "",
+        salary_min: parseInt(edited.salaryMin || extracted.salaryMin) || 0,
+        salary_max: parseInt(edited.salaryMax || extracted.salaryMax) || 0,
+        salary_currency: edited.salaryCurrency || extracted.salaryCurrency || "USD",
+        work_model: edited.workModel || extracted.workModel || "",
+        employment_type: edited.employmentType || extracted.employmentType || "",
+        visa_policy: edited.visaPolicy || extracted.visaPolicy || "",
+        language_requirements: edited.languageRequirements || extracted.languageRequirements || "",
+        recruiter_name: edited.recruiterName || extracted.recruiterName || "",
+        description: edited.description || extracted.description || "",
+        requirements_summary: edited.requirementsSummary || extracted.requirementsSummary || "",
+        application_url: edited.applicationUrl || extracted.applicationUrl || "",
+        source_type: tab as any,
+        source_input: tab === "url" ? url : text,
+      }).select().single();
+
+      if (error) throw error;
+
+      navigate(`/app/dealbreakers/${job.id}`);
+    } catch (err: any) {
+      console.error("Save error:", err);
+      toast({ title: "Error saving job", description: err.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -118,7 +158,7 @@ const NewJob = () => {
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="rounded-xl border border-border bg-card p-6">
+          <form id="extraction-form" className="rounded-xl border border-border bg-card p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="font-heading text-lg font-semibold text-foreground">Extraction Preview</h2>
               <span className="text-xs text-muted-foreground bg-accent rounded-full px-2.5 py-1">AI extracted</span>
@@ -128,19 +168,19 @@ const NewJob = () => {
                 <div key={key} className={key === "description" || key === "requirementsSummary" ? "sm:col-span-2" : ""}>
                   <Label className="text-xs text-muted-foreground capitalize">{key.replace(/([A-Z])/g, " $1")}</Label>
                   {(key === "description" || key === "requirementsSummary") ? (
-                    <Textarea className="mt-1" rows={3} defaultValue={value as string} />
+                    <Textarea name={key} className="mt-1" rows={3} defaultValue={value as string} />
                   ) : (
-                    <Input className="mt-1" defaultValue={value as string} />
+                    <Input name={key} className="mt-1" defaultValue={value as string} />
                   )}
                 </div>
               ))}
             </div>
-          </div>
+          </form>
 
           <div className="flex gap-3 justify-end">
             <Button variant="outline" onClick={() => setExtracted(null)}>Start Over</Button>
-            <Button onClick={handleContinue}>
-              Continue to Dealbreaker Check
+            <Button onClick={handleContinue} disabled={saving}>
+              {saving ? "Saving…" : "Continue to Dealbreaker Check"}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>

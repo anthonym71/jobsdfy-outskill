@@ -1,30 +1,37 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, Briefcase } from "lucide-react";
+import { PlusCircle, Briefcase, Loader2 } from "lucide-react";
 import VerdictBadge, { type Verdict } from "@/components/VerdictBadge";
 import StatusPill, { type JobStatus } from "@/components/StatusPill";
 import EmptyState from "@/components/EmptyState";
-
-interface Job {
-  id: string;
-  title: string;
-  company: string;
-  verdict: Verdict | null;
-  fitScore: number | null;
-  status: JobStatus;
-  createdAt: string;
-}
-
-// Mock data — replace with Supabase
-const mockJobs: Job[] = [];
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const Jobs = () => {
+  const { user } = useAuth();
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [verdictFilter, setVerdictFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  const filtered = mockJobs.filter((j) => {
+  useEffect(() => {
+    if (!user) return;
+    loadJobs();
+  }, [user]);
+
+  const loadJobs = async () => {
+    const { data } = await supabase
+      .from("jobs")
+      .select("*")
+      .eq("user_id", user!.id)
+      .order("created_at", { ascending: false });
+    setJobs(data || []);
+    setLoading(false);
+  };
+
+  const filtered = jobs.filter((j) => {
     if (verdictFilter !== "all" && j.verdict !== verdictFilter) return false;
     if (statusFilter !== "all" && j.status !== statusFilter) return false;
     return true;
@@ -42,7 +49,6 @@ const Jobs = () => {
         </Link>
       </div>
 
-      {/* Filters */}
       <div className="flex gap-3 flex-wrap">
         <Select value={verdictFilter} onValueChange={setVerdictFilter}>
           <SelectTrigger className="w-[140px]"><SelectValue placeholder="Verdict" /></SelectTrigger>
@@ -67,18 +73,15 @@ const Jobs = () => {
         </Select>
       </div>
 
-      {/* Job list */}
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+      ) : filtered.length === 0 ? (
         <div className="rounded-xl border border-border bg-card">
           <EmptyState
             icon={<Briefcase />}
             title="No jobs here yet"
             description="Start by checking a job. We'll save everything for you to track and revisit."
-            action={
-              <Link to="/app/new-job">
-                <Button><PlusCircle className="mr-2 h-4 w-4" />Check a Job</Button>
-              </Link>
-            }
+            action={<Link to="/app/new-job"><Button><PlusCircle className="mr-2 h-4 w-4" />Check a Job</Button></Link>}
           />
         </div>
       ) : (
@@ -86,11 +89,11 @@ const Jobs = () => {
           {filtered.map((job) => (
             <Link key={job.id} to={`/app/jobs/${job.id}`} className="flex items-center justify-between rounded-lg border border-border bg-card p-4 hover:bg-accent/50 transition-colors">
               <div className="min-w-0">
-                <p className="font-medium text-foreground text-sm truncate">{job.title}</p>
-                <p className="text-xs text-muted-foreground">{job.company} · {job.createdAt}</p>
+                <p className="font-medium text-foreground text-sm truncate">{job.title || "Untitled"}</p>
+                <p className="text-xs text-muted-foreground">{job.company} · {new Date(job.created_at).toLocaleDateString()}</p>
               </div>
               <div className="flex items-center gap-3 flex-shrink-0 ml-4">
-                {job.fitScore && <span className="text-xs font-heading font-semibold text-muted-foreground">{job.fitScore}/10</span>}
+                {job.fit_score && <span className="text-xs font-heading font-semibold text-muted-foreground">{job.fit_score}/10</span>}
                 {job.verdict && <VerdictBadge verdict={job.verdict} />}
                 <StatusPill status={job.status} />
               </div>
