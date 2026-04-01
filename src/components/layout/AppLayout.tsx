@@ -28,6 +28,9 @@ const AppLayout = () => {
       <div className="px-6 py-5 border-b border-border">
         <span className="font-heading text-lg font-bold text-foreground tracking-tight">AI Job OS</span>
       </div>
+      <div className="px-4 py-3">
+        <CreditBalance />
+      </div>
       <nav className="flex-1 px-3 py-4 space-y-1">
         {navItems.map((item) => (
           <NavLink
