@@ -105,5 +105,10 @@ export default {
       },
     },
   },
+  safelist: [
+    "verdict-banner-go",
+    "verdict-banner-review",
+    "verdict-banner-stop",
+  ],
   plugins: [require("tailwindcss-animate")],
 } satisfies Config;
