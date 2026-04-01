@@ -1,31 +1,145 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Check, Copy, RefreshCw, ShieldCheck } from "lucide-react";
+import { Check, Copy, RefreshCw, ShieldCheck, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import VerdictBadge from "@/components/VerdictBadge";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
-const mockJob = {
-  title: "Senior Frontend Engineer",
-  company: "Acme Corp",
-  mustHaves: ["5+ years React/TypeScript", "Design system experience", "German B2+", "EU work permit"],
-  emphasisPoints: ["Led migration to modern React stack", "Built shared component library used by 4 teams"],
-};
-
-const defaultDrafts = {
-  resume: `JANE DOE — Senior Frontend Engineer\n\nSummary:\n7 years of experience building scalable web applications with React and TypeScript. Led design system initiatives serving 4+ product teams.\n\nHighlights:\n• Led full migration from legacy jQuery to React 18 + TypeScript\n• Designed and maintained a shared component library (50+ components)\n• Reduced bundle size by 40% through code splitting and lazy loading\n• Mentored 3 junior engineers on frontend best practices`,
-  coverNote: `Hi,\n\nI'm excited about the Senior Frontend Engineer role at Acme Corp. With 7 years of React/TypeScript experience and a track record of building design systems at scale, I believe I'm a strong fit.\n\nI led a company-wide migration to modern React and built a shared component library used across 4 product teams. I'm fluent in English and German (B2+), and I'm based in Berlin.\n\nI'd love to discuss how I can contribute to your team.\n\nBest,\nJane`,
-  recruiterNote: `Hi [Recruiter],\n\nI came across the Senior Frontend Engineer role at Acme Corp and wanted to reach out. I have 7 years of React/TypeScript experience and recently led a design system initiative at my current company.\n\nWould love to connect if the role is still open.\n\nBest,\nJane`,
-};
+interface AppPack {
+  resume: string;
+  coverNote: string;
+  recruiterNote: string;
+  mustHaves: string[];
+  emphasisPoints: string[];
+}
 
 const QuickApply = () => {
-  const [drafts, setDrafts] = useState(defaultDrafts);
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { session } = useAuth();
   const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [job, setJob] = useState<any>(null);
+  const [pack, setPack] = useState<AppPack | null>(null);
+  const [drafts, setDrafts] = useState({ resume: "", coverNote: "", recruiterNote: "" });
+
+  useEffect(() => {
+    if (!id || !session) return;
+    loadJobAndGenerate();
+  }, [id, session]);
+
+  const loadJobAndGenerate = async () => {
+    setLoading(true);
+    try {
+      // Load job info
+      const { data: jobData } = await supabase.from("jobs").select("*").eq("id", id).single();
+      setJob(jobData);
+
+      // Check for existing assets
+      const { data: assets } = await supabase.from("application_assets").select("*").eq("job_id", id!);
+      if (assets && assets.length >= 3) {
+        const resume = assets.find((a) => a.asset_type === "resume")?.content || "";
+        const coverNote = assets.find((a) => a.asset_type === "cover_note")?.content || "";
+        const recruiterNote = assets.find((a) => a.asset_type === "recruiter_note")?.content || "";
+        setDrafts({ resume, coverNote, recruiterNote });
+        setPack({ resume, coverNote, recruiterNote, mustHaves: [], emphasisPoints: [] });
+        setLoading(false);
+        return;
+      }
+
+      // Generate new pack
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-application`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session!.access_token}`,
+          },
+          body: JSON.stringify({ jobId: id }),
+        }
+      );
+
+      const data = await resp.json();
+      if (!resp.ok) {
+        toast({ title: "Generation failed", description: data.error || "Something went wrong.", variant: "destructive" });
+        return;
+      }
+
+      setPack(data.data);
+      setDrafts({
+        resume: data.data.resume,
+        coverNote: data.data.coverNote,
+        recruiterNote: data.data.recruiterNote,
+      });
+    } catch (err) {
+      console.error("Error:", err);
+      toast({ title: "Error", description: "Could not generate application pack.", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const regenerate = async () => {
+    setLoading(true);
+    // Delete existing assets to force regeneration
+    await supabase.from("application_assets").delete().eq("job_id", id!);
+    await loadJobAndGenerate();
+  };
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     toast({ title: `${label} copied`, description: "Paste it wherever you need." });
   };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      // Delete old and insert updated
+      await supabase.from("application_assets").delete().eq("job_id", id!);
+      const assets = [
+        { job_id: id!, user_id: session!.user.id, asset_type: "resume", content: drafts.resume },
+        { job_id: id!, user_id: session!.user.id, asset_type: "cover_note", content: drafts.coverNote },
+        { job_id: id!, user_id: session!.user.id, asset_type: "recruiter_note", content: drafts.recruiterNote },
+      ];
+      const { error } = await supabase.from("application_assets").insert(assets);
+      if (error) throw error;
+      toast({ title: "Drafts saved" });
+    } catch (err: any) {
+      toast({ title: "Save error", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleApprove = async () => {
+    await handleSave();
+    await supabase.from("jobs").update({ status: "applied" }).eq("id", id!);
+    await supabase.from("application_assets").update({ approved: true }).eq("job_id", id!);
+    toast({ title: "Pack approved!", description: "Status updated to Applied." });
+    navigate("/app");
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">Generating your application pack…</p>
+      </div>
+    );
+  }
+
+  if (!pack) {
+    return (
+      <div className="p-6 md:p-8 max-w-4xl mx-auto">
+        <p className="text-muted-foreground">Could not generate application pack.</p>
+        <Button variant="outline" className="mt-4" onClick={() => navigate("/app")}>Back to Dashboard</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-6">
@@ -42,27 +156,31 @@ const QuickApply = () => {
         <div className="lg:col-span-2 space-y-4">
           <div className="rounded-xl border border-border bg-card p-5 space-y-4">
             <div>
-              <p className="font-heading text-base font-semibold text-foreground">{mockJob.title}</p>
-              <p className="text-sm text-muted-foreground">{mockJob.company}</p>
+              <p className="font-heading text-base font-semibold text-foreground">{job?.title || "Job"}</p>
+              <p className="text-sm text-muted-foreground">{job?.company}</p>
             </div>
-            <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Must-Haves</p>
-              <ul className="space-y-1.5">
-                {mockJob.mustHaves.map((r) => (
-                  <li key={r} className="text-sm text-foreground flex items-start gap-2">
-                    <span className="text-verdict-go">✓</span>{r}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Your Emphasis Points</p>
-              <ul className="space-y-1.5">
-                {mockJob.emphasisPoints.map((p) => (
-                  <li key={p} className="text-sm text-foreground">• {p}</li>
-                ))}
-              </ul>
-            </div>
+            {pack.mustHaves?.length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Must-Haves</p>
+                <ul className="space-y-1.5">
+                  {pack.mustHaves.map((r) => (
+                    <li key={r} className="text-sm text-foreground flex items-start gap-2">
+                      <span className="text-verdict-go">✓</span>{r}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {pack.emphasisPoints?.length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Your Emphasis Points</p>
+                <ul className="space-y-1.5">
+                  {pack.emphasisPoints.map((p) => (
+                    <li key={p} className="text-sm text-foreground">• {p}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
 
@@ -80,9 +198,6 @@ const QuickApply = () => {
                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyToClipboard(drafts[key], label)}>
                     <Copy className="h-3.5 w-3.5" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDrafts((d) => ({ ...d, [key]: defaultDrafts[key] }))}>
-                    <RefreshCw className="h-3.5 w-3.5" />
-                  </Button>
                 </div>
               </div>
               <Textarea
@@ -95,10 +210,14 @@ const QuickApply = () => {
           ))}
 
           <div className="flex gap-3 justify-end">
-            <Button variant="outline">Save Draft</Button>
-            <Button>
-              <Check className="mr-2 h-4 w-4" />
-              Approve Pack
+            <Button variant="ghost" size="sm" onClick={regenerate}>
+              <RefreshCw className="mr-1.5 h-4 w-4" />Regenerate
+            </Button>
+            <Button variant="outline" onClick={handleSave} disabled={saving}>
+              {saving ? "Saving…" : "Save Draft"}
+            </Button>
+            <Button onClick={handleApprove}>
+              <Check className="mr-2 h-4 w-4" />Approve Pack
             </Button>
           </div>
         </div>
