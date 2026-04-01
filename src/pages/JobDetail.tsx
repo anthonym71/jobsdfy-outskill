@@ -2,18 +2,34 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import VerdictBadge from "@/components/VerdictBadge";
-import StatusPill from "@/components/StatusPill";
+import StatusPill, { type JobStatus } from "@/components/StatusPill";
 import BlockerCard from "@/components/BlockerCard";
 import FitScoreCard from "@/components/FitScoreCard";
-import { Loader2, ArrowRight, ExternalLink } from "lucide-react";
+import { Loader2, ArrowRight, ExternalLink, Trash2, MoreVertical, Archive, Bookmark, RotateCcw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+const statusTransitions: { value: JobStatus; label: string; icon: typeof Bookmark }[] = [
+  { value: "saved", label: "Save Job", icon: Bookmark },
+  { value: "reviewing", label: "Mark Reviewing", icon: RotateCcw },
+  { value: "archived", label: "Archive", icon: Archive },
+];
 
 const JobDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [job, setJob] = useState<any>(null);
   const [blockers, setBlockers] = useState<any[]>([]);
@@ -40,6 +56,38 @@ const JobDetail = () => {
     setLoading(false);
   };
 
+  const updateStatus = async (status: JobStatus) => {
+    const { error } = await supabase.from("jobs").update({ status }).eq("id", id!);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      setJob((j: any) => ({ ...j, status }));
+      toast({ title: `Status updated to ${status}` });
+    }
+  };
+
+  const updateVerdict = async (verdict: "go" | "review" | "stop") => {
+    const { error } = await supabase.from("jobs").update({ verdict }).eq("id", id!);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      setJob((j: any) => ({ ...j, verdict }));
+      toast({ title: `Verdict overridden to ${verdict.toUpperCase()}` });
+    }
+  };
+
+  const deleteJob = async () => {
+    if (!confirm("Delete this job and all related data? This cannot be undone.")) return;
+    await Promise.all([
+      supabase.from("application_assets").delete().eq("job_id", id!),
+      supabase.from("job_blockers").delete().eq("job_id", id!),
+      supabase.from("job_matches").delete().eq("job_id", id!),
+    ]);
+    await supabase.from("jobs").delete().eq("id", id!);
+    toast({ title: "Job deleted" });
+    navigate("/app");
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center py-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
@@ -61,29 +109,59 @@ const JobDetail = () => {
   };
 
   return (
-    <div className="p-6 md:p-8 max-w-4xl mx-auto space-y-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-heading text-2xl font-bold text-foreground">{job.title || "Untitled"}</h1>
+    <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-5">
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="font-heading text-xl sm:text-2xl font-bold text-foreground truncate">{job.title || "Untitled"}</h1>
           <p className="text-sm text-muted-foreground">{job.company} · {job.location}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {job.verdict && <VerdictBadge verdict={job.verdict} />}
           <StatusPill status={job.status} />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {statusTransitions.map((t) => (
+                <DropdownMenuItem key={t.value} onClick={() => updateStatus(t.value)}>
+                  <t.icon className="mr-2 h-4 w-4" />{t.label}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              {job.verdict && (
+                <>
+                  <DropdownMenuItem className="text-xs text-muted-foreground" disabled>Override Verdict</DropdownMenuItem>
+                  {(["go", "review", "stop"] as const).filter(v => v !== job.verdict).map(v => (
+                    <DropdownMenuItem key={v} onClick={() => updateVerdict(v)}>
+                      Override to {v.toUpperCase()}
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              <DropdownMenuItem className="text-destructive" onClick={deleteJob}>
+                <Trash2 className="mr-2 h-4 w-4" />Delete Job
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
       <Tabs defaultValue="overview">
-        <TabsList>
+        <TabsList className="w-full grid grid-cols-4 text-xs">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="dealbreakers">Dealbreakers</TabsTrigger>
+          <TabsTrigger value="dealbreakers">Blockers</TabsTrigger>
           <TabsTrigger value="fit">Fit</TabsTrigger>
-          <TabsTrigger value="pack">Application Pack</TabsTrigger>
+          <TabsTrigger value="pack">Pack</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="mt-6">
-          <div className="rounded-xl border border-border bg-card p-6 space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2 text-sm">
+        <TabsContent value="overview" className="mt-5">
+          <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2 text-sm">
               <div><span className="text-muted-foreground">Title:</span> <span className="font-medium text-foreground ml-2">{job.title}</span></div>
               <div><span className="text-muted-foreground">Company:</span> <span className="font-medium text-foreground ml-2">{job.company}</span></div>
               <div><span className="text-muted-foreground">Location:</span> <span className="font-medium text-foreground ml-2">{job.location}</span></div>
@@ -113,7 +191,7 @@ const JobDetail = () => {
           </div>
 
           {/* Action buttons */}
-          <div className="flex gap-3 mt-4">
+          <div className="flex flex-wrap gap-2 mt-4">
             {!job.verdict && (
               <Button size="sm" onClick={() => navigate(`/app/dealbreakers/${id}`)}>
                 Run Dealbreaker Check <ArrowRight className="ml-1.5 h-4 w-4" />
@@ -132,7 +210,7 @@ const JobDetail = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="dealbreakers" className="mt-6">
+        <TabsContent value="dealbreakers" className="mt-5">
           {blockers.length === 0 ? (
             <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
               {job.verdict ? "No blockers recorded." : "Run the dealbreaker check to see results."}
@@ -153,18 +231,18 @@ const JobDetail = () => {
           )}
         </TabsContent>
 
-        <TabsContent value="fit" className="mt-6">
+        <TabsContent value="fit" className="mt-5">
           {!match ? (
             <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
               Run the fit analysis to see results.
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-3">
+            <div className="grid gap-5 md:grid-cols-3">
               <FitScoreCard
                 score={Number(match.fit_score)}
                 confidence={Number(match.fit_confidence) >= 7 ? "high" : Number(match.fit_confidence) >= 4 ? "medium" : "low"}
               />
-              <div className="md:col-span-2 rounded-xl border border-border bg-card p-6 space-y-4">
+              <div className="md:col-span-2 rounded-xl border border-border bg-card p-5 space-y-4">
                 <div>
                   <h3 className="font-heading text-sm font-semibold text-verdict-go mb-2">Strengths</h3>
                   <ul className="space-y-1">
@@ -195,7 +273,7 @@ const JobDetail = () => {
           )}
         </TabsContent>
 
-        <TabsContent value="pack" className="mt-6">
+        <TabsContent value="pack" className="mt-5">
           {assets.length === 0 ? (
             <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
               Generate a Quick Apply pack to see your tailored documents here.

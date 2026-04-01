@@ -38,14 +38,14 @@ const Jobs = () => {
   });
 
   return (
-    <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-heading text-2xl font-bold text-foreground">Jobs Pipeline</h1>
-          <p className="text-sm text-muted-foreground mt-1">All jobs you've checked, organized by status.</p>
+          <h1 className="font-heading text-xl sm:text-2xl font-bold text-foreground">Jobs Pipeline</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">All jobs you've checked, organized by status.</p>
         </div>
         <Link to="/app/new-job">
-          <Button><PlusCircle className="mr-2 h-4 w-4" />Check a Job</Button>
+          <Button size="sm" className="w-full sm:w-auto"><PlusCircle className="mr-2 h-4 w-4" />Check a Job</Button>
         </Link>
       </div>
 
