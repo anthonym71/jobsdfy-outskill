@@ -16,6 +16,7 @@ import QuickApply from "./pages/QuickApply";
 import Jobs from "./pages/Jobs";
 import JobDetail from "./pages/JobDetail";
 import Settings from "./pages/Settings";
+import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
