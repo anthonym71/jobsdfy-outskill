@@ -32,11 +32,11 @@ const pricing = [
 ];
 
 const faqs = [
-  { q: "How does AI Job OS extract job information?", a: "Paste a URL, raw text, screenshot, or voice note. Our AI extracts the job title, company, salary, location, requirements, and more into structured fields you can review and edit." },
+  { q: "How does JobsDFY extract job information?", a: "Paste a URL, raw text, screenshot, or voice note. Our AI extracts the job title, company, salary, location, requirements, and more into structured fields you can review and edit." },
   { q: "What dealbreakers does it check for?", a: "Salary range, visa/work authorization, location/remote mismatch, language requirements, mandatory certifications, years of experience, travel requirements, and industry exclusions." },
   { q: "Is my data private?", a: "Absolutely. Your profile, non-negotiables, and job data are only visible to you. We never share your information with employers or third parties." },
   { q: "How accurate is the fit score?", a: "The fit score is based on your profile, skills, and the extracted job requirements. We show a confidence level alongside it so you know when information is inferred vs. confirmed." },
-  { q: "Does AI Job OS auto-apply for me?", a: "Never. Nothing goes out without your explicit approval. We generate drafts that you review, edit, and send yourself." },
+  { q: "Does JobsDFY auto-apply for me?", a: "Never. Nothing goes out without your explicit approval. We generate drafts that you review, edit, and send yourself." },
   { q: "Does it work with LinkedIn?", a: "LinkedIn blocks automated scraping, but our Chrome extension lets you send jobs with one click. You can also use Smart Paste — just Ctrl+A, Ctrl+C any job page and paste the raw content." },
 ];
 
