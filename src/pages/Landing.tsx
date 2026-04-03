@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Shield, Zap, Link2, ChevronDown, Check, ArrowRight, Sparkles, Eye, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import jobyMascot from "@/assets/joby-mascot.png";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
