@@ -213,7 +213,8 @@ const Settings = () => {
       {/* Billing */}
       <section className="rounded-xl border border-border bg-card p-6 space-y-3">
         <h2 className="font-heading text-base font-semibold text-foreground">Billing</h2>
-        <p className="text-sm text-muted-foreground">Billing management coming soon.</p>
+        <p className="text-sm text-muted-foreground">Manage your subscription and buy credit packs.</p>
+        <Button size="sm" asChild><Link to="/app/pricing">View Plans & Pricing</Link></Button>
       </section>
 
       <Separator />
