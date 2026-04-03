@@ -64,40 +64,60 @@ const Landing = () => {
       {/* Hero */}
       <section className="relative overflow-hidden pt-16 pb-20 md:pt-28 md:pb-32">
         <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-accent/30" />
-        <div className="relative mx-auto max-w-4xl px-4 sm:px-6 text-center">
-          <motion.div
-            initial="hidden" animate="visible" custom={0} variants={fadeUp}
-            className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-medium text-primary mb-6"
-          >
-            <Sparkles className="h-3 w-3" />
-            Powered by AI — never auto-sends
-          </motion.div>
-          <motion.h1
-            initial="hidden" animate="visible" custom={1} variants={fadeUp}
-            className="font-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground leading-[1.1]"
-          >
-            Never waste time on the wrong job again.
-          </motion.h1>
-          <motion.p
-            initial="hidden" animate="visible" custom={2} variants={fadeUp}
-            className="mx-auto mt-5 max-w-2xl text-sm sm:text-base text-muted-foreground leading-relaxed"
-          >
-            Paste a job link, screenshot, or voice note. AI flags hard mismatches — salary, visa, location, language, skills — before you invest time. Then helps you apply fast when the role is worth it.
-          </motion.p>
-          <motion.div
-            initial="hidden" animate="visible" custom={3} variants={fadeUp}
-            className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center"
-          >
-            <Link to="/auth?mode=signup">
-              <Button size="lg" className="text-sm sm:text-base px-6 sm:px-8 py-5 sm:py-6">
-                Get Started Free
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-            <a href="#how-it-works">
-              <Button variant="outline" size="lg" className="text-sm sm:text-base px-6 sm:px-8 py-5 sm:py-6">See How It Works</Button>
-            </a>
-          </motion.div>
+        <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="flex flex-col-reverse items-center gap-8 md:flex-row md:gap-12">
+            {/* Text */}
+            <div className="flex-1 text-center md:text-left">
+              <motion.div
+                initial="hidden" animate="visible" custom={0} variants={fadeUp}
+                className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-medium text-primary mb-6"
+              >
+                <Sparkles className="h-3 w-3" />
+                Powered by AI — never auto-sends
+              </motion.div>
+              <motion.h1
+                initial="hidden" animate="visible" custom={1} variants={fadeUp}
+                className="font-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground leading-[1.1]"
+              >
+                Never waste time on the wrong job again.
+              </motion.h1>
+              <motion.p
+                initial="hidden" animate="visible" custom={2} variants={fadeUp}
+                className="mt-5 max-w-2xl text-sm sm:text-base text-muted-foreground leading-relaxed"
+              >
+                Paste a job link, screenshot, or voice note. AI flags hard mismatches — salary, visa, location, language, skills — before you invest time. Then helps you apply fast when the role is worth it.
+              </motion.p>
+              <motion.div
+                initial="hidden" animate="visible" custom={3} variants={fadeUp}
+                className="mt-8 flex flex-col items-center gap-3 sm:flex-row md:justify-start sm:justify-center"
+              >
+                <Link to="/auth?mode=signup">
+                  <Button size="lg" className="text-sm sm:text-base px-6 sm:px-8 py-5 sm:py-6">
+                    Get Started Free
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+                <a href="#how-it-works">
+                  <Button variant="outline" size="lg" className="text-sm sm:text-base px-6 sm:px-8 py-5 sm:py-6">See How It Works</Button>
+                </a>
+              </motion.div>
+            </div>
+
+            {/* Joby Mascot */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="flex-shrink-0 w-48 sm:w-56 md:w-72 lg:w-80"
+            >
+              <img
+                src={jobyMascot}
+                alt="Joby — your AI job search superhero"
+                className="w-full h-auto drop-shadow-xl"
+                loading="eager"
+              />
+            </motion.div>
+          </div>
         </div>
       </section>
 
