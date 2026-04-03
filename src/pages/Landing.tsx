@@ -48,7 +48,7 @@ const Landing = () => {
       {/* Nav */}
       <nav className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
-          <span className="font-heading text-lg sm:text-xl font-bold text-foreground tracking-tight">AI Job OS</span>
+          <span className="font-heading text-lg sm:text-xl font-bold text-foreground tracking-tight">JobsDFY</span>
           <div className="flex items-center gap-2 sm:gap-3">
             <Link to="/auth">
               <Button variant="ghost" size="sm">Sign In</Button>
