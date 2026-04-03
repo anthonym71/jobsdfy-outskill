@@ -32,11 +32,11 @@ const pricing = [
 ];
 
 const faqs = [
-  { q: "How does AI Job OS extract job information?", a: "Paste a URL, raw text, screenshot, or voice note. Our AI extracts the job title, company, salary, location, requirements, and more into structured fields you can review and edit." },
+  { q: "How does JobsDFY extract job information?", a: "Paste a URL, raw text, screenshot, or voice note. Our AI extracts the job title, company, salary, location, requirements, and more into structured fields you can review and edit." },
   { q: "What dealbreakers does it check for?", a: "Salary range, visa/work authorization, location/remote mismatch, language requirements, mandatory certifications, years of experience, travel requirements, and industry exclusions." },
   { q: "Is my data private?", a: "Absolutely. Your profile, non-negotiables, and job data are only visible to you. We never share your information with employers or third parties." },
   { q: "How accurate is the fit score?", a: "The fit score is based on your profile, skills, and the extracted job requirements. We show a confidence level alongside it so you know when information is inferred vs. confirmed." },
-  { q: "Does AI Job OS auto-apply for me?", a: "Never. Nothing goes out without your explicit approval. We generate drafts that you review, edit, and send yourself." },
+  { q: "Does JobsDFY auto-apply for me?", a: "Never. Nothing goes out without your explicit approval. We generate drafts that you review, edit, and send yourself." },
   { q: "Does it work with LinkedIn?", a: "LinkedIn blocks automated scraping, but our Chrome extension lets you send jobs with one click. You can also use Smart Paste — just Ctrl+A, Ctrl+C any job page and paste the raw content." },
 ];
 
@@ -48,7 +48,7 @@ const Landing = () => {
       {/* Nav */}
       <nav className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
-          <span className="font-heading text-lg sm:text-xl font-bold text-foreground tracking-tight">AI Job OS</span>
+          <span className="font-heading text-lg sm:text-xl font-bold text-foreground tracking-tight">JobsDFY</span>
           <div className="flex items-center gap-2 sm:gap-3">
             <Link to="/auth">
               <Button variant="ghost" size="sm">Sign In</Button>
@@ -251,8 +251,8 @@ const Landing = () => {
       {/* Footer */}
       <footer className="border-t border-border bg-background py-8 sm:py-10">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
-          <span className="font-heading text-sm font-semibold text-foreground">AI Job OS</span>
-          <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} AI Job OS. All rights reserved.</p>
+          <span className="font-heading text-sm font-semibold text-foreground">JobsDFY</span>
+          <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} JobsDFY. All rights reserved.</p>
         </div>
       </footer>
     </div>
