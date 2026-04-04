@@ -82,8 +82,13 @@ const JobDetail = () => {
   };
 
   const handleGenerateCV = async () => {
+    if (!credits || credits.balance < 2) {
+      toast({ title: "Insufficient credits", description: "You need 2 credits to generate a tailored CV.", variant: "destructive" });
+      return;
+    }
     setGeneratingCV(true);
     try {
+      await spendCredits(2, "generate_cv");
       const { data, error } = await supabase.functions.invoke("generate-cv", { body: { jobId: id } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
