@@ -1,138 +1,102 @@
 
 
-# JobsDFY: Complete V1+V2 Build — Gap Analysis & Execution Plan
+# JobsDFY: What's Done vs What's Left — Step-by-Step to Commercial Launch
 
-## What the Document Defines
+## COMPLETED (Working Now)
 
-The uploaded "Prompt Orchestration Matrix" defines **30+ prompt-driven features** across 10 domains. Here's what's built vs missing.
-
----
-
-## STATUS: Built vs Missing
-
-### BUILT (Working)
-| Feature | Edge Function | UI |
-|---------|--------------|-----|
-| Job extraction | `extract-job` | NewJob page |
-| Dealbreaker analysis | `analyze-dealbreakers` | DealbreakersCheck page |
-| Fit scoring | `analyze-fit` | FastDecision page |
-| Quick Apply pack | `generate-application` (ATS-upgraded) | QuickApply page |
-| Tailored CV generation | `generate-cv` | JobDetail button |
-| Cover letter generation | `generate-cover-letter` | JobDetail button |
-| Gap analysis | `analyze-gap` | JobDetail button |
-| Interview practice (Q&A + scoring) | `interview-practice` | InterviewPracticeTab |
-| Recruiter job posting + AI JD | `generate-job-description` | PostJob page |
-| Profile tabs (About, Work History, Education, References, Achievements) | N/A | Profile page |
-| Recruiter pricing (3 free / $9 / $49) | Stripe products | PostJob + Pricing |
-| Seeker subscriptions (Free / Pro / Premium) | Stripe products | Pricing page |
-| Credits + XP + achievements | DB tables | CreditWidgets |
-| Auth, onboarding, settings, support, admin | Various | Various pages |
-| Chrome extension | N/A | extension/ folder |
-
-### NOT BUILT — Required for V1+V2
-
-| # | Feature | Edge Function Needed | UI Needed | Priority |
-|---|---------|---------------------|-----------|----------|
-| 1 | **CV Upload + AI Parse** | `parse-cv` (NEW) | Upload button in WorkHistoryTab + import review screen | CRITICAL |
-| 2 | **CV Conflict Detection** | `detect-cv-conflicts` (NEW) | Side-by-side merge UI with keep/replace/merge checkboxes | CRITICAL |
-| 3 | **Profile Normalizer** | `normalize-profile` (NEW) | Onboarding review card — clean up raw text input | HIGH |
-| 4 | **Profile Summary Writer** | `generate-profile-summary` (NEW) | "Improve Summary" button on AboutMeTab | HIGH |
-| 5 | **Suggest Profile Keywords** | `suggest-profile-keywords` (NEW) | Keyword chip list on AboutMeTab | MEDIUM |
-| 6 | **STAR Bullet Enhancer** | `enhance-star-bullets` (NEW) | "Improve Entry" per work history item + before/after view | HIGH |
-| 7 | **Work Media Summarizer** | `summarize-work-media` (NEW) | Upload area + suggestion drawer per work entry | MEDIUM |
-| 8 | **Education Normalizer** | `normalize-education` (NEW) | Auto-clean on save in EducationTab | LOW |
-| 9 | **Achievement Normalizer** | `normalize-achievement` (NEW) | Achievement form + CV-ready bullet preview | MEDIUM |
-| 10 | **Reference Parser** | `parse-reference` (NEW) | Testimonial card with parsed highlights | MEDIUM |
-| 11 | **ATS Keyword Extraction** | `extract-ats-keywords` (NEW or merge into extract-job) | Hidden preprocessing or keyword panel on JobDetail | HIGH |
-| 12 | **CV Version Manager** | `position-cv-version` (NEW) | CV Versions library on Profile | HIGH |
-| 13 | **Career Timeline Generator** | `generate-timeline` (NEW) | Timeline visual + export on Application Pack | MEDIUM |
-| 14 | **Application Pack Orchestrator** | Wrapper combining ATS + CV + cover + recruiter msg + timeline | Pack summary screen replacing current QuickApply | HIGH |
-| 15 | **Recruiter Message Generator** | Already in `generate-application` but needs standalone | Short message editor on JobDetail | MEDIUM |
-| 16 | **STAR Answer Converter** | `convert-answer-star` (NEW or add to interview-practice) | Answer compare view in InterviewPracticeTab | MEDIUM |
-| 17 | **Recruiter Candidate View** | `candidate-shortlist-summary` + `candidate-comparison-writer` (NEW) | Recruiter dashboard showing candidate profiles + match indicators | HIGH |
-| 18 | **Voice AI Interview Bot** | ElevenLabs integration (agent + TTS + STT) | Voice conversation UI in InterviewPracticeTab | V2 |
-| 19 | **Photo Upload** | None (storage only) | Upload component in AboutMeTab | HIGH |
-| 20 | **Media Upload per Work Entry** | None (storage only) | Upload component in WorkHistoryTab | MEDIUM |
-| 21 | **Certificate Upload** | None (storage only) | Upload in EducationTab | MEDIUM |
-| 22 | **Support Ticket Summarizer** | `summarize-support-ticket` (NEW) | Admin helpdesk enhancement | LOW |
-| 23 | **Generated Artifacts Table** | DB migration | N/A | MEDIUM |
+| # | Feature | Status |
+|---|---------|--------|
+| 1 | Landing page with steps, features, pricing, FAQs, mascot | Done |
+| 2 | Auth (signup/login with email verification) | Done |
+| 3 | Onboarding (5-step wizard with phone verification) | Done |
+| 4 | Job extraction from URL or text (AI-powered) | Done |
+| 5 | Dealbreaker detection (salary, visa, location, language) | Done |
+| 6 | Fit scoring (1-10 with strengths/gaps/recommendation) | Done |
+| 7 | Quick Apply pack (ATS resume, cover note, recruiter msg) | Done |
+| 8 | Tailored CV generation (per-job, ATS-optimized) | Done |
+| 9 | Cover letter generation (300-400 words, personalized) | Done |
+| 10 | Gap analysis (missing keywords, recruiter concerns, verdict) | Done |
+| 11 | Interview practice (AI Q&A with STAR scoring) | Done |
+| 12 | Voice AI interview bot (ElevenLabs integration UI) | Done (needs API key) |
+| 13 | Job pipeline tracking (verdict + status) | Done |
+| 14 | Chrome/Edge/Brave extension (download + install page) | Done |
+| 15 | Profile: About Me with AI summary/keywords/photo upload | Done |
+| 16 | Profile: Work History with STAR enhance + CV upload/parse | Done |
+| 17 | Profile: Education with certificates + media upload | Done |
+| 18 | Profile: References with testimonials | Done |
+| 19 | Profile: Achievements + assessment placeholders | Done |
+| 20 | Profile: CV Versions library | Done |
+| 21 | Profile: Career Timeline generation | Done |
+| 22 | Recruiter job posting with AI JD generator | Done |
+| 23 | Recruiter pricing enforcement (3 free / $9 / $49) | Done |
+| 24 | Seeker subscriptions (Free / Pro $19 / Premium $49) | Done |
+| 25 | Credit packs ($5/10 credits, $15/50 credits) | Done |
+| 26 | XP, levels, achievements, credit expiry | Done |
+| 27 | Calendar with events + RSVP + courses link | Done |
+| 28 | Support ticket system | Done |
+| 29 | Admin helpdesk + user management | Done |
+| 30 | Settings with extension link + billing | Done |
+| 31 | 25 edge functions deployed | Done |
 
 ---
 
-## Execution Plan (Build Order)
+## REMAINING — Step-by-Step to Launch
 
-### Block 1: Core Profile Intelligence (parse-cv, conflict detection, profile enhancement)
-1. Create `parse-cv` edge function — accepts PDF/DOCX text, uses AI to extract structured work history, education, certs, skills
-2. Create `detect-cv-conflicts` edge function — compares parsed data vs existing entries, returns merge suggestions
-3. Build CV Upload + Import Review UI in WorkHistoryTab — file upload, parse, show side-by-side conflicts with checkboxes
-4. Create `generate-profile-summary` edge function — "Improve Summary" button on AboutMeTab
-5. Create `suggest-profile-keywords` edge function — keyword chip suggestions
-6. Build photo upload component for AboutMeTab (uses existing `profile-photos` bucket)
-7. Build media upload component for WorkHistoryTab (uses existing `work-media` bucket)
-8. Build certificate upload in EducationTab (uses existing `certificates` bucket)
+### Step 1: Fix Landing Page Pricing Mismatch
+The landing page shows "Starter Free / Pro $19 / Team $49" but actual Stripe tiers are "Free / Pro $9 / Premium $19" for seekers. Update landing page pricing cards to match real Stripe prices.
 
-### Block 2: STAR Enhancement + CV Versions
-1. Create `enhance-star-bullets` edge function — rewrites experience bullets using STAR methodology
-2. Add "Improve Entry" button per work history entry with before/after comparison
-3. Create `position-cv-version` edge function — creates role-positioned CV versions (SaaS vs Executive vs HR)
-4. Build CV Versions library UI on Profile page (new tab or section)
-5. Create `normalize-achievement` edge function
-6. Create `parse-reference` edge function with highlight extraction
+### Step 2: Sidebar Branding Fix
+Sidebar says "AI Job OS" — should say "JobsDFY" to match the product name.
 
-### Block 3: Application Pack Orchestration + Timeline
-1. Create `extract-ats-keywords` as standalone edge function (or verify it's already embedded in extract-job)
-2. Create `generate-timeline` edge function — career timeline with growth patterns
-3. Build Application Pack orchestrator — single "Generate Full Pack" button that chains: ATS keywords → tailored CV → cover letter → recruiter message → optional timeline
-4. Upgrade QuickApply page to show full pack with toggles for each component
-5. Create standalone recruiter message generator (separate from full application pack)
+### Step 3: Extension Icon Missing
+`extension/icon.png` needs to actually exist as a proper icon file. Currently may be a placeholder. Generate a simple icon.
 
-### Block 4: Recruiter Side + Interview Enhancements
-1. Create `candidate-shortlist-summary` edge function — generates candidate summaries for recruiters
-2. Build recruiter candidate view page — list candidates, see structured profiles, match indicators
-3. Add "Convert to STAR" button in InterviewPracticeTab for answer formatting
-4. Create `normalize-education` edge function
+### Step 4: Generated Artifacts Table
+Create `generated_artifacts` table for unified tracking of all AI-generated content with credit cost logging. Migration needed.
 
-### Block 5: Voice AI Interview Bot (V2)
-1. Set up ElevenLabs connector (API key)
-2. Create `elevenlabs-conversation-token` edge function
-3. Build Voice AI interview component using `@elevenlabs/react` `useConversation` hook
-4. Integrate into InterviewPracticeTab as a "Voice Practice" mode toggle
-5. Wire agent to use interview questions from profile + selected job
+### Step 5: Credit Deduction on Premium Features
+Currently AI features (CV generation, gap analysis, timeline, cover letter) do not deduct credits. Wire `spendCredits()` calls into JobDetail and QuickApply before calling edge functions.
 
-### Block 6: Database + Polish
-1. Create `generated_artifacts` table for unified artifact storage with credit tracking
-2. Wire credit deduction logic into premium features (timeline = 5 credits, extra CV versions, deep interview analysis)
-3. Admin support ticket summarizer
-4. End-to-end testing of all flows
-5. Publish to domain
+### Step 6: Recruiter Candidate View Page
+No page exists for recruiters to view candidate profiles. Build a `/app/recruiter/candidates` page that lists candidates who applied to their posted jobs, showing structured profiles and AI-generated match summaries.
+
+### Step 7: ElevenLabs API Key
+Voice AI bot UI is built but needs the `ELEVENLABS_API_KEY` secret added. You need to provide this key.
+
+### Step 8: Landing Page — Extension Download Section
+Add a prominent "Download Extension" CTA on the landing page linking to `/app/extension` (or direct ZIP download for non-logged-in users).
+
+### Step 9: Admin-Only Nav Guard
+Admin and Users nav items show for all users. Add role check so only admins see those links.
+
+### Step 10: Publish to Domain
+App is NOT published yet. Needs publishing + custom domain connection.
 
 ---
 
-## Database Migration Needed
+## Build Order (Implementation Sequence)
 
 ```text
-New table: generated_artifacts
-  id, user_id, job_id (nullable), artifact_type (enum: cv, cover_letter, 
-  recruiter_message, timeline, fit_analysis, interview_feedback, ats_keywords),
-  version_label, input_hash, output_json (jsonb), credit_cost, created_at
+1. Fix landing page pricing to match Stripe ($9 Pro / $19 Premium)
+2. Rename sidebar "AI Job OS" → "JobsDFY"  
+3. Create generated_artifacts migration
+4. Wire credit deduction into AI features
+5. Build recruiter candidate view page
+6. Add admin role guard to sidebar nav
+7. Add extension CTA to landing page
+8. Publish app
+9. Connect custom domain
+10. Add ELEVENLABS_API_KEY (you provide)
 ```
 
-## New Edge Functions Summary (13 new)
+### Files Modified
+- `src/pages/Landing.tsx` — fix pricing, add extension CTA
+- `src/components/layout/AppLayout.tsx` — rename branding, admin guard
+- `src/pages/JobDetail.tsx` — add credit deduction before AI calls
+- `src/pages/QuickApply.tsx` — add credit deduction
+- New: `src/pages/RecruiterCandidates.tsx` — candidate dashboard
+- New: migration for `generated_artifacts` table
+- `src/App.tsx` — add recruiter route
 
-`parse-cv`, `detect-cv-conflicts`, `generate-profile-summary`, `suggest-profile-keywords`, `enhance-star-bullets`, `normalize-achievement`, `parse-reference`, `extract-ats-keywords`, `position-cv-version`, `generate-timeline`, `candidate-shortlist-summary`, `convert-answer-star`, `elevenlabs-conversation-token`
-
-## New/Modified UI Files
-
-- `src/components/profile/CVUploadParser.tsx` — upload + import review
-- `src/components/profile/ConflictResolver.tsx` — side-by-side merge
-- `src/components/profile/MediaUploader.tsx` — reusable file upload
-- `src/components/profile/CVVersionsTab.tsx` — version library
-- `src/components/profile/VoiceInterviewBot.tsx` — ElevenLabs voice agent
-- Modified: `AboutMeTab.tsx`, `WorkHistoryTab.tsx`, `EducationTab.tsx`, `AchievementsTab.tsx`, `ReferencesTab.tsx`, `InterviewPracticeTab.tsx`, `QuickApply.tsx`, `JobDetail.tsx`, `Profile.tsx`
-
----
-
-## Estimated Build: 6 blocks, approximately 6-8 implementation prompts
-
-I'll start with Block 1 (parse-cv + conflict detection + profile enhancement + file uploads) immediately upon approval and continue through all blocks sequentially.
+### Estimated: 2-3 build prompts to complete everything.
 
