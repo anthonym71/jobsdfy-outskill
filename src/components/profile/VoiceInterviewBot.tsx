@@ -10,7 +10,7 @@ interface VoiceInterviewBotProps {
   company?: string;
 }
 
-const VoiceInterviewBot = ({ jobTitle, company }: VoiceInterviewBotProps) => {
+const VoiceInterviewBotInner = ({ jobTitle, company }: VoiceInterviewBotProps) => {
   const { toast } = useToast();
   const [isConnecting, setIsConnecting] = useState(false);
 
