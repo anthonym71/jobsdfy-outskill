@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, PlusCircle, Briefcase, Settings, LogOut, Menu, X, CreditCard, HelpCircle, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, PlusCircle, Briefcase, Settings, LogOut, Menu, X, CreditCard, HelpCircle, ShieldCheck, Users } from "lucide-react";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,6 +14,7 @@ const navItems = [
   { to: "/app/pricing", icon: CreditCard, label: "Pricing" },
   { to: "/app/support", icon: HelpCircle, label: "Support" },
   { to: "/app/admin", icon: ShieldCheck, label: "Admin" },
+  { to: "/app/admin/users", icon: Users, label: "Users" },
   { to: "/app/settings", icon: Settings, label: "Settings" },
 ];
 

@@ -19,6 +19,8 @@ import Settings from "./pages/Settings";
 import Pricing from "./pages/Pricing";
 import Support from "./pages/Support";
 import AdminHelpdesk from "./pages/AdminHelpdesk";
+import AdminUsers from "./pages/AdminUsers";
+import PostJob from "./pages/PostJob";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
@@ -61,7 +63,9 @@ const App = () => (
                 <Route path="/app/settings" element={<Settings />} />
                 <Route path="/app/pricing" element={<Pricing />} />
                 <Route path="/app/support" element={<Support />} />
+                <Route path="/app/post-job" element={<PostJob />} />
                 <Route path="/app/admin" element={<AdminHelpdesk />} />
+                <Route path="/app/admin/users" element={<AdminUsers />} />
               </Route>
             </Route>
             <Route path="*" element={<NotFound />} />
