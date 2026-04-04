@@ -92,7 +92,7 @@ const AppLayout = () => {
       {/* Mobile header */}
       <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between border-b border-border bg-card px-4 py-3 md:hidden">
         <div className="flex items-center gap-3">
-          <span className="font-heading text-lg font-bold text-foreground">AI Job OS</span>
+          <span className="font-heading text-lg font-bold text-foreground">JobsDFY</span>
           <CreditBalance compact />
         </div>
         <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>

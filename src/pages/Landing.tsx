@@ -257,6 +257,26 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* Extension CTA */}
+      <section className="py-12 md:py-16 bg-accent/20">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 text-center">
+          <h2 className="font-heading text-2xl sm:text-3xl font-bold text-foreground">Browser Extension</h2>
+          <p className="mt-2 text-sm text-muted-foreground max-w-xl mx-auto">One-click job checking from LinkedIn, Indeed, or any job board. Works on Chrome, Edge, Brave & Arc.</p>
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <a href="/jobsdfy-extension.zip" download>
+              <Button size="lg" variant="outline" className="text-sm px-6 py-5">
+                <FileText className="mr-2 h-4 w-4" /> Download Extension
+              </Button>
+            </a>
+            <Link to="/app/extension">
+              <Button size="lg" variant="ghost" className="text-sm px-6 py-5">
+                Installation Guide <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="py-16 md:py-24 bg-background">
         <div className="mx-auto max-w-2xl px-4 sm:px-6 text-center">
