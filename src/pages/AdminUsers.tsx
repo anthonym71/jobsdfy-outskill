@@ -110,7 +110,8 @@ const AdminUsers = () => {
       });
       if (authError) throw new Error("Invalid admin password");
 
-      // Insert credit transaction
+      // Use admin RLS policy (admin can update any credits)
+      // First insert the transaction record (admin policy allows this)
       await supabase.from("credit_transactions").insert({
         user_id: creditDialog.userId,
         amount: creditAmount,
@@ -118,7 +119,7 @@ const AdminUsers = () => {
         reason: "Admin credit allocation",
       });
 
-      // Update balance
+      // Update balance via admin policy
       const target = users.find(u => u.user_id === creditDialog.userId);
       const newBalance = (target?.balance || 0) + creditAmount;
       const newLifetime = (target?.lifetime_earned || 0) + creditAmount;
