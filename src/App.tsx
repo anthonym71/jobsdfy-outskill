@@ -26,6 +26,7 @@ import PostJob from "./pages/PostJob";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import ExtensionDownload from "./pages/ExtensionDownload";
+import RecruiterCandidates from "./pages/RecruiterCandidates";
 
 const queryClient = new QueryClient();
 
@@ -69,6 +70,7 @@ const App = () => (
                 <Route path="/app/pricing" element={<Pricing />} />
                 <Route path="/app/support" element={<Support />} />
                 <Route path="/app/post-job" element={<PostJob />} />
+                <Route path="/app/recruiter/candidates" element={<RecruiterCandidates />} />
                 <Route path="/app/admin" element={<AdminHelpdesk />} />
                 <Route path="/app/admin/users" element={<AdminUsers />} />
                 <Route path="/app/extension" element={<ExtensionDownload />} />

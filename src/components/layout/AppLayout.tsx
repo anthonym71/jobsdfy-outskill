@@ -3,11 +3,12 @@ import { LayoutDashboard, PlusCircle, Briefcase, Settings, LogOut, Menu, X, Cred
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { CreditBalance } from "@/components/gamification/CreditWidgets";
+import { supabase } from "@/integrations/supabase/client";
 
-const navItems = [
+const baseNavItems: { to: string; icon: any; label: string; end?: boolean }[] = [
   { to: "/app", icon: LayoutDashboard, label: "Dashboard", end: true },
   { to: "/app/new-job", icon: PlusCircle, label: "Check a Job" },
   { to: "/app/jobs", icon: Briefcase, label: "Jobs" },
@@ -15,15 +16,27 @@ const navItems = [
   { to: "/app/calendar", icon: CalendarDays, label: "Calendar" },
   { to: "/app/pricing", icon: CreditCard, label: "Pricing" },
   { to: "/app/support", icon: HelpCircle, label: "Support" },
-  { to: "/app/admin", icon: ShieldCheck, label: "Admin" },
-  { to: "/app/admin/users", icon: Users, label: "Users" },
   { to: "/app/settings", icon: Settings, label: "Settings" },
 ];
 
+const adminNavItems: { to: string; icon: any; label: string; end?: boolean }[] = [
+  { to: "/app/admin", icon: ShieldCheck, label: "Admin" },
+  { to: "/app/admin/users", icon: Users, label: "Users" },
+];
+
 const AppLayout = () => {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle()
+      .then(({ data }) => setIsAdmin(!!data));
+  }, [user]);
+
+  const navItems = isAdmin ? [...baseNavItems, ...adminNavItems] : baseNavItems;
 
   const handleSignOut = async () => {
     await signOut();
@@ -33,7 +46,7 @@ const AppLayout = () => {
   const sidebar = (
     <div className="flex h-full flex-col">
       <div className="px-6 py-5 border-b border-border">
-        <span className="font-heading text-lg font-bold text-foreground tracking-tight">AI Job OS</span>
+        <span className="font-heading text-lg font-bold text-foreground tracking-tight">JobsDFY</span>
       </div>
       <div className="px-4 py-3">
         <CreditBalance />
@@ -79,7 +92,7 @@ const AppLayout = () => {
       {/* Mobile header */}
       <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between border-b border-border bg-card px-4 py-3 md:hidden">
         <div className="flex items-center gap-3">
-          <span className="font-heading text-lg font-bold text-foreground">AI Job OS</span>
+          <span className="font-heading text-lg font-bold text-foreground">JobsDFY</span>
           <CreditBalance compact />
         </div>
         <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>

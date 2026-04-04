@@ -269,6 +269,47 @@ export type Database = {
         }
         Relationships: []
       }
+      generated_artifacts: {
+        Row: {
+          artifact_type: string
+          created_at: string
+          credit_cost: number
+          id: string
+          job_id: string | null
+          output_json: Json | null
+          user_id: string
+          version_label: string | null
+        }
+        Insert: {
+          artifact_type: string
+          created_at?: string
+          credit_cost?: number
+          id?: string
+          job_id?: string | null
+          output_json?: Json | null
+          user_id: string
+          version_label?: string | null
+        }
+        Update: {
+          artifact_type?: string
+          created_at?: string
+          credit_cost?: number
+          id?: string
+          job_id?: string | null
+          output_json?: Json | null
+          user_id?: string
+          version_label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_artifacts_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interview_sessions: {
         Row: {
           answers: Json | null

@@ -28,9 +28,9 @@ const features = [
 ];
 
 const pricing = [
-  { name: "Starter", price: "Free", period: "", features: ["3 job checks / month", "Basic dealbreaker check", "Extraction preview", "Manual apply"], highlight: false },
-  { name: "Pro", price: "$19", period: "/mo", features: ["Unlimited job checks", "Full fit scoring", "Quick Apply packs", "Job pipeline tracking", "Chrome extension", "Priority extraction"], highlight: true },
-  { name: "Team", price: "$49", period: "/mo", features: ["Everything in Pro", "Advanced role matching", "Priority processing", "Recruiter insights", "Custom templates", "Team dashboard"], highlight: false },
+  { name: "Free", price: "Free", period: "", features: ["3 credits / month", "Basic dealbreaker check", "Extraction preview", "Manual apply"], highlight: false },
+  { name: "Pro", price: "$9", period: "/mo", features: ["30 credits / month", "Full fit scoring", "Quick Apply packs", "Tailored CV & cover letter", "Chrome extension", "Gap analysis"], highlight: true },
+  { name: "Premium", price: "$19", period: "/mo", features: ["100 credits / month", "Everything in Pro", "Career timeline", "STAR bullet enhancer", "Priority processing", "Interview practice"], highlight: false },
 ];
 
 const faqs = [
@@ -253,6 +253,26 @@ const Landing = () => {
                 )}
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Extension CTA */}
+      <section className="py-12 md:py-16 bg-accent/20">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 text-center">
+          <h2 className="font-heading text-2xl sm:text-3xl font-bold text-foreground">Browser Extension</h2>
+          <p className="mt-2 text-sm text-muted-foreground max-w-xl mx-auto">One-click job checking from LinkedIn, Indeed, or any job board. Works on Chrome, Edge, Brave & Arc.</p>
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <a href="/jobsdfy-extension.zip" download>
+              <Button size="lg" variant="outline" className="text-sm px-6 py-5">
+                <FileText className="mr-2 h-4 w-4" /> Download Extension
+              </Button>
+            </a>
+            <Link to="/app/extension">
+              <Button size="lg" variant="ghost" className="text-sm px-6 py-5">
+                Installation Guide <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

@@ -6,6 +6,7 @@ import { Check, Copy, RefreshCw, ShieldCheck, Loader2, Clock, FileText, Mail, Me
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useCredits } from "@/hooks/useCredits";
 
 interface AppPack {
   resume: string;
@@ -36,6 +37,7 @@ const QuickApply = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
   const { toast } = useToast();
+  const { credits, spendCredits } = useCredits();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [job, setJob] = useState<any>(null);
@@ -66,6 +68,13 @@ const QuickApply = () => {
         setLoading(false);
         return;
       }
+
+      if (!credits || credits.balance < 3) {
+        toast({ title: "Insufficient credits", description: "You need 3 credits to generate an application pack.", variant: "destructive" });
+        setLoading(false);
+        return;
+      }
+      await spendCredits(3, "generate_application_pack");
 
       const resp = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-application`,

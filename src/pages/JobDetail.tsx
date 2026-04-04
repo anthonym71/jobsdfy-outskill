@@ -11,6 +11,7 @@ import { Loader2, ArrowRight, ExternalLink, Trash2, MoreVertical, Archive, Bookm
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useCredits } from "@/hooks/useCredits";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +31,7 @@ const JobDetail = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { credits, spendCredits } = useCredits();
   const [loading, setLoading] = useState(true);
   const [job, setJob] = useState<any>(null);
   const [blockers, setBlockers] = useState<any[]>([]);
@@ -80,8 +82,13 @@ const JobDetail = () => {
   };
 
   const handleGenerateCV = async () => {
+    if (!credits || credits.balance < 2) {
+      toast({ title: "Insufficient credits", description: "You need 2 credits to generate a tailored CV.", variant: "destructive" });
+      return;
+    }
     setGeneratingCV(true);
     try {
+      await spendCredits(2, "generate_cv");
       const { data, error } = await supabase.functions.invoke("generate-cv", { body: { jobId: id } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -93,8 +100,13 @@ const JobDetail = () => {
   };
 
   const handleGenerateCoverLetter = async () => {
+    if (!credits || credits.balance < 2) {
+      toast({ title: "Insufficient credits", description: "You need 2 credits to generate a cover letter.", variant: "destructive" });
+      return;
+    }
     setGeneratingCover(true);
     try {
+      await spendCredits(2, "generate_cover_letter");
       const { data, error } = await supabase.functions.invoke("generate-cover-letter", { body: { jobId: id } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -106,8 +118,13 @@ const JobDetail = () => {
   };
 
   const handleGapAnalysis = async () => {
+    if (!credits || credits.balance < 1) {
+      toast({ title: "Insufficient credits", description: "You need 1 credit for gap analysis.", variant: "destructive" });
+      return;
+    }
     setAnalyzingGap(true);
     try {
+      await spendCredits(1, "gap_analysis");
       const { data, error } = await supabase.functions.invoke("analyze-gap", { body: { jobId: id } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
