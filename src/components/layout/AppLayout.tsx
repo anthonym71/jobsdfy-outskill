@@ -46,7 +46,7 @@ const AppLayout = () => {
   const sidebar = (
     <div className="flex h-full flex-col">
       <div className="px-6 py-5 border-b border-border">
-        <span className="font-heading text-lg font-bold text-foreground tracking-tight">AI Job OS</span>
+        <span className="font-heading text-lg font-bold text-foreground tracking-tight">JobsDFY</span>
       </div>
       <div className="px-4 py-3">
         <CreditBalance />
