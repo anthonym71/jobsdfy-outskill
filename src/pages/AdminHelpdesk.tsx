@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, ShieldCheck, Phone, Ticket } from "lucide-react";
+import { Loader2, ShieldCheck, Phone, Ticket, Settings, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +41,12 @@ const AdminHelpdesk = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
+  // OTP Override state
+  const [otpOverrideEnabled, setOtpOverrideEnabled] = useState(false);
+  const [otpOverrideCode, setOtpOverrideCode] = useState("");
+  const [showOverrideCode, setShowOverrideCode] = useState(false);
+  const [savingOverride, setSavingOverride] = useState(false);
+
   useEffect(() => {
     if (user) checkAdminAndLoad();
   }, [user]);
@@ -64,7 +73,33 @@ const AdminHelpdesk = () => {
       .order("created_at", { ascending: false });
     setPhoneRequests((phoneData as PhoneChangeReq[]) || []);
 
+    // Load OTP override settings
+    const { data: settingsData } = await supabase
+      .from("app_settings")
+      .select("*")
+      .in("key", ["otp_override_enabled", "otp_override_code"]);
+
+    if (settingsData) {
+      for (const s of settingsData) {
+        if (s.key === "otp_override_enabled") setOtpOverrideEnabled(s.value === "true");
+        if (s.key === "otp_override_code") setOtpOverrideCode(s.value);
+      }
+    }
+
     setLoading(false);
+  };
+
+  const saveOverrideSettings = async () => {
+    setSavingOverride(true);
+    try {
+      await supabase.from("app_settings").upsert({ key: "otp_override_enabled", value: otpOverrideEnabled ? "true" : "false", updated_at: new Date().toISOString() }, { onConflict: "key" });
+      await supabase.from("app_settings").upsert({ key: "otp_override_code", value: otpOverrideCode, updated_at: new Date().toISOString() }, { onConflict: "key" });
+      toast({ title: "Override settings saved" });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSavingOverride(false);
+    }
   };
 
   const updateTicket = async (ticketId: string, status: string, adminNotes?: string) => {
@@ -140,6 +175,9 @@ const AdminHelpdesk = () => {
           <TabsTrigger value="phone" className="flex items-center gap-1">
             <Phone className="h-4 w-4" /> Phone Changes ({phoneRequests.filter(r => r.status === "pending").length})
           </TabsTrigger>
+          <TabsTrigger value="settings" className="flex items-center gap-1">
+            <Settings className="h-4 w-4" /> OTP Settings
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="tickets" className="space-y-3 mt-4">
@@ -188,6 +226,52 @@ const AdminHelpdesk = () => {
               </div>
             ))
           )}
+        </TabsContent>
+
+        <TabsContent value="settings" className="space-y-4 mt-4">
+          <div className="rounded-xl border border-border bg-card p-6 space-y-5">
+            <div>
+              <h3 className="font-medium text-foreground text-sm mb-1">A2P 10DLC Override</h3>
+              <p className="text-xs text-muted-foreground">
+                While A2P registration is pending, users can enter this override password instead of an SMS code to verify their phone number. Turn this off once A2P is approved.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label htmlFor="otp-override-toggle" className="text-sm">Override enabled</Label>
+              <Switch
+                id="otp-override-toggle"
+                checked={otpOverrideEnabled}
+                onCheckedChange={setOtpOverrideEnabled}
+              />
+            </div>
+
+            <div>
+              <Label className="text-sm">Override password</Label>
+              <div className="flex gap-2 mt-1">
+                <div className="relative flex-1">
+                  <Input
+                    type={showOverrideCode ? "text" : "password"}
+                    value={otpOverrideCode}
+                    onChange={(e) => setOtpOverrideCode(e.target.value)}
+                    placeholder="Enter override code"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowOverrideCode(!showOverrideCode)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showOverrideCode ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <Button size="sm" onClick={saveOverrideSettings} disabled={savingOverride}>
+              {savingOverride ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+              Save Override Settings
+            </Button>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
