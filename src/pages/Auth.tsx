@@ -25,12 +25,13 @@ const Auth = () => {
     }
   }, [user, isLoading, navigate]);
 
+  const [emailSent, setEmailSent] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
       if (isSignUp) {
-        setCreatingAccount(true);
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -40,8 +41,7 @@ const Auth = () => {
         if (data.session) {
           navigate("/onboarding");
         } else {
-          toast({ title: "Check your email", description: "We sent you a confirmation link." });
-          setCreatingAccount(false);
+          setEmailSent(true);
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -49,7 +49,6 @@ const Auth = () => {
         navigate("/app");
       }
     } catch (err: any) {
-      setCreatingAccount(false);
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
