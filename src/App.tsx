@@ -16,6 +16,8 @@ import QuickApply from "./pages/QuickApply";
 import Jobs from "./pages/Jobs";
 import JobDetail from "./pages/JobDetail";
 import Settings from "./pages/Settings";
+import Profile from "./pages/Profile";
+import Calendar from "./pages/Calendar";
 import Pricing from "./pages/Pricing";
 import Support from "./pages/Support";
 import AdminHelpdesk from "./pages/AdminHelpdesk";
@@ -61,6 +63,8 @@ const App = () => (
                 <Route path="/app/jobs" element={<Jobs />} />
                 <Route path="/app/jobs/:id" element={<JobDetail />} />
                 <Route path="/app/settings" element={<Settings />} />
+                <Route path="/app/profile" element={<Profile />} />
+                <Route path="/app/calendar" element={<Calendar />} />
                 <Route path="/app/pricing" element={<Pricing />} />
                 <Route path="/app/support" element={<Support />} />
                 <Route path="/app/post-job" element={<PostJob />} />

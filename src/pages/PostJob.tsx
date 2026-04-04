@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,10 +7,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, ArrowLeft, ArrowRight, Loader2, Send } from "lucide-react";
+import { Sparkles, ArrowLeft, ArrowRight, Loader2, Send, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useSubscription, RECRUITER_TIERS } from "@/hooks/useSubscription";
 import {
   COUNTRIES, CITIES, JOB_LEVELS, JOB_CATEGORIES, BENEFITS_OPTIONS,
   QUALIFICATION_OPTIONS, CURRENCIES, LANGUAGE_OPTIONS
@@ -22,9 +23,22 @@ const PostJob = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { recruiterTier, loading: subLoading, checkout } = useSubscription();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [activeJobCount, setActiveJobCount] = useState(0);
+  const [countLoading, setCountLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("recruiter_job_posts").select("id", { count: "exact", head: true })
+      .eq("user_id", user.id).eq("is_active", true)
+      .then(({ count }) => { setActiveJobCount(count || 0); setCountLoading(false); });
+  }, [user]);
+
+  const maxJobs = recruiterTier === "unlimited" ? Infinity : recruiterTier === "standard" ? 10 : 3;
+  const atLimit = activeJobCount >= maxJobs;
 
   const [form, setForm] = useState({
     title: "", company: "", country: "", city: "", work_model: "onsite",
@@ -100,6 +114,25 @@ const PostJob = () => {
       setSaving(false);
     }
   };
+
+  if (subLoading || countLoading) {
+    return <div className="flex justify-center py-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  }
+
+  if (atLimit) {
+    return (
+      <div className="p-6 md:p-8 max-w-xl mx-auto text-center space-y-4 py-16">
+        <AlertTriangle className="h-10 w-10 text-amber-500 mx-auto" />
+        <h2 className="font-heading text-xl font-bold text-foreground">Job Posting Limit Reached</h2>
+        <p className="text-sm text-muted-foreground">
+          You have {activeJobCount} active job post{activeJobCount !== 1 ? "s" : ""}.
+          {recruiterTier === "free" ? " Free accounts can post up to 3 jobs." : " Your plan allows up to 10 active posts."}
+        </p>
+        <p className="text-sm text-muted-foreground">Upgrade your recruiter plan to post more jobs.</p>
+        <Button asChild><Link to="/app/pricing">View Recruiter Plans</Link></Button>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 md:p-8 max-w-3xl mx-auto space-y-6">

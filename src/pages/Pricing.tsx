@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Check, Zap, Crown, Sparkles, Loader2 } from "lucide-react";
-import { useSubscription, STRIPE_TIERS, CREDIT_PACKS, type SubscriptionTier } from "@/hooks/useSubscription";
+import { Check, Zap, Crown, Sparkles, Loader2, Briefcase } from "lucide-react";
+import { useSubscription, STRIPE_TIERS, CREDIT_PACKS, RECRUITER_TIERS, type SubscriptionTier } from "@/hooks/useSubscription";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -11,7 +11,7 @@ const tierFeatures: Record<SubscriptionTier, string[]> = {
 };
 
 const Pricing = () => {
-  const { tier: currentTier, subscribed, loading, checkout, manageSubscription } = useSubscription();
+  const { tier: currentTier, recruiterTier, subscribed, loading, checkout, manageSubscription } = useSubscription();
   const { toast } = useToast();
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
 
@@ -41,66 +41,133 @@ const Pricing = () => {
         <p className="text-muted-foreground">Start free, upgrade when you need more power.</p>
       </div>
 
-      {/* Subscription tiers */}
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Free */}
-        <div className={`rounded-xl border p-6 space-y-4 ${currentTier === "free" ? "border-primary ring-2 ring-primary/20" : "border-border"} bg-card`}>
-          {currentTier === "free" && <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">Current Plan</span>}
-          <div>
-            <h3 className="font-heading text-lg font-semibold text-foreground flex items-center gap-2"><Zap className="h-5 w-5 text-primary" /> Free</h3>
-            <p className="text-3xl font-bold text-foreground mt-2">$0<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+      {/* Job Seeker Subscription tiers */}
+      <div>
+        <h2 className="font-heading text-xl font-semibold text-foreground text-center mb-4">Job Seeker Plans</h2>
+        <div className="grid gap-6 md:grid-cols-3">
+          {/* Free */}
+          <div className={`rounded-xl border p-6 space-y-4 ${currentTier === "free" ? "border-primary ring-2 ring-primary/20" : "border-border"} bg-card`}>
+            {currentTier === "free" && <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">Current Plan</span>}
+            <div>
+              <h3 className="font-heading text-lg font-semibold text-foreground flex items-center gap-2"><Zap className="h-5 w-5 text-primary" /> Free</h3>
+              <p className="text-3xl font-bold text-foreground mt-2">$0<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+            </div>
+            <ul className="space-y-2">
+              {tierFeatures.free.map(f => (
+                <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground"><Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />{f}</li>
+              ))}
+            </ul>
+            <Button variant="outline" className="w-full" disabled>Current Plan</Button>
           </div>
-          <ul className="space-y-2">
-            {tierFeatures.free.map(f => (
-              <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground"><Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />{f}</li>
-            ))}
-          </ul>
-          <Button variant="outline" className="w-full" disabled>Current Plan</Button>
-        </div>
 
-        {/* Pro */}
-        <div className={`rounded-xl border p-6 space-y-4 ${currentTier === "pro" ? "border-primary ring-2 ring-primary/20" : "border-border"} bg-card`}>
-          {currentTier === "pro" && <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">Current Plan</span>}
-          <div>
-            <h3 className="font-heading text-lg font-semibold text-foreground flex items-center gap-2"><Sparkles className="h-5 w-5 text-amber-500" /> Pro</h3>
-            <p className="text-3xl font-bold text-foreground mt-2">$9<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+          {/* Pro */}
+          <div className={`rounded-xl border p-6 space-y-4 ${currentTier === "pro" ? "border-primary ring-2 ring-primary/20" : "border-border"} bg-card`}>
+            {currentTier === "pro" && <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">Current Plan</span>}
+            <div>
+              <h3 className="font-heading text-lg font-semibold text-foreground flex items-center gap-2"><Sparkles className="h-5 w-5 text-amber-500" /> Pro</h3>
+              <p className="text-3xl font-bold text-foreground mt-2">$9<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+            </div>
+            <ul className="space-y-2">
+              {tierFeatures.pro.map(f => (
+                <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground"><Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />{f}</li>
+              ))}
+            </ul>
+            {currentTier === "pro" ? (
+              <Button variant="outline" className="w-full" onClick={manageSubscription}>Manage Plan</Button>
+            ) : (
+              <Button className="w-full" onClick={() => handleCheckout(STRIPE_TIERS.pro.price_id)} disabled={!!checkoutLoading}>
+                {checkoutLoading === STRIPE_TIERS.pro.price_id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                {currentTier === "premium" ? "Downgrade" : "Upgrade"} to Pro
+              </Button>
+            )}
           </div>
-          <ul className="space-y-2">
-            {tierFeatures.pro.map(f => (
-              <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground"><Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />{f}</li>
-            ))}
-          </ul>
-          {currentTier === "pro" ? (
-            <Button variant="outline" className="w-full" onClick={manageSubscription}>Manage Plan</Button>
-          ) : (
-            <Button className="w-full" onClick={() => handleCheckout(STRIPE_TIERS.pro.price_id)} disabled={!!checkoutLoading}>
-              {checkoutLoading === STRIPE_TIERS.pro.price_id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              {currentTier === "premium" ? "Downgrade" : "Upgrade"} to Pro
-            </Button>
-          )}
-        </div>
 
-        {/* Premium */}
-        <div className={`rounded-xl border p-6 space-y-4 relative ${currentTier === "premium" ? "border-primary ring-2 ring-primary/20" : "border-amber-500/50"} bg-card`}>
-          <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-medium text-amber-900 bg-amber-400 px-3 py-0.5 rounded-full">Most Popular</span>
-          {currentTier === "premium" && <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">Current Plan</span>}
-          <div>
-            <h3 className="font-heading text-lg font-semibold text-foreground flex items-center gap-2"><Crown className="h-5 w-5 text-amber-500" /> Premium</h3>
-            <p className="text-3xl font-bold text-foreground mt-2">$19<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+          {/* Premium */}
+          <div className={`rounded-xl border p-6 space-y-4 relative ${currentTier === "premium" ? "border-primary ring-2 ring-primary/20" : "border-amber-500/50"} bg-card`}>
+            <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-medium text-amber-900 bg-amber-400 px-3 py-0.5 rounded-full">Most Popular</span>
+            {currentTier === "premium" && <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">Current Plan</span>}
+            <div>
+              <h3 className="font-heading text-lg font-semibold text-foreground flex items-center gap-2"><Crown className="h-5 w-5 text-amber-500" /> Premium</h3>
+              <p className="text-3xl font-bold text-foreground mt-2">$19<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+            </div>
+            <ul className="space-y-2">
+              {tierFeatures.premium.map(f => (
+                <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground"><Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />{f}</li>
+              ))}
+            </ul>
+            {currentTier === "premium" ? (
+              <Button variant="outline" className="w-full" onClick={manageSubscription}>Manage Plan</Button>
+            ) : (
+              <Button className="w-full bg-amber-500 hover:bg-amber-600 text-amber-950" onClick={() => handleCheckout(STRIPE_TIERS.premium.price_id)} disabled={!!checkoutLoading}>
+                {checkoutLoading === STRIPE_TIERS.premium.price_id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Upgrade to Premium
+              </Button>
+            )}
           </div>
-          <ul className="space-y-2">
-            {tierFeatures.premium.map(f => (
-              <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground"><Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />{f}</li>
-            ))}
-          </ul>
-          {currentTier === "premium" ? (
-            <Button variant="outline" className="w-full" onClick={manageSubscription}>Manage Plan</Button>
-          ) : (
-            <Button className="w-full bg-amber-500 hover:bg-amber-600 text-amber-950" onClick={() => handleCheckout(STRIPE_TIERS.premium.price_id)} disabled={!!checkoutLoading}>
-              {checkoutLoading === STRIPE_TIERS.premium.price_id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Upgrade to Premium
-            </Button>
-          )}
+        </div>
+      </div>
+
+      {/* Recruiter Plans */}
+      <div>
+        <h2 className="font-heading text-xl font-semibold text-foreground text-center mb-2">Recruiter Plans</h2>
+        <p className="text-sm text-muted-foreground text-center mb-4">Post jobs and reach candidates. 3 free posts, then subscribe for more.</p>
+        <div className="grid gap-6 md:grid-cols-3 max-w-3xl mx-auto">
+          {/* Free Recruiter */}
+          <div className={`rounded-xl border p-6 space-y-4 ${recruiterTier === "free" ? "border-primary ring-2 ring-primary/20" : "border-border"} bg-card`}>
+            {recruiterTier === "free" && <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">Current</span>}
+            <div>
+              <h3 className="font-heading text-lg font-semibold text-foreground flex items-center gap-2"><Briefcase className="h-5 w-5 text-primary" /> Free</h3>
+              <p className="text-3xl font-bold text-foreground mt-2">$0</p>
+            </div>
+            <ul className="space-y-2">
+              <li className="flex items-start gap-2 text-sm text-muted-foreground"><Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />3 free job posts</li>
+              <li className="flex items-start gap-2 text-sm text-muted-foreground"><Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />Basic listing</li>
+            </ul>
+            <Button variant="outline" className="w-full" disabled>Free Tier</Button>
+          </div>
+
+          {/* Recruiter Standard */}
+          <div className={`rounded-xl border p-6 space-y-4 ${recruiterTier === "standard" ? "border-primary ring-2 ring-primary/20" : "border-border"} bg-card`}>
+            {recruiterTier === "standard" && <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">Current</span>}
+            <div>
+              <h3 className="font-heading text-lg font-semibold text-foreground flex items-center gap-2"><Briefcase className="h-5 w-5 text-amber-500" /> Standard</h3>
+              <p className="text-3xl font-bold text-foreground mt-2">$9<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+            </div>
+            <ul className="space-y-2">
+              <li className="flex items-start gap-2 text-sm text-muted-foreground"><Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />Up to 10 active job posts</li>
+              <li className="flex items-start gap-2 text-sm text-muted-foreground"><Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />AI job description generator</li>
+            </ul>
+            {recruiterTier === "standard" ? (
+              <Button variant="outline" className="w-full" onClick={manageSubscription}>Manage</Button>
+            ) : (
+              <Button className="w-full" onClick={() => handleCheckout(RECRUITER_TIERS.standard.price_id)} disabled={!!checkoutLoading}>
+                {checkoutLoading === RECRUITER_TIERS.standard.price_id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Subscribe
+              </Button>
+            )}
+          </div>
+
+          {/* Recruiter Unlimited */}
+          <div className={`rounded-xl border p-6 space-y-4 ${recruiterTier === "unlimited" ? "border-primary ring-2 ring-primary/20" : "border-border"} bg-card`}>
+            {recruiterTier === "unlimited" && <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">Current</span>}
+            <div>
+              <h3 className="font-heading text-lg font-semibold text-foreground flex items-center gap-2"><Crown className="h-5 w-5 text-amber-500" /> Unlimited</h3>
+              <p className="text-3xl font-bold text-foreground mt-2">$49<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+            </div>
+            <ul className="space-y-2">
+              <li className="flex items-start gap-2 text-sm text-muted-foreground"><Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />Unlimited job posts</li>
+              <li className="flex items-start gap-2 text-sm text-muted-foreground"><Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />Priority listing</li>
+              <li className="flex items-start gap-2 text-sm text-muted-foreground"><Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />AI job description generator</li>
+            </ul>
+            {recruiterTier === "unlimited" ? (
+              <Button variant="outline" className="w-full" onClick={manageSubscription}>Manage</Button>
+            ) : (
+              <Button className="w-full bg-amber-500 hover:bg-amber-600 text-amber-950" onClick={() => handleCheckout(RECRUITER_TIERS.unlimited.price_id)} disabled={!!checkoutLoading}>
+                {checkoutLoading === RECRUITER_TIERS.unlimited.price_id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Subscribe
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
