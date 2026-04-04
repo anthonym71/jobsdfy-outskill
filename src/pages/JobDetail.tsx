@@ -35,7 +35,10 @@ const JobDetail = () => {
   const [blockers, setBlockers] = useState<any[]>([]);
   const [match, setMatch] = useState<any>(null);
   const [assets, setAssets] = useState<any[]>([]);
-
+  const [generatingCV, setGeneratingCV] = useState(false);
+  const [generatingCover, setGeneratingCover] = useState(false);
+  const [analyzingGap, setAnalyzingGap] = useState(false);
+  const [gapAnalysis, setGapAnalysis] = useState<any>(null);
   useEffect(() => {
     if (!id || !user) return;
     loadAll();
