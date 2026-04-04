@@ -63,9 +63,6 @@ export const ACHIEVEMENTS: Record<string, { icon: string; title: string; descrip
   assessment_complete: { icon: "🧠", title: "Self-Aware", description: "Complete a personality test" },
 };
 
-// Default credit expiry: 30 days
-const CREDIT_EXPIRY_DAYS = 30;
-
 export function useCredits() {
   const { user } = useAuth();
   const [credits, setCredits] = useState<UserCredits | null>(null);
@@ -90,9 +87,9 @@ export function useCredits() {
         last_active_date: data.last_active_date,
       });
     } else {
-      // Initialize credits for new user
+      // Initialize credits for new user via SECURITY DEFINER function
+      await supabase.rpc("initialize_user_credits", { _user_id: user.id });
       const initial: UserCredits = { balance: 3, lifetime_earned: 3, xp: 0, level: 1, streak_days: 0, last_active_date: null };
-      await supabase.from("user_credits").insert({ user_id: user.id, balance: 3, lifetime_earned: 3 });
       setCredits(initial);
     }
 
@@ -111,51 +108,40 @@ export function useCredits() {
     const reward = CREDIT_REWARDS[reason];
     if (!reward) return false;
 
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + CREDIT_EXPIRY_DAYS);
-
-    const newBalance = credits.balance + reward.credits;
-    const newLifetime = credits.lifetime_earned + reward.credits;
-    const newXp = credits.xp + reward.xp;
-    const newLevel = getLevelFromXp(newXp);
-
-    await supabase.from("credit_transactions").insert({
-      user_id: user.id,
-      amount: reward.credits,
-      action: "earned" as any,
-      reason,
-      expires_at: expiresAt.toISOString(),
+    // Use server-side RPC that validates reason and amounts
+    const { data: success } = await supabase.rpc("earn_credits", {
+      _user_id: user.id,
+      _reason: reason,
+      _credits: reward.credits,
+      _xp: reward.xp,
     });
 
-    await supabase.from("user_credits").update({
-      balance: newBalance,
-      lifetime_earned: newLifetime,
-      xp: newXp,
-      level: newLevel,
-      updated_at: new Date().toISOString(),
-    }).eq("user_id", user.id);
+    if (!success) return false;
 
-    setCredits({ ...credits, balance: newBalance, lifetime_earned: newLifetime, xp: newXp, level: newLevel });
+    const newXp = credits.xp + reward.xp;
+    setCredits({
+      ...credits,
+      balance: credits.balance + reward.credits,
+      lifetime_earned: credits.lifetime_earned + reward.credits,
+      xp: newXp,
+      level: getLevelFromXp(newXp),
+    });
     return true;
   }, [user, credits]);
 
   const spendCredits = useCallback(async (amount: number, reason: string) => {
     if (!user || !credits || credits.balance < amount) return false;
 
-    await supabase.from("credit_transactions").insert({
-      user_id: user.id,
-      amount: -amount,
-      action: "spent" as any,
-      reason,
+    // Use server-side RPC that validates amount and balance
+    const { data: success } = await supabase.rpc("spend_credits", {
+      _user_id: user.id,
+      _amount: amount,
+      _reason: reason,
     });
 
-    const newBalance = credits.balance - amount;
-    await supabase.from("user_credits").update({
-      balance: newBalance,
-      updated_at: new Date().toISOString(),
-    }).eq("user_id", user.id);
+    if (!success) return false;
 
-    setCredits({ ...credits, balance: newBalance });
+    setCredits({ ...credits, balance: credits.balance - amount });
     return true;
   }, [user, credits]);
 

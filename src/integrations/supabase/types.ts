@@ -1199,9 +1199,176 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      recruiter_job_posts_public: {
+        Row: {
+          application_email: string | null
+          application_url: string | null
+          benefits: string[] | null
+          city: string | null
+          company: string | null
+          country: string | null
+          created_at: string | null
+          description: string | null
+          employee_provides: string | null
+          employer_provides: string | null
+          employment_type: string | null
+          id: string | null
+          is_active: boolean | null
+          job_category: string | null
+          job_level: string | null
+          job_subcategory: string | null
+          language_other: string | null
+          language_primary: string | null
+          language_secondary: string | null
+          phone_extension: string | null
+          phone_type: string | null
+          qualifications: string | null
+          recruiter_email: string | null
+          recruiter_name: string | null
+          recruiter_phone: string | null
+          relocation_offered: boolean | null
+          requirements: string | null
+          salary_basic: number | null
+          salary_currency: string | null
+          salary_ote: number | null
+          show_email: boolean | null
+          show_phone: boolean | null
+          special_requirements: string | null
+          title: string | null
+          travel_percent: number | null
+          travel_required: boolean | null
+          updated_at: string | null
+          user_id: string | null
+          work_model: string | null
+        }
+        Insert: {
+          application_email?: string | null
+          application_url?: string | null
+          benefits?: string[] | null
+          city?: string | null
+          company?: string | null
+          country?: string | null
+          created_at?: string | null
+          description?: string | null
+          employee_provides?: string | null
+          employer_provides?: string | null
+          employment_type?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          job_category?: string | null
+          job_level?: string | null
+          job_subcategory?: string | null
+          language_other?: string | null
+          language_primary?: string | null
+          language_secondary?: string | null
+          phone_extension?: never
+          phone_type?: never
+          qualifications?: string | null
+          recruiter_email?: never
+          recruiter_name?: never
+          recruiter_phone?: never
+          relocation_offered?: boolean | null
+          requirements?: string | null
+          salary_basic?: number | null
+          salary_currency?: string | null
+          salary_ote?: number | null
+          show_email?: boolean | null
+          show_phone?: boolean | null
+          special_requirements?: string | null
+          title?: string | null
+          travel_percent?: number | null
+          travel_required?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+          work_model?: string | null
+        }
+        Update: {
+          application_email?: string | null
+          application_url?: string | null
+          benefits?: string[] | null
+          city?: string | null
+          company?: string | null
+          country?: string | null
+          created_at?: string | null
+          description?: string | null
+          employee_provides?: string | null
+          employer_provides?: string | null
+          employment_type?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          job_category?: string | null
+          job_level?: string | null
+          job_subcategory?: string | null
+          language_other?: string | null
+          language_primary?: string | null
+          language_secondary?: string | null
+          phone_extension?: never
+          phone_type?: never
+          qualifications?: string | null
+          recruiter_email?: never
+          recruiter_name?: never
+          recruiter_phone?: never
+          relocation_offered?: boolean | null
+          requirements?: string | null
+          salary_basic?: number | null
+          salary_currency?: string | null
+          salary_ote?: number | null
+          show_email?: boolean | null
+          show_phone?: boolean | null
+          special_requirements?: string | null
+          title?: string | null
+          travel_percent?: number | null
+          travel_required?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+          work_model?: string | null
+        }
+        Relationships: []
+      }
+      support_tickets_user_view: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          status: string | null
+          subject: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          status?: string | null
+          subject?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          status?: string | null
+          subject?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      earn_credits: {
+        Args: {
+          _credits: number
+          _reason: string
+          _user_id: string
+          _xp: number
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1209,6 +1376,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      initialize_user_credits: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
+      spend_credits: {
+        Args: { _amount: number; _reason: string; _user_id: string }
+        Returns: boolean
+      }
+      validate_referral_code: { Args: { _code: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
