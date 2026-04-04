@@ -128,4 +128,10 @@ const VoiceInterviewBotInner = ({ jobTitle, company }: VoiceInterviewBotProps) =
   );
 };
 
+const VoiceInterviewBot = (props: VoiceInterviewBotProps) => (
+  <ConversationProvider>
+    <VoiceInterviewBotInner {...props} />
+  </ConversationProvider>
+);
+
 export default VoiceInterviewBot;
