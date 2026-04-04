@@ -1,43 +1,66 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const DEFAULT_AGENT_ID = "agent_9501kncarackfv1vkxevndvsjahk";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // Validate auth
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: userError } = await supabase.auth.getUser(token);
+    if (userError || !userData.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
     if (!ELEVENLABS_API_KEY) {
-      return new Response(JSON.stringify({ error: "ElevenLabs not configured. Please connect ElevenLabs in Settings." }), {
+      return new Response(JSON.stringify({ error: "ElevenLabs not configured" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const { agentId } = await req.json();
-    if (!agentId) return new Response(JSON.stringify({ error: "Agent ID required" }), { status: 400, headers: corsHeaders });
-
+    // Use the default agent ID — don't accept arbitrary agent IDs from clients
     const response = await fetch(
-      `https://api.elevenlabs.io/v1/convai/conversation/token?agent_id=${agentId}`,
+      `https://api.elevenlabs.io/v1/convai/conversation/token?agent_id=${DEFAULT_AGENT_ID}`,
       { headers: { "xi-api-key": ELEVENLABS_API_KEY } }
     );
 
     if (!response.ok) {
       const text = await response.text();
-      return new Response(JSON.stringify({ error: `ElevenLabs error: ${response.status} ${text}` }), {
+      return new Response(JSON.stringify({ error: `ElevenLabs error: ${response.status}` }), {
         status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const { token } = await response.json();
+    const data = await response.json();
 
-    return new Response(JSON.stringify({ token }), {
+    return new Response(JSON.stringify({ token: data.token }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
