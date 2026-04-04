@@ -11,6 +11,8 @@ const navItems = [
   { to: "/app/new-job", icon: PlusCircle, label: "Check a Job" },
   { to: "/app/jobs", icon: Briefcase, label: "Jobs" },
   { to: "/app/pricing", icon: CreditCard, label: "Pricing" },
+  { to: "/app/support", icon: HelpCircle, label: "Support" },
+  { to: "/app/admin", icon: ShieldCheck, label: "Admin" },
   { to: "/app/settings", icon: Settings, label: "Settings" },
 ];
 
