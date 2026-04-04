@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,10 +7,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, ArrowLeft, ArrowRight, Loader2, Send } from "lucide-react";
+import { Sparkles, ArrowLeft, ArrowRight, Loader2, Send, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useSubscription, RECRUITER_TIERS } from "@/hooks/useSubscription";
 import {
   COUNTRIES, CITIES, JOB_LEVELS, JOB_CATEGORIES, BENEFITS_OPTIONS,
   QUALIFICATION_OPTIONS, CURRENCIES, LANGUAGE_OPTIONS
