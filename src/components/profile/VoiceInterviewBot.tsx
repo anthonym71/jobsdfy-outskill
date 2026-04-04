@@ -33,13 +33,12 @@ const VoiceInterviewBotInner = ({ jobTitle, company }: VoiceInterviewBotProps) =
       await navigator.mediaDevices.getUserMedia({ audio: true });
 
       const { data, error } = await supabase.functions.invoke("elevenlabs-conversation-token");
-      if (error || !data?.token) {
-        throw new Error(data?.error || error?.message || "Failed to get token");
+      if (error || !data?.signed_url) {
+        throw new Error(data?.error || error?.message || "Failed to get signed URL");
       }
 
       await conversation.startSession({
-        conversationToken: data.token,
-        connectionType: "webrtc",
+        signedUrl: data.signed_url,
       });
     } catch (e: any) {
       console.error("Voice AI error:", e);
