@@ -73,6 +73,36 @@ export type Database = {
           },
         ]
       }
+      certificates: {
+        Row: {
+          created_at: string
+          date_issued: string | null
+          file_url: string | null
+          id: string
+          issuer: string | null
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date_issued?: string | null
+          file_url?: string | null
+          id?: string
+          issuer?: string | null
+          name?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date_issued?: string | null
+          file_url?: string | null
+          id?: string
+          issuer?: string | null
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           action: Database["public"]["Enums"]["credit_action"]
@@ -99,6 +129,134 @@ export type Database = {
           expires_at?: string | null
           id?: string
           reason?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      education: {
+        Row: {
+          created_at: string
+          degree: string | null
+          description: string | null
+          end_year: number | null
+          field: string | null
+          id: string
+          institution: string
+          start_year: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          degree?: string | null
+          description?: string | null
+          end_year?: number | null
+          field?: string | null
+          id?: string
+          institution?: string
+          start_year?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          degree?: string | null
+          description?: string | null
+          end_year?: number | null
+          field?: string | null
+          id?: string
+          institution?: string
+          start_year?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      event_rsvps: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_rsvps_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          event_date: string
+          id: string
+          location: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          event_date: string
+          id?: string
+          location?: string | null
+          title?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          event_date?: string
+          id?: string
+          location?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      interview_sessions: {
+        Row: {
+          answers: Json | null
+          created_at: string
+          feedback: Json | null
+          id: string
+          job_id: string | null
+          questions: Json | null
+          user_id: string
+        }
+        Insert: {
+          answers?: Json | null
+          created_at?: string
+          feedback?: Json | null
+          id?: string
+          job_id?: string | null
+          questions?: Json | null
+          user_id: string
+        }
+        Update: {
+          answers?: Json | null
+          created_at?: string
+          feedback?: Json | null
+          id?: string
+          job_id?: string | null
+          questions?: Json | null
           user_id?: string
         }
         Relationships: []
@@ -440,6 +598,56 @@ export type Database = {
         }
         Relationships: []
       }
+      references: {
+        Row: {
+          consent_given: boolean
+          created_at: string
+          document_url: string | null
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          testimonial_text: string | null
+          user_id: string
+          video_url: string | null
+          work_history_id: string | null
+        }
+        Insert: {
+          consent_given?: boolean
+          created_at?: string
+          document_url?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          testimonial_text?: string | null
+          user_id: string
+          video_url?: string | null
+          work_history_id?: string | null
+        }
+        Update: {
+          consent_given?: boolean
+          created_at?: string
+          document_url?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          testimonial_text?: string | null
+          user_id?: string
+          video_url?: string | null
+          work_history_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "references_work_history_id_fkey"
+            columns: ["work_history_id"]
+            isOneToOne: false
+            referencedRelation: "work_history"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       referral_codes: {
         Row: {
           code: string
@@ -494,6 +702,36 @@ export type Database = {
         }
         Relationships: []
       }
+      social_accounts: {
+        Row: {
+          created_at: string
+          followers: number | null
+          friends: number | null
+          id: string
+          platform: string
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          followers?: number | null
+          friends?: number | null
+          id?: string
+          platform?: string
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          followers?: number | null
+          friends?: number | null
+          id?: string
+          platform?: string
+          url?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       support_tickets: {
         Row: {
           admin_notes: string | null
@@ -526,6 +764,36 @@ export type Database = {
           status?: string
           subject?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      test_results: {
+        Row: {
+          completed_at: string
+          created_at: string
+          details: Json | null
+          id: string
+          score: number | null
+          test_type: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          score?: number | null
+          test_type?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          score?: number | null
+          test_type?: string
           user_id?: string
         }
         Relationships: []
@@ -640,12 +908,16 @@ export type Database = {
           created_at: string
           full_name: string
           headline: string | null
+          hobbies: string[] | null
           id: string
           industries: string[] | null
+          interests: string[] | null
           languages_spoken: string[] | null
           location: string | null
           phone_number: string | null
           phone_verified: boolean | null
+          photo_url: string | null
+          sports: string[] | null
           summary: string | null
           top_skills: string[] | null
           updated_at: string
@@ -656,12 +928,16 @@ export type Database = {
           created_at?: string
           full_name?: string
           headline?: string | null
+          hobbies?: string[] | null
           id?: string
           industries?: string[] | null
+          interests?: string[] | null
           languages_spoken?: string[] | null
           location?: string | null
           phone_number?: string | null
           phone_verified?: boolean | null
+          photo_url?: string | null
+          sports?: string[] | null
           summary?: string | null
           top_skills?: string[] | null
           updated_at?: string
@@ -672,12 +948,16 @@ export type Database = {
           created_at?: string
           full_name?: string
           headline?: string | null
+          hobbies?: string[] | null
           id?: string
           industries?: string[] | null
+          interests?: string[] | null
           languages_spoken?: string[] | null
           location?: string | null
           phone_number?: string | null
           phone_verified?: boolean | null
+          photo_url?: string | null
+          sports?: string[] | null
           summary?: string | null
           top_skills?: string[] | null
           updated_at?: string
@@ -724,6 +1004,119 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      work_history: {
+        Row: {
+          achievements: string | null
+          awards: string | null
+          company: string
+          created_at: string
+          description: string | null
+          employment_type: string
+          end_month: number | null
+          end_year: number | null
+          id: string
+          is_concurrent: boolean
+          is_current: boolean
+          location: string | null
+          location_type: string | null
+          performance: string | null
+          skills: string[] | null
+          sort_order: number
+          start_month: number | null
+          start_year: number | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          achievements?: string | null
+          awards?: string | null
+          company?: string
+          created_at?: string
+          description?: string | null
+          employment_type?: string
+          end_month?: number | null
+          end_year?: number | null
+          id?: string
+          is_concurrent?: boolean
+          is_current?: boolean
+          location?: string | null
+          location_type?: string | null
+          performance?: string | null
+          skills?: string[] | null
+          sort_order?: number
+          start_month?: number | null
+          start_year?: number | null
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          achievements?: string | null
+          awards?: string | null
+          company?: string
+          created_at?: string
+          description?: string | null
+          employment_type?: string
+          end_month?: number | null
+          end_year?: number | null
+          id?: string
+          is_concurrent?: boolean
+          is_current?: boolean
+          location?: string | null
+          location_type?: string | null
+          performance?: string | null
+          skills?: string[] | null
+          sort_order?: number
+          start_month?: number | null
+          start_year?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      work_history_media: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_type: string
+          file_url: string
+          id: string
+          sort_order: number
+          user_id: string
+          work_history_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name?: string
+          file_type?: string
+          file_url?: string
+          id?: string
+          sort_order?: number
+          user_id: string
+          work_history_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_type?: string
+          file_url?: string
+          id?: string
+          sort_order?: number
+          user_id?: string
+          work_history_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_history_media_work_history_id_fkey"
+            columns: ["work_history_id"]
+            isOneToOne: false
+            referencedRelation: "work_history"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
