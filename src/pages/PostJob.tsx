@@ -23,9 +23,22 @@ const PostJob = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { recruiterTier, loading: subLoading, checkout } = useSubscription();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [activeJobCount, setActiveJobCount] = useState(0);
+  const [countLoading, setCountLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("recruiter_job_posts").select("id", { count: "exact", head: true })
+      .eq("user_id", user.id).eq("is_active", true)
+      .then(({ count }) => { setActiveJobCount(count || 0); setCountLoading(false); });
+  }, [user]);
+
+  const maxJobs = recruiterTier === "unlimited" ? Infinity : recruiterTier === "standard" ? 10 : 3;
+  const atLimit = activeJobCount >= maxJobs;
 
   const [form, setForm] = useState({
     title: "", company: "", country: "", city: "", work_model: "onsite",
