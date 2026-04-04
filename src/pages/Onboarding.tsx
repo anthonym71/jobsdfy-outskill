@@ -91,7 +91,7 @@ const Onboarding = () => {
     setVerifyingOtp(true);
     try {
       const { data, error } = await supabase.functions.invoke("verify-phone", {
-        body: { action: "verify", code: otpCode.trim() },
+        body: { action: "verify", code: otpCode.trim(), phoneNumber: phoneNumber.trim() },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
