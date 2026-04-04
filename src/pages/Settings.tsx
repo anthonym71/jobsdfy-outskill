@@ -52,6 +52,7 @@ const Settings = () => {
         topSkills: (p.top_skills || []).join(", "),
         industries: (p.industries || []).join(", "),
         languages: (p.languages_spoken || []).join(", "),
+        phoneNumber: (p as any).phone_number || "",
       });
     }
 
