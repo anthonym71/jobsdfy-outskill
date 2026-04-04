@@ -6,6 +6,7 @@ import { Loader2, MessageSquare, Sparkles, CheckCircle, Send } from "lucide-reac
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import VoiceInterviewBot from "./VoiceInterviewBot";
 
 const InterviewPracticeTab = () => {
   const { user } = useAuth();
@@ -156,6 +157,11 @@ const InterviewPracticeTab = () => {
           ))}
         </div>
       )}
+      {/* Voice AI Section */}
+      <VoiceInterviewBot
+        jobTitle={jobs.find(j => j.id === selectedJobId)?.title}
+        company={jobs.find(j => j.id === selectedJobId)?.company}
+      />
     </div>
   );
 };

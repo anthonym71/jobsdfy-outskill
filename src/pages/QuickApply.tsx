@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Check, Copy, RefreshCw, ShieldCheck, Loader2 } from "lucide-react";
+import { Check, Copy, RefreshCw, ShieldCheck, Loader2, Clock, FileText, Mail, MessageSquare, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,22 @@ interface AppPack {
   emphasisPoints: string[];
 }
 
+interface TimelineEvent {
+  year: number;
+  type: string;
+  title: string;
+  subtitle?: string;
+  description?: string;
+  growthIndicator?: string;
+}
+
+interface TimelineData {
+  timelineEvents: TimelineEvent[];
+  careerThemes: string[];
+  growthPattern: string;
+  totalYears?: number;
+}
+
 const QuickApply = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -25,6 +41,9 @@ const QuickApply = () => {
   const [job, setJob] = useState<any>(null);
   const [pack, setPack] = useState<AppPack | null>(null);
   const [drafts, setDrafts] = useState({ resume: "", coverNote: "", recruiterNote: "" });
+  const [timeline, setTimeline] = useState<TimelineData | null>(null);
+  const [generatingTimeline, setGeneratingTimeline] = useState(false);
+  const [showTimeline, setShowTimeline] = useState(false);
 
   useEffect(() => {
     if (!id || !session) return;
@@ -34,11 +53,9 @@ const QuickApply = () => {
   const loadJobAndGenerate = async () => {
     setLoading(true);
     try {
-      // Load job info
       const { data: jobData } = await supabase.from("jobs").select("*").eq("id", id).single();
       setJob(jobData);
 
-      // Check for existing assets
       const { data: assets } = await supabase.from("application_assets").select("*").eq("job_id", id!);
       if (assets && assets.length >= 3) {
         const resume = assets.find((a) => a.asset_type === "resume")?.content || "";
@@ -50,15 +67,11 @@ const QuickApply = () => {
         return;
       }
 
-      // Generate new pack
       const resp = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-application`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session!.access_token}`,
-          },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session!.access_token}` },
           body: JSON.stringify({ jobId: id }),
         }
       );
@@ -70,11 +83,7 @@ const QuickApply = () => {
       }
 
       setPack(data.data);
-      setDrafts({
-        resume: data.data.resume,
-        coverNote: data.data.coverNote,
-        recruiterNote: data.data.recruiterNote,
-      });
+      setDrafts({ resume: data.data.resume, coverNote: data.data.coverNote, recruiterNote: data.data.recruiterNote });
     } catch (err) {
       console.error("Error:", err);
       toast({ title: "Error", description: "Could not generate application pack.", variant: "destructive" });
@@ -85,9 +94,29 @@ const QuickApply = () => {
 
   const regenerate = async () => {
     setLoading(true);
-    // Delete existing assets to force regeneration
     await supabase.from("application_assets").delete().eq("job_id", id!);
     await loadJobAndGenerate();
+  };
+
+  const handleGenerateTimeline = async () => {
+    if (!session) return;
+    setGeneratingTimeline(true);
+    try {
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-timeline`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({}),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || "Failed");
+      setTimeline(data.data);
+      setShowTimeline(true);
+      toast({ title: "Timeline generated!" });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    } finally {
+      setGeneratingTimeline(false);
+    }
   };
 
   const copyToClipboard = (text: string, label: string) => {
@@ -98,7 +127,6 @@ const QuickApply = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Delete old and insert updated
       await supabase.from("application_assets").delete().eq("job_id", id!);
       const assets = [
         { job_id: id!, user_id: session!.user.id, asset_type: "resume", content: drafts.resume },
@@ -123,6 +151,15 @@ const QuickApply = () => {
     navigate("/app");
   };
 
+  const growthColor = (g?: string) => {
+    switch (g) {
+      case "promotion": return "text-verdict-go";
+      case "leadership": return "text-primary";
+      case "pivot": return "text-amber-500";
+      default: return "text-muted-foreground";
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
@@ -144,7 +181,7 @@ const QuickApply = () => {
   return (
     <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-6">
       <div className="flex flex-col gap-1">
-        <h1 className="font-heading text-2xl font-bold text-foreground">Quick Apply Pack</h1>
+        <h1 className="font-heading text-2xl font-bold text-foreground">Application Pack</h1>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <ShieldCheck className="h-4 w-4 text-verdict-go" />
           Nothing goes out without your approval.
@@ -152,7 +189,7 @@ const QuickApply = () => {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-5">
-        {/* Left: Job highlights */}
+        {/* Left: Job highlights + Timeline */}
         <div className="lg:col-span-2 space-y-4">
           <div className="rounded-xl border border-border bg-card p-5 space-y-4">
             <div>
@@ -182,23 +219,71 @@ const QuickApply = () => {
               </div>
             )}
           </div>
+
+          {/* Timeline Section */}
+          <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-heading text-sm font-semibold text-foreground flex items-center gap-1.5">
+                <Clock className="h-4 w-4 text-primary" />
+                Career Timeline
+              </h3>
+              {timeline && (
+                <Button variant="ghost" size="sm" onClick={() => setShowTimeline(!showTimeline)} className="h-7 w-7 p-0">
+                  {showTimeline ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </Button>
+              )}
+            </div>
+            {!timeline ? (
+              <Button variant="outline" size="sm" onClick={handleGenerateTimeline} disabled={generatingTimeline} className="w-full">
+                {generatingTimeline ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Clock className="h-4 w-4 mr-1" />}
+                Generate Timeline
+              </Button>
+            ) : showTimeline && (
+              <div className="space-y-3">
+                {timeline.careerThemes?.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {timeline.careerThemes.map((t, i) => (
+                      <span key={i} className="text-[10px] bg-primary/10 text-primary rounded-full px-2 py-0.5">{t}</span>
+                    ))}
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">{timeline.growthPattern}</p>
+                <div className="space-y-2 border-l-2 border-border pl-4">
+                  {timeline.timelineEvents?.map((evt, i) => (
+                    <div key={i} className="relative">
+                      <div className="absolute -left-[21px] top-1 h-2.5 w-2.5 rounded-full bg-primary border-2 border-background" />
+                      <p className="text-xs text-muted-foreground">{evt.year}</p>
+                      <p className="text-sm font-medium text-foreground">{evt.title}</p>
+                      {evt.subtitle && <p className="text-xs text-muted-foreground">{evt.subtitle}</p>}
+                      {evt.growthIndicator && (
+                        <span className={`text-[10px] font-medium ${growthColor(evt.growthIndicator)}`}>
+                          {evt.growthIndicator}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Right: Editable drafts */}
         <div className="lg:col-span-3 space-y-5">
           {([
-            { key: "resume" as const, label: "Tailored Resume Draft" },
-            { key: "coverNote" as const, label: "Cover Note" },
-            { key: "recruiterNote" as const, label: "Recruiter Message" },
-          ]).map(({ key, label }) => (
+            { key: "resume" as const, label: "Tailored Resume Draft", icon: FileText },
+            { key: "coverNote" as const, label: "Cover Note", icon: Mail },
+            { key: "recruiterNote" as const, label: "Recruiter Message", icon: MessageSquare },
+          ]).map(({ key, label, icon: Icon }) => (
             <div key={key} className="rounded-xl border border-border bg-card p-5">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-heading text-sm font-semibold text-foreground">{label}</h3>
-                <div className="flex gap-1.5">
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyToClipboard(drafts[key], label)}>
-                    <Copy className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+                <h3 className="font-heading text-sm font-semibold text-foreground flex items-center gap-1.5">
+                  <Icon className="h-4 w-4 text-primary" />
+                  {label}
+                </h3>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyToClipboard(drafts[key], label)}>
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
               </div>
               <Textarea
                 rows={key === "resume" ? 10 : 6}

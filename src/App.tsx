@@ -25,6 +25,7 @@ import AdminUsers from "./pages/AdminUsers";
 import PostJob from "./pages/PostJob";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import ExtensionDownload from "./pages/ExtensionDownload";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +71,7 @@ const App = () => (
                 <Route path="/app/post-job" element={<PostJob />} />
                 <Route path="/app/admin" element={<AdminHelpdesk />} />
                 <Route path="/app/admin/users" element={<AdminUsers />} />
+                <Route path="/app/extension" element={<ExtensionDownload />} />
               </Route>
             </Route>
             <Route path="*" element={<NotFound />} />
