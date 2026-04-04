@@ -70,7 +70,7 @@ const Auth = () => {
             </p>
           </div>
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+            <CheckCircle2 className="h-4 w-4 text-primary" />
             <span>Account verified</span>
           </div>
         </div>
