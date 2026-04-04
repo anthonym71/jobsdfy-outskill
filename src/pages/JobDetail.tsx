@@ -118,6 +118,7 @@ const JobDetail = () => {
     } finally { setAnalyzingGap(false); }
   };
 
+  const deleteJob = async () => {
     if (!confirm("Delete this job and all related data? This cannot be undone.")) return;
     await Promise.all([
       supabase.from("application_assets").delete().eq("job_id", id!),
