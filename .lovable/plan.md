@@ -1,171 +1,119 @@
 
 
-# Comprehensive Profile, Recruiter Pricing & Feature Build
+# Implement JobsDFY Prompt Stack: ATS Intelligence, STAR Rewriting, CV Tailoring & Gap Analysis
 
-This is a large build covering recruiter pricing enforcement, a restructured Settings/Profile system, CV management with upload parsing, media storage, interview practice, and more.
-
-## Prerequisites
-
-**File Storage**: You selected external storage (S3/GHL), but no S3 connection exists yet. Before building upload features, we need to either:
-- Connect an AWS S3 bucket (recommended for media/docs)
-- Or use Lovable Cloud storage buckets as a fallback (no extra setup needed)
-
-**Recruiter Stripe Products**: We need to create two new Stripe products for recruiter tiers ($9/mo for up to 10 jobs, $49/mo unlimited).
+The uploaded document contains a production-ready AI prompt stack with 8 layered prompts that need to be wired into the existing edge functions and new ones. This is the "skill stack" that makes JobsDFY's AI actually good at CV/career work.
 
 ---
 
-## What Gets Built
+## What This Changes
 
-### 1. Recruiter Job Posting Pricing Enforcement
-- Create two new Stripe products/prices: **Recruiter Standard** ($9/mo, up to 10 jobs) and **Recruiter Unlimited** ($49/mo, unlimited)
-- Add `recruiter_job_count` tracking — count active posts per user
-- Enforce limits in `PostJob.tsx`: 3 free posts allowed; at limit, show upgrade prompt with Stripe checkout
-- Add recruiter subscription tier display on the Pricing page alongside seeker tiers
-- Users subscribe and must cancel themselves via Stripe portal
-
-### 2. Restructure Settings → App Settings Only
-- Strip Profile and Non-Negotiables sections out of `Settings.tsx`
-- Settings keeps: Privacy, Billing, Danger Zone (sign out)
-- Add a "Profile" nav item in the sidebar pointing to `/app/profile`
-
-### 3. New Profile Page (`/app/profile`) — Tabbed Layout
-Six tabs:
-
-**Tab 1: About Me**
-- Photo upload, full name, headline, summary, location (dropdowns), contact info
-- Social media accounts (LinkedIn, Twitter/X, GitHub, Instagram, TikTok, etc.) with follower counts
-- Hobbies, interests, sports (tag inputs)
-
-**Tab 2: Work History (CV)**
-- "Upload CV" button — parses PDF/DOCX via AI edge function, extracts structured work entries
-- Conflict resolution UI: if parsed data overlaps existing entries, show side-by-side comparison with checkboxes to keep/replace/merge
-- Tick boxes for "concurrent role" (volunteering + working, day/night job)
-- Structured entry form with dropdowns: Title, Employment Type, Company, Currently Working (tick), Start/End Month+Year, Location, Location Type, Description, Awards, Achievements, Performance
-- "Add Next Job" button for manual entry
-- Top 5 skills per role (dropdown + add), total skills capped at 100
-- Media per job: upload up to 50 files (pictures, docs, PDFs, presentations)
-
-**Tab 3: References & Testimonials**
-- Per-job references: Name, Email, Phone, consent checkbox, or upload document/video testimonial
-- Consent-to-share toggle per reference
-
-**Tab 4: Education & Qualifications**
-- Studies, qualifications (dropdowns), certificates upload, awards
-- Languages (primary, secondary, others)
-
-**Tab 5: Achievements & Tests**
-- Display earned achievements from gamification
-- IQ test, Personality test, DRIVE assessment links/results
-- Test history and scores
-
-**Tab 6: Interview Practice**
-- Dropdown: "Practice for a specific job?" (lists their saved jobs)
-- AI generates interview questions based on profile + selected job
-- Text-based Q&A with AI scoring and feedback
-- "What you could have said better" suggestions
-- V2 placeholder for Voice AI bot
-
-### 4. CV Builder & Letterhead Generator
-- "Generate CV" button — AI compiles profile data into a formatted CV (PDF download)
-- "Generate Cover Letter" — based on profile + selected job
-- Letterhead template with user's contact info
-
-### 5. Calendar & Events
-- Calendar component on a new tab or page (`/app/calendar`)
-- Display company-hosted events (stored in a new `events` table, admin-managed)
-- Users can RSVP / mark interest
-
-### 6. Courses
-- "Courses" section links out to GHL Kollab (external URL)
-- AI recommends courses/training based on profile gaps and target jobs
-- Simple card UI with "View Course" button linking externally
-
-### 7. Non-Negotiables
-- Move from Settings into Profile page (or keep as a sub-section of About Me)
+The prompt stack replaces generic AI prompts with recruiter-grade, ATS-optimized instructions across the entire pipeline. Currently the edge functions use simple one-paragraph system prompts. This upgrade gives them structured, expert-level instructions.
 
 ---
 
-## Database Changes (Single Migration)
+## Implementation
+
+### 1. Upgrade `generate-application` Edge Function
+
+Replace the current generic system prompt with the **Core System Prompt** from the document. This is the master instruction that governs all CV output quality.
+
+Key changes:
+- System prompt becomes the full "elite executive CV, ATS, and career positioning engine" instruction (~500 words covering truth rules, ATS formatting, keyword optimization, action verbs, STAR logic)
+- Before generating the resume, run the **ATS Keyword Extraction** step as a first AI call against the job description — extract top 15 keywords, required vs preferred skills, success signals, rejection reasons
+- Use extracted keywords to inform the resume tailoring call
+- Apply the **STAR Rewrite** logic to experience bullets in the prompt
+- Change the tool schema to return structured JSON matching the recommended output schema: `cv_version_name`, `professional_summary`, `core_skills[]`, `experience[{title, company, date_range, bullets[]}]`, plus the existing `coverNote` and `recruiterNote`
+- Also fetch `work_history` rows for the user to include real structured experience data (not just profile summary)
+
+### 2. Create `generate-cv` Edge Function (New)
+
+Dedicated CV generation that produces a full tailored CV (not just a Quick Apply pack).
+
+- Accepts `{ jobId?: string, versionName?: string }`
+- Fetches: user profile, work history, education, certificates, skills
+- If `jobId` provided: fetches job description, runs ATS keyword extraction first
+- Applies the **Tailored CV Generation Prompt** (prompt 4 from the doc) with all structured data
+- Tool schema returns the full recommended output schema from the document
+- Stores result in a new `cv_versions` row (or `application_assets` with type `tailored_cv`)
+- Supports multiple versions from same profile (SaaS Sales vs Executive vs HR Leadership)
+
+### 3. Create `generate-cover-letter` Edge Function (New)
+
+- Accepts `{ jobId: string }`
+- Fetches job + profile + work history
+- System prompt enforces: personalized intro, experience-to-requirements mapping, 300-400 words max, professional/confident/human tone
+- Returns structured `{ coverLetter, keyAlignments[], toneNotes }`
+
+### 4. Create `analyze-gap` Edge Function (New)
+
+Implements the **Gap Analysis Prompt** (prompt 8):
+- Accepts `{ jobId: string }`
+- Compares candidate profile + tailored CV against job description
+- Returns: `{ strongestFitAreas[], recruiterConcerns[], missingKeywords[], missingEvidence[], improvementSuggestions[], verdict: "apply"|"improve_then_apply"|"skip" }`
+- Direct but not cruel, distinguishes dealbreakers from fixable weaknesses
+
+### 5. Create `interview-practice` Edge Function (New)
+
+- Accepts `{ jobId?: string }`
+- Fetches profile + job (if provided)
+- Generates 5-8 interview questions based on role, experience gaps, and common recruiter concerns
+- Accepts follow-up calls with `{ sessionId, questionIndex, answer }` to score answers
+- Returns feedback using STAR logic: what was good, what could be stronger, suggested better answer
+- Stores sessions in `interview_sessions` table
+
+### 6. Upgrade `extract-job` Edge Function
+
+Enhance the extraction to also capture the fields from the ATS Keyword Extraction prompt:
+- Add to tool schema: `seniorityLevel`, `requiredSkills[]`, `preferredSkills[]`, `coreResponsibilities[]`, `systemsTools[]`, `successSignals[]`, `rejectionReasons[]`
+- These fields power downstream CV tailoring and gap analysis
+
+### 7. Save Prompt Stack to Memory
+
+Store the core system prompt and key rules as a memory file so all future edge function work stays consistent with these instructions.
+
+---
+
+## Database Changes
+
+One small migration:
+- Add `cv_versions` table: `id, user_id, job_id (nullable), version_name, content (jsonb), ats_keywords (jsonb), created_at`
+- Or reuse `application_assets` with new `asset_type` values (`tailored_cv`, `gap_analysis`, `ats_keywords`)
+
+---
+
+## Files Summary
 
 ```text
-New tables:
-- work_history: user_id, title, company, employment_type, is_current, 
-  start_month, start_year, end_month, end_year, location, location_type,
-  description, awards, achievements, performance, skills (array, max 5),
-  is_concurrent, sort_order
-- work_history_media: work_history_id, user_id, file_url, file_type, 
-  file_name, sort_order (limit 50 per work_history entry)
-- references: work_history_id, user_id, name, email, phone, 
-  consent_given, document_url, video_url, testimonial_text
-- education: user_id, institution, degree, field, start_year, 
-  end_year, description
-- certificates: user_id, name, issuer, date_issued, file_url
-- social_accounts: user_id, platform, url, followers, friends
-- events: id, title, description, event_date, location, created_by (admin)
-- event_rsvps: event_id, user_id, status
-- recruiter_subscriptions: tracking table or just use Stripe check
-- test_results: user_id, test_type, score, completed_at, details (jsonb)
-- interview_sessions: user_id, job_id (nullable), questions (jsonb), 
-  answers (jsonb), feedback (jsonb), created_at
+Modified:
+- supabase/functions/generate-application/index.ts — upgraded prompts + ATS keywords + work history data
+- supabase/functions/extract-job/index.ts — enhanced extraction schema
 
-Alter:
-- user_profiles: add photo_url, hobbies, interests, sports (arrays),
-  social_accounts moved to separate table
-
-Storage:
-- S3 bucket connection needed for file uploads
-- Or create Supabase storage buckets: profile-photos, cv-uploads, 
-  work-media, certificates, testimonial-videos
-```
-
-## New Edge Functions
-- `parse-cv` — accepts uploaded PDF/DOCX, uses AI to extract structured work history
-- `generate-cv` — compiles profile into formatted CV PDF
-- `generate-cover-letter` — AI cover letter based on profile + job
-- `interview-practice` — generates questions and scores answers
-- `recommend-courses` — suggests training based on profile gaps
-
-## File Changes Summary
-
-```text
-New files:
-- src/pages/Profile.tsx (tabbed layout, main profile page)
-- src/components/profile/AboutMeTab.tsx
-- src/components/profile/WorkHistoryTab.tsx
-- src/components/profile/ReferencesTab.tsx
-- src/components/profile/EducationTab.tsx
-- src/components/profile/AchievementsTab.tsx
-- src/components/profile/InterviewPracticeTab.tsx
-- src/components/profile/CVUploadParser.tsx
-- src/components/profile/ConflictResolver.tsx
-- src/components/profile/MediaUploader.tsx
-- src/pages/Calendar.tsx
-- supabase/functions/parse-cv/index.ts
+New:
 - supabase/functions/generate-cv/index.ts
-- supabase/functions/generate-cover-letter/index.ts
+- supabase/functions/generate-cover-letter/index.ts  
+- supabase/functions/analyze-gap/index.ts
 - supabase/functions/interview-practice/index.ts
+- mem://features/prompt-stack — core AI rules and prompt patterns
 
-Modified files:
-- src/App.tsx — add /app/profile, /app/calendar routes
-- src/components/layout/AppLayout.tsx — add Profile + Calendar nav items
-- src/pages/Settings.tsx — strip to app settings only
-- src/pages/PostJob.tsx — add recruiter tier limit enforcement
-- src/pages/Pricing.tsx — add recruiter pricing section
-- src/hooks/useSubscription.ts — add recruiter tier constants
+UI wiring (existing tabs):
+- src/components/profile/InterviewPracticeTab.tsx — connect to real edge function
+- src/pages/QuickApply.tsx or JobDetail — add "Generate Tailored CV" and "Gap Analysis" buttons
 ```
+
+---
 
 ## Build Order
-1. Database migration (all new tables)
-2. Connect S3 or create storage buckets
-3. Create Stripe recruiter products
-4. Recruiter pricing enforcement in PostJob + Pricing pages
-5. Strip Settings to app-only
-6. Build Profile page with all tabs
-7. CV upload + parse edge function
-8. CV builder + cover letter edge functions
-9. Interview practice
-10. Calendar + events
-11. Courses link section
 
-This is approximately 8-10 build prompts to complete given the scope.
+1. Save prompt stack rules to memory
+2. Database migration (cv_versions table or asset_type expansion)
+3. Upgrade `extract-job` with enhanced schema
+4. Upgrade `generate-application` with ATS-aware prompts + work history
+5. Create `generate-cv` edge function
+6. Create `generate-cover-letter` edge function
+7. Create `analyze-gap` edge function
+8. Create `interview-practice` edge function
+9. Wire UI buttons for CV generation, gap analysis, and interview practice
+
+This is approximately 3-4 build prompts to complete.
 
