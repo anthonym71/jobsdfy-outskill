@@ -227,6 +227,52 @@ const AdminHelpdesk = () => {
             ))
           )}
         </TabsContent>
+
+        <TabsContent value="settings" className="space-y-4 mt-4">
+          <div className="rounded-xl border border-border bg-card p-6 space-y-5">
+            <div>
+              <h3 className="font-medium text-foreground text-sm mb-1">A2P 10DLC Override</h3>
+              <p className="text-xs text-muted-foreground">
+                While A2P registration is pending, users can enter this override password instead of an SMS code to verify their phone number. Turn this off once A2P is approved.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label htmlFor="otp-override-toggle" className="text-sm">Override enabled</Label>
+              <Switch
+                id="otp-override-toggle"
+                checked={otpOverrideEnabled}
+                onCheckedChange={setOtpOverrideEnabled}
+              />
+            </div>
+
+            <div>
+              <Label className="text-sm">Override password</Label>
+              <div className="flex gap-2 mt-1">
+                <div className="relative flex-1">
+                  <Input
+                    type={showOverrideCode ? "text" : "password"}
+                    value={otpOverrideCode}
+                    onChange={(e) => setOtpOverrideCode(e.target.value)}
+                    placeholder="Enter override code"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowOverrideCode(!showOverrideCode)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showOverrideCode ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <Button size="sm" onClick={saveOverrideSettings} disabled={savingOverride}>
+              {savingOverride ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+              Save Override Settings
+            </Button>
+          </div>
+        </TabsContent>
       </Tabs>
     </div>
   );
