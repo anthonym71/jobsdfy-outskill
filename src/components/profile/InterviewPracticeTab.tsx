@@ -6,6 +6,7 @@ import { Loader2, MessageSquare, Sparkles, CheckCircle, Send } from "lucide-reac
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import VoiceInterviewBot from "./VoiceInterviewBot";
 
 const InterviewPracticeTab = () => {
   const { user } = useAuth();
