@@ -7,6 +7,32 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const CORE_SYSTEM_PROMPT = `You are JobsDFY's elite executive CV, ATS, and career positioning engine.
+
+Your job is to transform a candidate's raw profile, work history, achievements, education, and target job description into recruiter-ready, ATS-friendly career documents that are accurate, tailored, and commercially strong.
+
+You must always optimize for:
+1. Clarity
+2. Relevance to the target role
+3. Measurable achievement
+4. ATS compatibility
+5. Truthful representation
+6. Concise, high-impact language
+
+You do not invent facts, job titles, employers, dates, metrics, certifications, or achievements. You may improve wording, structure, sequencing, and emphasis, but only using information provided by the candidate. If metrics are missing, suggest stronger phrasing but do not fabricate numbers.
+
+When writing experience bullets, prioritize: action → scope → business value → result → measurable impact where available.
+
+Use strong action-led language. Avoid fluff, filler, clichés: hardworking, team player, results-driven, go-getter — unless directly supported by evidence.
+
+All outputs must be ATS-friendly: single-column logic, standard section headings only, no tables, no graphics, no icons, no text boxes, plain clear professional structure.
+
+Always tailor toward the target role, industry, and seniority level. Use exact keywords from the job description where appropriate. Avoid keyword stuffing. Keep tone natural and role-appropriate.
+
+When writing STAR bullets use this formula: Action verb + what was done + scope/context + result + metric or business impact. Keep Situation/Task brief. Emphasize Action and Result. If no metrics available, use phrasing like improved, strengthened, accelerated, streamlined without fabricating precision.
+
+Always protect truth, readability, and recruiter trust.`;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -33,9 +59,11 @@ serve(async (req) => {
 
     const { jobId } = await req.json();
 
-    const [jobRes, profileRes] = await Promise.all([
+    const [jobRes, profileRes, workHistoryRes, educationRes] = await Promise.all([
       supabase.from("jobs").select("*").eq("id", jobId).eq("user_id", user.id).single(),
       supabase.from("user_profiles").select("*").eq("user_id", user.id).single(),
+      supabase.from("work_history").select("*").eq("user_id", user.id).order("sort_order"),
+      supabase.from("education").select("*").eq("user_id", user.id).order("start_year", { ascending: false }),
     ]);
 
     if (jobRes.error || !jobRes.data) {
@@ -46,6 +74,8 @@ serve(async (req) => {
 
     const job = jobRes.data;
     const profile = profileRes.data;
+    const workHistory = workHistoryRes.data || [];
+    const education = educationRes.data || [];
 
     const lovableKey = Deno.env.get("LOVABLE_API_KEY");
     if (!lovableKey) {
@@ -54,24 +84,49 @@ serve(async (req) => {
       });
     }
 
-    const prompt = `Generate a tailored Quick Apply pack for this job application. Create three documents.
+    // Format work history for prompt
+    const workHistoryText = workHistory.map((w: any) => {
+      const dateRange = `${w.start_month || ""}/${w.start_year || ""} - ${w.is_current ? "Present" : `${w.end_month || ""}/${w.end_year || ""}`}`;
+      return `- ${w.title} at ${w.company} (${dateRange}, ${w.employment_type})\n  Location: ${w.location || "N/A"} (${w.location_type || ""})\n  Description: ${w.description || ""}\n  Achievements: ${w.achievements || ""}\n  Awards: ${w.awards || ""}\n  Skills: ${(w.skills || []).join(", ")}`;
+    }).join("\n\n");
 
-JOB:
+    const educationText = education.map((e: any) =>
+      `- ${e.degree || ""} ${e.field || ""} at ${e.institution} (${e.start_year || ""}-${e.end_year || ""})`
+    ).join("\n");
+
+    const prompt = `Generate a tailored Quick Apply pack for this job application. Use the candidate's full structured profile data below.
+
+JOB DESCRIPTION:
 - Title: ${job.title}
 - Company: ${job.company}
 - Location: ${job.location}
+- Work Model: ${job.work_model}
+- Employment Type: ${job.employment_type}
 - Requirements: ${job.requirements_summary}
-- Description: ${job.description}
+- Full Description: ${job.description}
 
-CANDIDATE:
+CANDIDATE PROFILE:
 - Name: ${profile?.full_name || "Candidate"}
 - Headline: ${profile?.headline || ""}
 - Skills: ${(profile?.top_skills || []).join(", ")}
 - Experience: ${profile?.years_of_experience || 0} years
 - Summary: ${profile?.summary || ""}
 - Location: ${profile?.location || ""}
+- Industries: ${(profile?.industries || []).join(", ")}
+- Languages: ${(profile?.languages_spoken || []).join(", ")}
 
-Generate a professional, tailored resume summary, a concise cover note, and a short recruiter outreach message. Keep them specific to this role. Use the tool provided.`;
+WORK HISTORY:
+${workHistoryText || "No work history provided"}
+
+EDUCATION:
+${educationText || "No education provided"}
+
+Generate:
+1. A tailored resume using ATS-friendly formatting with standard headings (Professional Summary, Core Skills, Professional Experience, Education). Rewrite experience bullets using STAR logic: action verb + scope + result + metric. Use exact keywords from the job description naturally.
+2. A concise cover note (300-400 words max) that connects the candidate's experience to this specific role's requirements. Professional, confident, human tone.
+3. A short recruiter outreach message (2-3 sentences, direct and relevant).
+
+Use the tool provided to return structured output.`;
 
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -82,24 +137,27 @@ Generate a professional, tailored resume summary, a concise cover note, and a sh
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: "You are an expert career coach and resume writer. Write professionally, concisely, and tailor everything to the specific job." },
+          { role: "system", content: CORE_SYSTEM_PROMPT },
           { role: "user", content: prompt },
         ],
         tools: [{
           type: "function",
           function: {
             name: "generate_application_pack",
-            description: "Generate tailored application documents",
+            description: "Generate tailored ATS-optimized application documents",
             parameters: {
               type: "object",
               properties: {
-                resume: { type: "string", description: "Tailored resume draft (formatted with line breaks)" },
-                coverNote: { type: "string", description: "Cover note/letter (formatted with line breaks)" },
+                resume: { type: "string", description: "Full tailored resume with ATS-friendly formatting, standard headings, STAR bullets" },
+                coverNote: { type: "string", description: "Tailored cover note/letter (300-400 words)" },
                 recruiterNote: { type: "string", description: "Short recruiter outreach message" },
-                mustHaves: { type: "array", items: { type: "string" }, description: "Key requirements from the job that the candidate meets" },
+                professionalSummary: { type: "string", description: "The professional summary section extracted" },
+                coreSkills: { type: "array", items: { type: "string" }, description: "Core skills aligned to the role" },
+                mustHaves: { type: "array", items: { type: "string" }, description: "Key requirements the candidate meets" },
                 emphasisPoints: { type: "array", items: { type: "string" }, description: "Candidate strengths to emphasize" },
+                keywordsUsed: { type: "array", items: { type: "string" }, description: "ATS keywords incorporated into the resume" },
               },
-              required: ["resume", "coverNote", "recruiterNote", "mustHaves", "emphasisPoints"],
+              required: ["resume", "coverNote", "recruiterNote", "professionalSummary", "coreSkills", "mustHaves", "emphasisPoints", "keywordsUsed"],
               additionalProperties: false,
             },
           },
@@ -140,7 +198,6 @@ Generate a professional, tailored resume summary, a concise cover note, and a sh
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminClient = createClient(supabaseUrl, serviceKey);
 
-    // Delete old assets for this job
     await adminClient.from("application_assets").delete().eq("job_id", jobId);
 
     const assets = [

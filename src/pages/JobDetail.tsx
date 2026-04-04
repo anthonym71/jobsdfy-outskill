@@ -7,7 +7,7 @@ import VerdictBadge from "@/components/VerdictBadge";
 import StatusPill, { type JobStatus } from "@/components/StatusPill";
 import BlockerCard from "@/components/BlockerCard";
 import FitScoreCard from "@/components/FitScoreCard";
-import { Loader2, ArrowRight, ExternalLink, Trash2, MoreVertical, Archive, Bookmark, RotateCcw } from "lucide-react";
+import { Loader2, ArrowRight, ExternalLink, Trash2, MoreVertical, Archive, Bookmark, RotateCcw, FileText, Search, FileDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -35,7 +35,10 @@ const JobDetail = () => {
   const [blockers, setBlockers] = useState<any[]>([]);
   const [match, setMatch] = useState<any>(null);
   const [assets, setAssets] = useState<any[]>([]);
-
+  const [generatingCV, setGeneratingCV] = useState(false);
+  const [generatingCover, setGeneratingCover] = useState(false);
+  const [analyzingGap, setAnalyzingGap] = useState(false);
+  const [gapAnalysis, setGapAnalysis] = useState<any>(null);
   useEffect(() => {
     if (!id || !user) return;
     loadAll();
@@ -74,6 +77,45 @@ const JobDetail = () => {
       setJob((j: any) => ({ ...j, verdict }));
       toast({ title: `Verdict overridden to ${verdict.toUpperCase()}` });
     }
+  };
+
+  const handleGenerateCV = async () => {
+    setGeneratingCV(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-cv", { body: { jobId: id } });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "Tailored CV generated!", description: "Check the Pack tab for your new CV." });
+      loadAll();
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message || "Failed to generate CV", variant: "destructive" });
+    } finally { setGeneratingCV(false); }
+  };
+
+  const handleGenerateCoverLetter = async () => {
+    setGeneratingCover(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-cover-letter", { body: { jobId: id } });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "Cover letter generated!", description: "Check the Pack tab." });
+      loadAll();
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message || "Failed to generate cover letter", variant: "destructive" });
+    } finally { setGeneratingCover(false); }
+  };
+
+  const handleGapAnalysis = async () => {
+    setAnalyzingGap(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("analyze-gap", { body: { jobId: id } });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setGapAnalysis(data?.data);
+      toast({ title: "Gap analysis complete!" });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message || "Failed to analyze gap", variant: "destructive" });
+    } finally { setAnalyzingGap(false); }
   };
 
   const deleteJob = async () => {
@@ -207,7 +249,56 @@ const JobDetail = () => {
                 Generate Quick Apply <ArrowRight className="ml-1.5 h-4 w-4" />
               </Button>
             )}
+            <Button size="sm" variant="outline" onClick={handleGenerateCV} disabled={generatingCV}>
+              {generatingCV ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <FileDown className="h-4 w-4 mr-1" />}
+              Tailored CV
+            </Button>
+            <Button size="sm" variant="outline" onClick={handleGenerateCoverLetter} disabled={generatingCover}>
+              {generatingCover ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <FileText className="h-4 w-4 mr-1" />}
+              Cover Letter
+            </Button>
+            <Button size="sm" variant="outline" onClick={handleGapAnalysis} disabled={analyzingGap}>
+              {analyzingGap ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Search className="h-4 w-4 mr-1" />}
+              Gap Analysis
+            </Button>
           </div>
+
+          {gapAnalysis && (
+            <div className="rounded-xl border border-border bg-card p-5 mt-4 space-y-4">
+              <div className="flex items-center gap-2">
+                <Search className="h-4 w-4 text-primary" />
+                <h3 className="font-heading text-sm font-semibold text-foreground">Gap Analysis</h3>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${gapAnalysis.verdict === "apply" ? "bg-verdict-go-bg text-verdict-go" : gapAnalysis.verdict === "improve_then_apply" ? "bg-verdict-review-bg text-verdict-review" : "bg-verdict-stop-bg text-verdict-stop"}`}>
+                  {gapAnalysis.verdict === "apply" ? "Ready to Apply" : gapAnalysis.verdict === "improve_then_apply" ? "Improve First" : "Consider Skipping"}
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground">{gapAnalysis.verdictReason}</p>
+              {gapAnalysis.strongestFitAreas?.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-primary mb-1">Strongest Fit Areas</p>
+                  <ul className="space-y-0.5">{gapAnalysis.strongestFitAreas.map((s: string, i: number) => <li key={i} className="text-sm text-foreground">✓ {s}</li>)}</ul>
+                </div>
+              )}
+              {gapAnalysis.recruiterConcerns?.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Recruiter Concerns</p>
+                  <ul className="space-y-0.5">{gapAnalysis.recruiterConcerns.map((s: string, i: number) => <li key={i} className="text-sm text-foreground">⚠ {s}</li>)}</ul>
+                </div>
+              )}
+              {gapAnalysis.missingKeywords?.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Missing Keywords</p>
+                  <div className="flex flex-wrap gap-1">{gapAnalysis.missingKeywords.map((k: string, i: number) => <span key={i} className="text-xs bg-accent rounded-full px-2 py-0.5 text-foreground">{k}</span>)}</div>
+                </div>
+              )}
+              {gapAnalysis.improvementSuggestions?.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-primary mb-1">Improvement Suggestions</p>
+                  <ul className="space-y-0.5">{gapAnalysis.improvementSuggestions.map((s: string, i: number) => <li key={i} className="text-sm text-foreground">→ {s}</li>)}</ul>
+                </div>
+              )}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="dealbreakers" className="mt-5">

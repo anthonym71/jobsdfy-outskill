@@ -25,13 +25,12 @@ serve(async (req) => {
 
     // If URL provided, scrape it with Firecrawl
     if (url) {
-      // Check for unsupported sites
       const unsupportedDomains = ["linkedin.com", "www.linkedin.com"];
       try {
         let checkUrl = url.trim();
         if (!checkUrl.startsWith("http")) checkUrl = `https://${checkUrl}`;
         const hostname = new URL(checkUrl).hostname;
-        if (unsupportedDomains.some(d => hostname === d || hostname.endsWith(`.${d}`))) {
+        if (unsupportedDomains.some((d: string) => hostname === d || hostname.endsWith(`.${d}`))) {
           return new Response(
             JSON.stringify({
               success: false,
@@ -92,7 +91,6 @@ serve(async (req) => {
       }
     }
 
-    // Use Lovable AI to extract structured job data
     const lovableKey = Deno.env.get("LOVABLE_API_KEY");
     if (!lovableKey) {
       return new Response(
@@ -101,9 +99,9 @@ serve(async (req) => {
       );
     }
 
-    const extractionPrompt = `Extract structured job posting information from the following content. Return a JSON object using the tool provided.
+    const extractionPrompt = `Extract structured job posting information AND ATS hiring signals from the following content. Return structured data using the tool provided.
 
-If a field is not found or unclear, use an empty string "".
+If a field is not found or unclear, use an empty string "" for strings or an empty array [] for arrays.
 
 Content:
 ${jobContent.slice(0, 12000)}`;
@@ -119,7 +117,7 @@ ${jobContent.slice(0, 12000)}`;
         messages: [
           {
             role: "system",
-            content: "You are a precise job posting data extractor. Extract only what is present in the text. Never fabricate information.",
+            content: `You are an expert ATS keyword extraction and job analysis engine. Extract all structured job data AND hiring signals. Prioritize exact phrases from the job description. Separate required from preferred skills. Identify repeated ideas even if phrased differently. Never fabricate information.`,
           },
           { role: "user", content: extractionPrompt },
         ],
@@ -128,7 +126,7 @@ ${jobContent.slice(0, 12000)}`;
             type: "function",
             function: {
               name: "extract_job",
-              description: "Extract structured job posting data",
+              description: "Extract structured job posting data with ATS hiring signals",
               parameters: {
                 type: "object",
                 properties: {
@@ -146,12 +144,23 @@ ${jobContent.slice(0, 12000)}`;
                   description: { type: "string", description: "Brief job description summary (2-3 sentences)" },
                   requirementsSummary: { type: "string", description: "Key requirements summary" },
                   applicationUrl: { type: "string", description: "Application URL if found" },
+                  seniorityLevel: { type: "string", description: "Seniority level: Junior, Mid, Senior, Lead, Director, VP, C-Level" },
+                  requiredSkills: { type: "array", items: { type: "string" }, description: "Top 10 required skills from the JD" },
+                  preferredSkills: { type: "array", items: { type: "string" }, description: "Top 10 preferred/differentiating skills" },
+                  coreResponsibilities: { type: "array", items: { type: "string" }, description: "Core responsibilities listed" },
+                  systemsTools: { type: "array", items: { type: "string" }, description: "Systems, tools, platforms mentioned" },
+                  atsKeywords: { type: "array", items: { type: "string" }, description: "Top 15 ATS keywords ranked by importance" },
+                  successSignals: { type: "array", items: { type: "string" }, description: "Success signals the hiring manager is looking for" },
+                  rejectionReasons: { type: "array", items: { type: "string" }, description: "Likely reasons a candidate would be rejected" },
                 },
                 required: [
                   "title", "company", "location", "salaryMin", "salaryMax",
                   "salaryCurrency", "workModel", "employmentType", "visaPolicy",
                   "languageRequirements", "recruiterName", "description",
                   "requirementsSummary", "applicationUrl",
+                  "seniorityLevel", "requiredSkills", "preferredSkills",
+                  "coreResponsibilities", "systemsTools", "atsKeywords",
+                  "successSignals", "rejectionReasons",
                 ],
                 additionalProperties: false,
               },
@@ -196,7 +205,6 @@ ${jobContent.slice(0, 12000)}`;
 
     const extracted = JSON.parse(toolCall.function.arguments);
 
-    // If we scraped a URL, use it as application URL if none extracted
     if (url && !extracted.applicationUrl) {
       extracted.applicationUrl = url;
     }

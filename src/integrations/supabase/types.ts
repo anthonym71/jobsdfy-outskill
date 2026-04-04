@@ -133,6 +133,44 @@ export type Database = {
         }
         Relationships: []
       }
+      cv_versions: {
+        Row: {
+          ats_keywords: Json | null
+          content: Json
+          created_at: string
+          id: string
+          job_id: string | null
+          user_id: string
+          version_name: string
+        }
+        Insert: {
+          ats_keywords?: Json | null
+          content?: Json
+          created_at?: string
+          id?: string
+          job_id?: string | null
+          user_id: string
+          version_name?: string
+        }
+        Update: {
+          ats_keywords?: Json | null
+          content?: Json
+          created_at?: string
+          id?: string
+          job_id?: string | null
+          user_id?: string
+          version_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cv_versions_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       education: {
         Row: {
           created_at: string
