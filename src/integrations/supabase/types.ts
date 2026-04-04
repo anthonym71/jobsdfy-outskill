@@ -263,6 +263,39 @@ export type Database = {
         }
         Relationships: []
       }
+      phone_change_requests: {
+        Row: {
+          created_at: string
+          current_phone: string | null
+          id: string
+          new_phone: string
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_phone?: string | null
+          id?: string
+          new_phone: string
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_phone?: string | null
+          id?: string
+          new_phone?: string
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       referral_codes: {
         Row: {
           code: string
@@ -314,6 +347,42 @@ export type Database = {
           referral_code?: string
           referred_user_id?: string
           referrer_id?: string
+        }
+        Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          admin_notes: string | null
+          category: string
+          created_at: string
+          description: string
+          id: string
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          status?: string
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -431,6 +500,8 @@ export type Database = {
           industries: string[] | null
           languages_spoken: string[] | null
           location: string | null
+          phone_number: string | null
+          phone_verified: boolean | null
           summary: string | null
           top_skills: string[] | null
           updated_at: string
@@ -445,6 +516,8 @@ export type Database = {
           industries?: string[] | null
           languages_spoken?: string[] | null
           location?: string | null
+          phone_number?: string | null
+          phone_verified?: boolean | null
           summary?: string | null
           top_skills?: string[] | null
           updated_at?: string
@@ -459,6 +532,8 @@ export type Database = {
           industries?: string[] | null
           languages_spoken?: string[] | null
           location?: string | null
+          phone_number?: string | null
+          phone_verified?: boolean | null
           summary?: string | null
           top_skills?: string[] | null
           updated_at?: string
@@ -467,14 +542,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
+      app_role: "admin" | "moderator" | "user"
       blocker_severity: "confirmed" | "likely" | "unclear"
       credit_action:
         | "earned"
@@ -618,6 +718,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "moderator", "user"],
       blocker_severity: ["confirmed", "likely", "unclear"],
       credit_action: [
         "earned",
