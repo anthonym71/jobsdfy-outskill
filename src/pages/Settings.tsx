@@ -21,6 +21,7 @@ const Settings = () => {
   const [profile, setProfile] = useState({
     fullName: "", location: "", headline: "", summary: "",
     yearsExp: "", topSkills: "", industries: "", languages: "",
+    phoneNumber: "",
   });
 
   const [nonNegs, setNonNegs] = useState({
@@ -51,6 +52,7 @@ const Settings = () => {
         topSkills: (p.top_skills || []).join(", "),
         industries: (p.industries || []).join(", "),
         languages: (p.languages_spoken || []).join(", "),
+        phoneNumber: (p as any).phone_number || "",
       });
     }
 
@@ -138,6 +140,11 @@ const Settings = () => {
         <div className="grid gap-4 sm:grid-cols-2">
           <div><Label>Full Name</Label><Input value={profile.fullName} onChange={(e) => setProfile((p) => ({ ...p, fullName: e.target.value }))} className="mt-1" /></div>
           <div><Label>Email</Label><Input value={user?.email || ""} disabled className="mt-1" /></div>
+          <div>
+            <Label>Phone Number</Label>
+            <Input value={profile.phoneNumber || "Not set"} disabled className="mt-1" />
+            <p className="text-xs text-muted-foreground mt-1">Phone changes require admin approval. <a href="/app/support" className="text-primary underline">Submit a ticket</a> to request a change.</p>
+          </div>
           <div><Label>Location</Label><Input value={profile.location} onChange={(e) => setProfile((p) => ({ ...p, location: e.target.value }))} className="mt-1" /></div>
           <div><Label>Headline</Label><Input value={profile.headline} onChange={(e) => setProfile((p) => ({ ...p, headline: e.target.value }))} className="mt-1" /></div>
           <div className="sm:col-span-2"><Label>Summary</Label><Textarea value={profile.summary} onChange={(e) => setProfile((p) => ({ ...p, summary: e.target.value }))} className="mt-1" rows={3} /></div>

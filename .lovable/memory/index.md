@@ -6,6 +6,8 @@ Lovable Cloud enabled. Auth via Supabase. All colors via HSL design tokens.
 Protective-first UX: dealbreakers before fit score, fit before quick apply. Nothing auto-sends.
 No LinkedIn credential automation — security/ToS risk. Chrome extension + smart paste instead.
 Stripe enabled: Free/Pro($9)/Premium($19) tiers + credit top-up packs.
+Phone verification required at onboarding (SMS OTP via Twilio). Phone changes need admin approval.
+Admin roles via user_roles table + has_role() security definer function.
 
 ## Memories
 - [Design tokens](mem://design/tokens) — Verdict colors, neutral palette, font system
@@ -15,3 +17,4 @@ Stripe enabled: Free/Pro($9)/Premium($19) tiers + credit top-up packs.
 - [Stripe pricing](mem://features/stripe-pricing) — Product/price IDs, tiers, credit packs, edge functions
 - [Gamification](mem://features/gamification) — Token/credit economy with XP, achievements, expiring credits
 - [DRIVE assessment](mem://features/drive-assessment) — Emotional buying/building behaviour profiling
+- [Business info](mem://features/business-info) — FFLIPI Holding LLC, contact, legal URLs

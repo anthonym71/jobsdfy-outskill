@@ -9,10 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useCredits, CREDIT_REWARDS } from "@/hooks/useCredits";
-import { Coins, Zap, Trophy } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+import { Coins, Zap, Trophy, Phone, Loader2, CheckCircle } from "lucide-react";
 
-const totalSteps = 4;
+const totalSteps = 5;
 
 const STEP_REWARDS: Record<number, string> = {
   1: "profile_basic",
@@ -29,6 +28,14 @@ const Onboarding = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const { credits, earnCredits, unlockAchievement } = useCredits();
+
+  // Phone verification state
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
 
   const [form, setForm] = useState({
     fullName: "", location: "", headline: "", summary: "",
@@ -58,7 +65,50 @@ const Onboarding = () => {
     }
   };
 
+  const sendOtp = async () => {
+    if (!phoneNumber.trim()) {
+      toast({ title: "Enter your phone number", variant: "destructive" });
+      return;
+    }
+    setSendingOtp(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("verify-phone", {
+        body: { action: "send", phoneNumber: phoneNumber.trim() },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setOtpSent(true);
+      toast({ title: "Code sent!", description: "Check your phone for the 6-digit code." });
+    } catch (err: any) {
+      toast({ title: "Failed to send code", description: err.message, variant: "destructive" });
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const verifyOtp = async () => {
+    if (!otpCode.trim()) return;
+    setVerifyingOtp(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("verify-phone", {
+        body: { action: "verify", code: otpCode.trim() },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setPhoneVerified(true);
+      toast({ title: "Phone verified! ✅" });
+    } catch (err: any) {
+      toast({ title: "Verification failed", description: err.message, variant: "destructive" });
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
+
   const next = async () => {
+    if (step === 5 && !phoneVerified) {
+      toast({ title: "Please verify your phone number first", variant: "destructive" });
+      return;
+    }
     await awardStepCredits(step);
     if (step < totalSteps) setStep(step + 1);
   };
@@ -67,6 +117,10 @@ const Onboarding = () => {
 
   const finish = async () => {
     if (!user) return;
+    if (!phoneVerified) {
+      toast({ title: "Please verify your phone number first", variant: "destructive" });
+      return;
+    }
     setSaving(true);
 
     try {
@@ -100,7 +154,6 @@ const Onboarding = () => {
 
       if (nonNegError) throw nonNegError;
 
-      // Award final step + first_steps achievement
       await awardStepCredits(4);
       await unlockAchievement("first_steps");
 
@@ -245,6 +298,67 @@ const Onboarding = () => {
             </>
           )}
 
+          {step === 5 && (
+            <>
+              <h2 className="font-heading text-lg font-semibold text-foreground flex items-center gap-2">
+                <Phone className="h-5 w-5" /> Verify Your Phone
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                We need your mobile number to secure your account. This number cannot be changed without admin approval.
+              </p>
+              <div className="space-y-4">
+                {!phoneVerified ? (
+                  <>
+                    <div>
+                      <Label>Mobile Number (with country code)</Label>
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          value={phoneNumber}
+                          onChange={(e) => setPhoneNumber(e.target.value)}
+                          placeholder="+1 555 123 4567"
+                          disabled={otpSent}
+                        />
+                        <Button onClick={sendOtp} disabled={sendingOtp || otpSent} variant="outline" size="sm" className="shrink-0">
+                          {sendingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : otpSent ? "Sent" : "Send Code"}
+                        </Button>
+                      </div>
+                    </div>
+                    {otpSent && (
+                      <div>
+                        <Label>Enter 6-digit code</Label>
+                        <div className="flex gap-2 mt-1">
+                          <Input
+                            value={otpCode}
+                            onChange={(e) => setOtpCode(e.target.value)}
+                            placeholder="123456"
+                            maxLength={6}
+                          />
+                          <Button onClick={verifyOtp} disabled={verifyingOtp} size="sm" className="shrink-0">
+                            {verifyingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify"}
+                          </Button>
+                        </div>
+                        <button
+                          onClick={() => { setOtpSent(false); setOtpCode(""); }}
+                          className="text-xs text-muted-foreground underline mt-2"
+                        >
+                          Use a different number
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex items-center gap-3 rounded-lg bg-green-500/10 p-4">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <div>
+                      <p className="font-medium text-foreground">Phone verified</p>
+                      <p className="text-sm text-muted-foreground">{phoneNumber}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
           <div className="flex justify-between pt-2">
             <Button variant="outline" onClick={back} disabled={step === 1}>Back</Button>
             {step < totalSteps ? (
@@ -257,7 +371,7 @@ const Onboarding = () => {
                 )}
               </Button>
             ) : (
-              <Button onClick={finish} disabled={saving}>
+              <Button onClick={finish} disabled={saving || !phoneVerified}>
                 {saving ? "Saving…" : "Finish Setup 🏆"}
               </Button>
             )}
