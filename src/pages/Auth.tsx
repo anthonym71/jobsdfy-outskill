@@ -14,7 +14,6 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [creatingAccount, setCreatingAccount] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, isLoading } = useAuth();
@@ -25,12 +24,13 @@ const Auth = () => {
     }
   }, [user, isLoading, navigate]);
 
+  const [emailSent, setEmailSent] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
       if (isSignUp) {
-        setCreatingAccount(true);
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -40,8 +40,7 @@ const Auth = () => {
         if (data.session) {
           navigate("/onboarding");
         } else {
-          toast({ title: "Check your email", description: "We sent you a confirmation link." });
-          setCreatingAccount(false);
+          setEmailSent(true);
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -49,30 +48,28 @@ const Auth = () => {
         navigate("/app");
       }
     } catch (err: any) {
-      setCreatingAccount(false);
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
-  if (creatingAccount) {
+  if (emailSent) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-6">
         <div className="w-full max-w-sm text-center space-y-6">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-            <Loader2 className="h-8 w-8 text-primary animate-spin" />
+            <CheckCircle2 className="h-8 w-8 text-primary" />
           </div>
           <div>
-            <h2 className="font-heading text-xl font-bold text-foreground">Setting up your account</h2>
+            <h2 className="font-heading text-xl font-bold text-foreground">Check your email</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Creating your profile and preparing your dashboard…
+              We sent a confirmation link to <strong className="text-foreground">{email}</strong>. Click it to activate your account, then come back and sign in.
             </p>
           </div>
-          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <CheckCircle2 className="h-4 w-4 text-primary" />
-            <span>Account verified</span>
-          </div>
+          <Button variant="outline" onClick={() => { setEmailSent(false); setIsSignUp(false); }}>
+            Back to Sign In
+          </Button>
         </div>
       </div>
     );
