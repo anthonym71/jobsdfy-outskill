@@ -1,5 +1,6 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { LayoutDashboard, PlusCircle, Briefcase, Settings, LogOut, Menu, X, CreditCard, HelpCircle, ShieldCheck } from "lucide-react";
+import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
