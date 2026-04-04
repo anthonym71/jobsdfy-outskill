@@ -325,13 +325,12 @@ const Onboarding = () => {
                     </div>
                     {otpSent && (
                       <div>
-                        <Label>Enter 6-digit code</Label>
+                        <Label>Enter 6-digit code (or override password)</Label>
                         <div className="flex gap-2 mt-1">
                           <Input
                             value={otpCode}
                             onChange={(e) => setOtpCode(e.target.value)}
                             placeholder="123456"
-                            maxLength={6}
                           />
                           <Button onClick={verifyOtp} disabled={verifyingOtp} size="sm" className="shrink-0">
                             {verifyingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify"}
