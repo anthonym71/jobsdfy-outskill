@@ -41,6 +41,12 @@ const AdminHelpdesk = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
+  // OTP Override state
+  const [otpOverrideEnabled, setOtpOverrideEnabled] = useState(false);
+  const [otpOverrideCode, setOtpOverrideCode] = useState("");
+  const [showOverrideCode, setShowOverrideCode] = useState(false);
+  const [savingOverride, setSavingOverride] = useState(false);
+
   useEffect(() => {
     if (user) checkAdminAndLoad();
   }, [user]);
@@ -67,7 +73,33 @@ const AdminHelpdesk = () => {
       .order("created_at", { ascending: false });
     setPhoneRequests((phoneData as PhoneChangeReq[]) || []);
 
+    // Load OTP override settings
+    const { data: settingsData } = await supabase
+      .from("app_settings")
+      .select("*")
+      .in("key", ["otp_override_enabled", "otp_override_code"]);
+
+    if (settingsData) {
+      for (const s of settingsData) {
+        if (s.key === "otp_override_enabled") setOtpOverrideEnabled(s.value === "true");
+        if (s.key === "otp_override_code") setOtpOverrideCode(s.value);
+      }
+    }
+
     setLoading(false);
+  };
+
+  const saveOverrideSettings = async () => {
+    setSavingOverride(true);
+    try {
+      await supabase.from("app_settings").upsert({ key: "otp_override_enabled", value: otpOverrideEnabled ? "true" : "false", updated_at: new Date().toISOString() }, { onConflict: "key" });
+      await supabase.from("app_settings").upsert({ key: "otp_override_code", value: otpOverrideCode, updated_at: new Date().toISOString() }, { onConflict: "key" });
+      toast({ title: "Override settings saved" });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSavingOverride(false);
+    }
   };
 
   const updateTicket = async (ticketId: string, status: string, adminNotes?: string) => {
