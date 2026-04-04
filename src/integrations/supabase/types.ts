@@ -314,6 +314,132 @@ export type Database = {
         }
         Relationships: []
       }
+      recruiter_job_posts: {
+        Row: {
+          application_email: string | null
+          application_url: string | null
+          benefits: string[] | null
+          city: string
+          company: string
+          country: string
+          created_at: string
+          description: string
+          employee_provides: string | null
+          employer_provides: string | null
+          employment_type: string
+          id: string
+          is_active: boolean
+          job_category: string
+          job_level: string
+          job_subcategory: string
+          language_other: string | null
+          language_primary: string | null
+          language_secondary: string | null
+          phone_extension: string | null
+          phone_type: string | null
+          qualifications: string | null
+          recruiter_email: string | null
+          recruiter_name: string | null
+          recruiter_phone: string | null
+          relocation_offered: boolean | null
+          requirements: string
+          salary_basic: number | null
+          salary_currency: string
+          salary_ote: number | null
+          show_email: boolean
+          show_phone: boolean
+          special_requirements: string | null
+          title: string
+          travel_percent: number | null
+          travel_required: boolean
+          updated_at: string
+          user_id: string
+          work_model: string
+        }
+        Insert: {
+          application_email?: string | null
+          application_url?: string | null
+          benefits?: string[] | null
+          city?: string
+          company?: string
+          country?: string
+          created_at?: string
+          description?: string
+          employee_provides?: string | null
+          employer_provides?: string | null
+          employment_type?: string
+          id?: string
+          is_active?: boolean
+          job_category?: string
+          job_level?: string
+          job_subcategory?: string
+          language_other?: string | null
+          language_primary?: string | null
+          language_secondary?: string | null
+          phone_extension?: string | null
+          phone_type?: string | null
+          qualifications?: string | null
+          recruiter_email?: string | null
+          recruiter_name?: string | null
+          recruiter_phone?: string | null
+          relocation_offered?: boolean | null
+          requirements?: string
+          salary_basic?: number | null
+          salary_currency?: string
+          salary_ote?: number | null
+          show_email?: boolean
+          show_phone?: boolean
+          special_requirements?: string | null
+          title?: string
+          travel_percent?: number | null
+          travel_required?: boolean
+          updated_at?: string
+          user_id: string
+          work_model?: string
+        }
+        Update: {
+          application_email?: string | null
+          application_url?: string | null
+          benefits?: string[] | null
+          city?: string
+          company?: string
+          country?: string
+          created_at?: string
+          description?: string
+          employee_provides?: string | null
+          employer_provides?: string | null
+          employment_type?: string
+          id?: string
+          is_active?: boolean
+          job_category?: string
+          job_level?: string
+          job_subcategory?: string
+          language_other?: string | null
+          language_primary?: string | null
+          language_secondary?: string | null
+          phone_extension?: string | null
+          phone_type?: string | null
+          qualifications?: string | null
+          recruiter_email?: string | null
+          recruiter_name?: string | null
+          recruiter_phone?: string | null
+          relocation_offered?: boolean | null
+          requirements?: string
+          salary_basic?: number | null
+          salary_currency?: string
+          salary_ote?: number | null
+          show_email?: boolean
+          show_phone?: boolean
+          special_requirements?: string | null
+          title?: string
+          travel_percent?: number | null
+          travel_required?: boolean
+          updated_at?: string
+          user_id?: string
+          work_model?: string
+        }
+        Relationships: []
+      }
       referral_codes: {
         Row: {
           code: string
@@ -574,6 +700,27 @@ export type Database = {
         Update: {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_tags: {
+        Row: {
+          created_at: string
+          id: string
+          tag: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          tag: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          tag?: string
           user_id?: string
         }
         Relationships: []
