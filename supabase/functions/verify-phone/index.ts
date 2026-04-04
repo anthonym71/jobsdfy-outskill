@@ -89,11 +89,35 @@ serve(async (req) => {
       if (!code) throw new Error("Verification code is required");
 
       const meta = user.user_metadata;
-      if (!meta?.phone_otp) throw new Error("No pending verification");
-      if (new Date(meta.phone_otp_expires) < new Date()) throw new Error("Code expired");
-      if (meta.phone_otp !== code) throw new Error("Invalid code");
+      const phoneNum = phoneNumber || meta?.phone_otp_number;
+      if (!phoneNum) throw new Error("No phone number provided");
 
-      const phoneNum = meta.phone_otp_number;
+      // Check for admin override code
+      let isOverride = false;
+      const { data: overrideEnabled } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "otp_override_enabled")
+        .single();
+
+      if (overrideEnabled?.value === "true") {
+        const { data: overrideCode } = await supabase
+          .from("app_settings")
+          .select("value")
+          .eq("key", "otp_override_code")
+          .single();
+
+        if (overrideCode?.value && code === overrideCode.value) {
+          isOverride = true;
+        }
+      }
+
+      if (!isOverride) {
+        // Normal OTP verification
+        if (!meta?.phone_otp) throw new Error("No pending verification");
+        if (new Date(meta.phone_otp_expires) < new Date()) throw new Error("Code expired");
+        if (meta.phone_otp !== code) throw new Error("Invalid code");
+      }
 
       // Update user_profiles with verified phone
       await supabase.from("user_profiles").update({
