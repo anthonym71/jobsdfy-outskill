@@ -19,6 +19,7 @@ import Settings from "./pages/Settings";
 import Pricing from "./pages/Pricing";
 import Support from "./pages/Support";
 import AdminHelpdesk from "./pages/AdminHelpdesk";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/onboarding" element={<Onboarding />} />
               <Route element={<AppLayout />}>

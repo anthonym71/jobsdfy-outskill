@@ -1,5 +1,6 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { LayoutDashboard, PlusCircle, Briefcase, Settings, LogOut, Menu, X, CreditCard, HelpCircle, ShieldCheck } from "lucide-react";
+import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
@@ -94,8 +95,11 @@ const AppLayout = () => {
       )}
 
       {/* Main content */}
-      <main className="flex-1 pt-14 md:pt-0 overflow-auto">
-        <Outlet />
+      <main className="flex-1 pt-14 md:pt-0 overflow-auto flex flex-col">
+        <div className="flex-1">
+          <Outlet />
+        </div>
+        <Footer />
       </main>
     </div>
   );
