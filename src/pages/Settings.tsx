@@ -21,6 +21,7 @@ const Settings = () => {
   const [profile, setProfile] = useState({
     fullName: "", location: "", headline: "", summary: "",
     yearsExp: "", topSkills: "", industries: "", languages: "",
+    phoneNumber: "",
   });
 
   const [nonNegs, setNonNegs] = useState({
