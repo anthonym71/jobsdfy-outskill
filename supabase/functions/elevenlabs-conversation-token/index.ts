@@ -12,7 +12,6 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    // Validate auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -41,14 +40,15 @@ serve(async (req) => {
       });
     }
 
-    // Use the default agent ID — don't accept arbitrary agent IDs from clients
+    // Get signed URL for WebSocket connection (more compatible than WebRTC token)
     const response = await fetch(
-      `https://api.elevenlabs.io/v1/convai/conversation/token?agent_id=${DEFAULT_AGENT_ID}`,
+      `https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id=${DEFAULT_AGENT_ID}`,
       { headers: { "xi-api-key": ELEVENLABS_API_KEY } }
     );
 
     if (!response.ok) {
       const text = await response.text();
+      console.error("ElevenLabs error:", response.status, text);
       return new Response(JSON.stringify({ error: `ElevenLabs error: ${response.status}` }), {
         status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -56,10 +56,11 @@ serve(async (req) => {
 
     const data = await response.json();
 
-    return new Response(JSON.stringify({ token: data.token }), {
+    return new Response(JSON.stringify({ signed_url: data.signed_url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
+    console.error("Internal error:", e);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
