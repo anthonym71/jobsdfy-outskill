@@ -3,11 +3,12 @@ import { LayoutDashboard, PlusCircle, Briefcase, Settings, LogOut, Menu, X, Cred
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { CreditBalance } from "@/components/gamification/CreditWidgets";
+import { supabase } from "@/integrations/supabase/client";
 
-const navItems = [
+const baseNavItems = [
   { to: "/app", icon: LayoutDashboard, label: "Dashboard", end: true },
   { to: "/app/new-job", icon: PlusCircle, label: "Check a Job" },
   { to: "/app/jobs", icon: Briefcase, label: "Jobs" },
@@ -15,9 +16,12 @@ const navItems = [
   { to: "/app/calendar", icon: CalendarDays, label: "Calendar" },
   { to: "/app/pricing", icon: CreditCard, label: "Pricing" },
   { to: "/app/support", icon: HelpCircle, label: "Support" },
+  { to: "/app/settings", icon: Settings, label: "Settings" },
+];
+
+const adminNavItems = [
   { to: "/app/admin", icon: ShieldCheck, label: "Admin" },
   { to: "/app/admin/users", icon: Users, label: "Users" },
-  { to: "/app/settings", icon: Settings, label: "Settings" },
 ];
 
 const AppLayout = () => {
