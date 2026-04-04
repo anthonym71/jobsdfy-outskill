@@ -12,9 +12,7 @@ const Auth = () => {
   const [searchParams] = useSearchParams();
   const [isSignUp, setIsSignUp] = useState(searchParams.get("mode") === "signup");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [creatingAccount, setCreatingAccount] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, isLoading } = useAuth();
