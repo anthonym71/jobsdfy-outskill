@@ -28,9 +28,9 @@ const features = [
 ];
 
 const pricing = [
-  { name: "Starter", price: "Free", period: "", features: ["3 job checks / month", "Basic dealbreaker check", "Extraction preview", "Manual apply"], highlight: false },
-  { name: "Pro", price: "$19", period: "/mo", features: ["Unlimited job checks", "Full fit scoring", "Quick Apply packs", "Job pipeline tracking", "Chrome extension", "Priority extraction"], highlight: true },
-  { name: "Team", price: "$49", period: "/mo", features: ["Everything in Pro", "Advanced role matching", "Priority processing", "Recruiter insights", "Custom templates", "Team dashboard"], highlight: false },
+  { name: "Free", price: "Free", period: "", features: ["3 credits / month", "Basic dealbreaker check", "Extraction preview", "Manual apply"], highlight: false },
+  { name: "Pro", price: "$9", period: "/mo", features: ["30 credits / month", "Full fit scoring", "Quick Apply packs", "Tailored CV & cover letter", "Chrome extension", "Gap analysis"], highlight: true },
+  { name: "Premium", price: "$19", period: "/mo", features: ["100 credits / month", "Everything in Pro", "Career timeline", "STAR bullet enhancer", "Priority processing", "Interview practice"], highlight: false },
 ];
 
 const faqs = [
