@@ -249,7 +249,56 @@ const JobDetail = () => {
                 Generate Quick Apply <ArrowRight className="ml-1.5 h-4 w-4" />
               </Button>
             )}
+            <Button size="sm" variant="outline" onClick={handleGenerateCV} disabled={generatingCV}>
+              {generatingCV ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <FileDown className="h-4 w-4 mr-1" />}
+              Tailored CV
+            </Button>
+            <Button size="sm" variant="outline" onClick={handleGenerateCoverLetter} disabled={generatingCover}>
+              {generatingCover ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <FileText className="h-4 w-4 mr-1" />}
+              Cover Letter
+            </Button>
+            <Button size="sm" variant="outline" onClick={handleGapAnalysis} disabled={analyzingGap}>
+              {analyzingGap ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Search className="h-4 w-4 mr-1" />}
+              Gap Analysis
+            </Button>
           </div>
+
+          {gapAnalysis && (
+            <div className="rounded-xl border border-border bg-card p-5 mt-4 space-y-4">
+              <div className="flex items-center gap-2">
+                <Search className="h-4 w-4 text-primary" />
+                <h3 className="font-heading text-sm font-semibold text-foreground">Gap Analysis</h3>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${gapAnalysis.verdict === "apply" ? "bg-verdict-go-bg text-verdict-go" : gapAnalysis.verdict === "improve_then_apply" ? "bg-verdict-review-bg text-verdict-review" : "bg-verdict-stop-bg text-verdict-stop"}`}>
+                  {gapAnalysis.verdict === "apply" ? "Ready to Apply" : gapAnalysis.verdict === "improve_then_apply" ? "Improve First" : "Consider Skipping"}
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground">{gapAnalysis.verdictReason}</p>
+              {gapAnalysis.strongestFitAreas?.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-primary mb-1">Strongest Fit Areas</p>
+                  <ul className="space-y-0.5">{gapAnalysis.strongestFitAreas.map((s: string, i: number) => <li key={i} className="text-sm text-foreground">✓ {s}</li>)}</ul>
+                </div>
+              )}
+              {gapAnalysis.recruiterConcerns?.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Recruiter Concerns</p>
+                  <ul className="space-y-0.5">{gapAnalysis.recruiterConcerns.map((s: string, i: number) => <li key={i} className="text-sm text-foreground">⚠ {s}</li>)}</ul>
+                </div>
+              )}
+              {gapAnalysis.missingKeywords?.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Missing Keywords</p>
+                  <div className="flex flex-wrap gap-1">{gapAnalysis.missingKeywords.map((k: string, i: number) => <span key={i} className="text-xs bg-accent rounded-full px-2 py-0.5 text-foreground">{k}</span>)}</div>
+                </div>
+              )}
+              {gapAnalysis.improvementSuggestions?.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-primary mb-1">Improvement Suggestions</p>
+                  <ul className="space-y-0.5">{gapAnalysis.improvementSuggestions.map((s: string, i: number) => <li key={i} className="text-sm text-foreground">→ {s}</li>)}</ul>
+                </div>
+              )}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="dealbreakers" className="mt-5">
