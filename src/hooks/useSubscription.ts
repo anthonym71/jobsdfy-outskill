@@ -19,16 +19,35 @@ export const STRIPE_TIERS = {
   },
 } as const;
 
+export const RECRUITER_TIERS = {
+  standard: {
+    name: "Recruiter Standard",
+    price_id: "price_1TIJEi2E142c9AbtYY7H6JqG",
+    product_id: "prod_UGqwkBswf8Qd90",
+    price: 9,
+    maxJobs: 10,
+  },
+  unlimited: {
+    name: "Recruiter Unlimited",
+    price_id: "price_1TIJFB2E142c9Abt74jT8Dni",
+    product_id: "prod_UGqxnwGnSiBqLG",
+    price: 49,
+    maxJobs: Infinity,
+  },
+} as const;
+
 export const CREDIT_PACKS = [
   { name: "10 Credits", price_id: "price_1TIH512E142c9AbtUaWjCMWu", price: 4.99, credits: 10 },
   { name: "50 Credits", price_id: "price_1TIH5S2E142c9AbtB9RhOqeH", price: 14.99, credits: 50 },
 ] as const;
 
 export type SubscriptionTier = "free" | "pro" | "premium";
+export type RecruiterTier = "free" | "standard" | "unlimited";
 
 export interface SubscriptionState {
   subscribed: boolean;
   tier: SubscriptionTier;
+  recruiterTier: RecruiterTier;
   subscriptionEnd: string | null;
   loading: boolean;
 }
@@ -38,13 +57,14 @@ export function useSubscription() {
   const [state, setState] = useState<SubscriptionState>({
     subscribed: false,
     tier: "free",
+    recruiterTier: "free",
     subscriptionEnd: null,
     loading: true,
   });
 
   const checkSubscription = useCallback(async () => {
     if (!user) {
-      setState({ subscribed: false, tier: "free", subscriptionEnd: null, loading: false });
+      setState({ subscribed: false, tier: "free", recruiterTier: "free", subscriptionEnd: null, loading: false });
       return;
     }
 
@@ -53,14 +73,27 @@ export function useSubscription() {
       if (error) throw error;
 
       let tier: SubscriptionTier = "free";
+      let recruiterTier: RecruiterTier = "free";
+
       if (data?.subscribed && data?.product_id) {
         if (data.product_id === STRIPE_TIERS.premium.product_id) tier = "premium";
         else if (data.product_id === STRIPE_TIERS.pro.product_id) tier = "pro";
+        else if (data.product_id === RECRUITER_TIERS.unlimited.product_id) recruiterTier = "unlimited";
+        else if (data.product_id === RECRUITER_TIERS.standard.product_id) recruiterTier = "standard";
+      }
+
+      // Check all active subscriptions for recruiter tier too
+      if (data?.all_product_ids) {
+        for (const pid of data.all_product_ids) {
+          if (pid === RECRUITER_TIERS.unlimited.product_id) recruiterTier = "unlimited";
+          else if (pid === RECRUITER_TIERS.standard.product_id && recruiterTier === "free") recruiterTier = "standard";
+        }
       }
 
       setState({
         subscribed: data?.subscribed ?? false,
         tier,
+        recruiterTier,
         subscriptionEnd: data?.subscription_end ?? null,
         loading: false,
       });
