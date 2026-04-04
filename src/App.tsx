@@ -16,6 +16,8 @@ import QuickApply from "./pages/QuickApply";
 import Jobs from "./pages/Jobs";
 import JobDetail from "./pages/JobDetail";
 import Settings from "./pages/Settings";
+import Profile from "./pages/Profile";
+import Calendar from "./pages/Calendar";
 import Pricing from "./pages/Pricing";
 import Support from "./pages/Support";
 import AdminHelpdesk from "./pages/AdminHelpdesk";
