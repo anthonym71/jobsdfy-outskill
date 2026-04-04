@@ -5,10 +5,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Trash2, Upload } from "lucide-react";
+import { Loader2, Plus, Trash2, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import CVUploadParser from "./CVUploadParser";
+import MediaUploader from "./MediaUploader";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface WorkEntry {
   id?: string;
@@ -41,12 +49,15 @@ const emptyEntry = (): WorkEntry => ({
 });
 
 const WorkHistoryTab = () => {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [entries, setEntries] = useState<WorkEntry[]>([]);
   const [newSkill, setNewSkill] = useState<Record<number, string>>({});
+  const [showUpload, setShowUpload] = useState(false);
+  const [enhancingIndex, setEnhancingIndex] = useState<number | null>(null);
+  const [starPreview, setStarPreview] = useState<{ index: number; data: any } | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -96,10 +107,42 @@ const WorkHistoryTab = () => {
     updateEntry(entryIdx, "skills", entry.skills.filter((_, si) => si !== skillIdx));
   };
 
+  const handleEnhanceSTAR = async (i: number) => {
+    if (!session) return;
+    const entry = entries[i];
+    setEnhancingIndex(i);
+    try {
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/enhance-star-bullets`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({
+          title: entry.title, company: entry.company,
+          description: entry.description, achievements: entry.achievements,
+          awards: entry.awards, performance: entry.performance,
+        }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || "Failed");
+      setStarPreview({ index: i, data: data.data });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    } finally {
+      setEnhancingIndex(null);
+    }
+  };
+
+  const applySTAR = () => {
+    if (!starPreview) return;
+    const { index, data } = starPreview;
+    updateEntry(index, "description", data.enhancedDescription);
+    if (data.enhancedAchievements) updateEntry(index, "achievements", data.enhancedAchievements);
+    setStarPreview(null);
+    toast({ title: "STAR bullets applied!" });
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Delete existing entries and re-insert
       await supabase.from("work_history").delete().eq("user_id", user!.id);
       if (entries.length > 0) {
         const { error } = await supabase.from("work_history").insert(
@@ -133,11 +176,11 @@ const WorkHistoryTab = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="font-heading text-base font-semibold text-foreground">Work History</h2>
-          <p className="text-sm text-muted-foreground">Add your work experience. Upload a CV to auto-populate (coming soon).</p>
+          <p className="text-sm text-muted-foreground">Add your work experience or upload a CV to auto-populate.</p>
         </div>
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" disabled>
-            <Upload className="h-4 w-4 mr-1" />Upload CV
+          <Button size="sm" variant="outline" onClick={() => setShowUpload(!showUpload)}>
+            {showUpload ? "Hide Upload" : "Upload CV"}
           </Button>
           <Button size="sm" onClick={addEntry}>
             <Plus className="h-4 w-4 mr-1" />Add Job
@@ -145,9 +188,13 @@ const WorkHistoryTab = () => {
         </div>
       </div>
 
-      {entries.length === 0 && (
+      {showUpload && (
+        <CVUploadParser onImportComplete={() => { setShowUpload(false); loadEntries(); }} />
+      )}
+
+      {entries.length === 0 && !showUpload && (
         <div className="text-center py-12 text-muted-foreground">
-          <p>No work history yet. Click "Add Job" to get started.</p>
+          <p>No work history yet. Click "Add Job" or "Upload CV" to get started.</p>
         </div>
       )}
 
@@ -157,7 +204,13 @@ const WorkHistoryTab = () => {
             <h3 className="font-heading text-sm font-semibold text-foreground">
               {entry.title || entry.company ? `${entry.title}${entry.company ? ` at ${entry.company}` : ""}` : `Position ${i + 1}`}
             </h3>
-            <Button size="icon" variant="ghost" onClick={() => removeEntry(i)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+            <div className="flex gap-1">
+              <Button size="sm" variant="ghost" onClick={() => handleEnhanceSTAR(i)} disabled={enhancingIndex === i} className="text-xs">
+                {enhancingIndex === i ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
+                STAR Enhance
+              </Button>
+              <Button size="icon" variant="ghost" onClick={() => removeEntry(i)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+            </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -222,7 +275,7 @@ const WorkHistoryTab = () => {
             </label>
             <label className="flex items-center gap-2 text-sm">
               <Checkbox checked={entry.is_concurrent} onCheckedChange={v => updateEntry(i, "is_concurrent", !!v)} />
-              Concurrent role (e.g. volunteering alongside)
+              Concurrent role
             </label>
           </div>
 
@@ -233,6 +286,9 @@ const WorkHistoryTab = () => {
             <div><Label>Achievements</Label><Input value={entry.achievements} onChange={e => updateEntry(i, "achievements", e.target.value)} className="mt-1" /></div>
             <div><Label>Performance</Label><Input value={entry.performance} onChange={e => updateEntry(i, "performance", e.target.value)} className="mt-1" /></div>
           </div>
+
+          {/* Media upload */}
+          <MediaUploader bucket="work-media" folder={entry.id || `entry_${i}`} label="Upload Evidence" maxFiles={3} accept="image/*,.pdf,.doc,.docx" />
 
           {/* Skills */}
           <div>
@@ -260,6 +316,40 @@ const WorkHistoryTab = () => {
           {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving…</> : "Save Work History"}
         </Button>
       )}
+
+      {/* STAR Preview Dialog */}
+      <Dialog open={!!starPreview} onOpenChange={() => setStarPreview(null)}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>STAR Enhanced Preview</DialogTitle>
+          </DialogHeader>
+          {starPreview?.data && (
+            <div className="space-y-4 text-sm">
+              <div>
+                <h4 className="font-medium text-foreground mb-1">Enhanced Description</h4>
+                <p className="text-muted-foreground whitespace-pre-line">{starPreview.data.enhancedDescription}</p>
+              </div>
+              {starPreview.data.bullets?.length > 0 && (
+                <div>
+                  <h4 className="font-medium text-foreground mb-1">STAR Bullets</h4>
+                  <ul className="space-y-1">
+                    {starPreview.data.bullets.map((b: string, i: number) => (
+                      <li key={i} className="text-muted-foreground">• {b}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <div className="rounded-lg bg-accent/50 p-3">
+                <p className="text-xs text-muted-foreground">{starPreview.data.improvementNotes}</p>
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" size="sm" onClick={() => setStarPreview(null)}>Cancel</Button>
+                <Button size="sm" onClick={applySTAR}>Apply Changes</Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
