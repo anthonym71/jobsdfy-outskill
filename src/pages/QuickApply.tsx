@@ -69,6 +69,13 @@ const QuickApply = () => {
         return;
       }
 
+      if (!credits || credits.balance < 3) {
+        toast({ title: "Insufficient credits", description: "You need 3 credits to generate an application pack.", variant: "destructive" });
+        setLoading(false);
+        return;
+      }
+      await spendCredits(3, "generate_application_pack");
+
       const resp = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-application`,
         {
