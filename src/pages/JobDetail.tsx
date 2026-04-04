@@ -118,8 +118,13 @@ const JobDetail = () => {
   };
 
   const handleGapAnalysis = async () => {
+    if (!credits || credits.balance < 1) {
+      toast({ title: "Insufficient credits", description: "You need 1 credit for gap analysis.", variant: "destructive" });
+      return;
+    }
     setAnalyzingGap(true);
     try {
+      await spendCredits(1, "gap_analysis");
       const { data, error } = await supabase.functions.invoke("analyze-gap", { body: { jobId: id } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);

@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { CreditBalance } from "@/components/gamification/CreditWidgets";
 import { supabase } from "@/integrations/supabase/client";
 
-const baseNavItems = [
+const baseNavItems: { to: string; icon: any; label: string; end?: boolean }[] = [
   { to: "/app", icon: LayoutDashboard, label: "Dashboard", end: true },
   { to: "/app/new-job", icon: PlusCircle, label: "Check a Job" },
   { to: "/app/jobs", icon: Briefcase, label: "Jobs" },
