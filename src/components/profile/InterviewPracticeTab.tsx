@@ -157,6 +157,11 @@ const InterviewPracticeTab = () => {
           ))}
         </div>
       )}
+      {/* Voice AI Section */}
+      <VoiceInterviewBot
+        jobTitle={jobs.find(j => j.id === selectedJobId)?.title}
+        company={jobs.find(j => j.id === selectedJobId)?.company}
+      />
     </div>
   );
 };

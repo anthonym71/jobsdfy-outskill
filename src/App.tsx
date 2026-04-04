@@ -71,6 +71,7 @@ const App = () => (
                 <Route path="/app/post-job" element={<PostJob />} />
                 <Route path="/app/admin" element={<AdminHelpdesk />} />
                 <Route path="/app/admin/users" element={<AdminUsers />} />
+                <Route path="/app/extension" element={<ExtensionDownload />} />
               </Route>
             </Route>
             <Route path="*" element={<NotFound />} />
