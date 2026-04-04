@@ -100,8 +100,13 @@ const JobDetail = () => {
   };
 
   const handleGenerateCoverLetter = async () => {
+    if (!credits || credits.balance < 2) {
+      toast({ title: "Insufficient credits", description: "You need 2 credits to generate a cover letter.", variant: "destructive" });
+      return;
+    }
     setGeneratingCover(true);
     try {
+      await spendCredits(2, "generate_cover_letter");
       const { data, error } = await supabase.functions.invoke("generate-cover-letter", { body: { jobId: id } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
