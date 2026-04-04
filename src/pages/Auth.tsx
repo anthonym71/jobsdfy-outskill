@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -14,11 +14,11 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [creatingAccount, setCreatingAccount] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, isLoading } = useAuth();
 
-  // Redirect if already logged in
   useEffect(() => {
     if (!isLoading && user) {
       navigate("/app", { replace: true });
@@ -30,17 +30,18 @@ const Auth = () => {
     setLoading(true);
     try {
       if (isSignUp) {
+        setCreatingAccount(true);
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
-        // If auto-confirm is on, session is returned immediately
         if (data.session) {
           navigate("/onboarding");
         } else {
           toast({ title: "Check your email", description: "We sent you a confirmation link." });
+          setCreatingAccount(false);
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -48,11 +49,34 @@ const Auth = () => {
         navigate("/app");
       }
     } catch (err: any) {
+      setCreatingAccount(false);
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
+
+  if (creatingAccount) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-6">
+        <div className="w-full max-w-sm text-center space-y-6">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+            <Loader2 className="h-8 w-8 text-primary animate-spin" />
+          </div>
+          <div>
+            <h2 className="font-heading text-xl font-bold text-foreground">Setting up your account</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Creating your profile and preparing your dashboard…
+            </p>
+          </div>
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <CheckCircle2 className="h-4 w-4 text-primary" />
+            <span>Account verified</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-6">
@@ -79,7 +103,12 @@ const Auth = () => {
               <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Please wait…" : isSignUp ? "Create Account" : "Sign In"}
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Please wait…
+                </span>
+              ) : isSignUp ? "Create Account" : "Sign In"}
             </Button>
           </form>
 
