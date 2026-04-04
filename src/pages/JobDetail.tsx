@@ -31,6 +31,7 @@ const JobDetail = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { credits, spendCredits } = useCredits();
   const [loading, setLoading] = useState(true);
   const [job, setJob] = useState<any>(null);
   const [blockers, setBlockers] = useState<any[]>([]);
