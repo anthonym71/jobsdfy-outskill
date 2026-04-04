@@ -95,8 +95,11 @@ const AppLayout = () => {
       )}
 
       {/* Main content */}
-      <main className="flex-1 pt-14 md:pt-0 overflow-auto">
-        <Outlet />
+      <main className="flex-1 pt-14 md:pt-0 overflow-auto flex flex-col">
+        <div className="flex-1">
+          <Outlet />
+        </div>
+        <Footer />
       </main>
     </div>
   );
