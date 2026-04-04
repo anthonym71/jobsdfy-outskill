@@ -270,13 +270,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border bg-background py-8 sm:py-10">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
-          <span className="font-heading text-sm font-semibold text-foreground">JobsDFY</span>
-          <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} JobsDFY. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
