@@ -37,6 +37,7 @@ const QuickApply = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
   const { toast } = useToast();
+  const { credits, spendCredits } = useCredits();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [job, setJob] = useState<any>(null);
