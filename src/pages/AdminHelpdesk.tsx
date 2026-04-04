@@ -175,6 +175,9 @@ const AdminHelpdesk = () => {
           <TabsTrigger value="phone" className="flex items-center gap-1">
             <Phone className="h-4 w-4" /> Phone Changes ({phoneRequests.filter(r => r.status === "pending").length})
           </TabsTrigger>
+          <TabsTrigger value="settings" className="flex items-center gap-1">
+            <Settings className="h-4 w-4" /> OTP Settings
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="tickets" className="space-y-3 mt-4">
