@@ -19,7 +19,7 @@ const baseNavItems: { to: string; icon: any; label: string; end?: boolean }[] = 
   { to: "/app/settings", icon: Settings, label: "Settings" },
 ];
 
-const adminNavItems = [
+const adminNavItems: { to: string; icon: any; label: string; end?: boolean }[] = [
   { to: "/app/admin", icon: ShieldCheck, label: "Admin" },
   { to: "/app/admin/users", icon: Users, label: "Users" },
 ];
