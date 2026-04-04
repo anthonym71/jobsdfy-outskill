@@ -79,7 +79,45 @@ const JobDetail = () => {
     }
   };
 
-  const deleteJob = async () => {
+  const handleGenerateCV = async () => {
+    setGeneratingCV(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-cv", { body: { jobId: id } });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "Tailored CV generated!", description: "Check the Pack tab for your new CV." });
+      loadAll();
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message || "Failed to generate CV", variant: "destructive" });
+    } finally { setGeneratingCV(false); }
+  };
+
+  const handleGenerateCoverLetter = async () => {
+    setGeneratingCover(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-cover-letter", { body: { jobId: id } });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "Cover letter generated!", description: "Check the Pack tab." });
+      loadAll();
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message || "Failed to generate cover letter", variant: "destructive" });
+    } finally { setGeneratingCover(false); }
+  };
+
+  const handleGapAnalysis = async () => {
+    setAnalyzingGap(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("analyze-gap", { body: { jobId: id } });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setGapAnalysis(data?.data);
+      toast({ title: "Gap analysis complete!" });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message || "Failed to analyze gap", variant: "destructive" });
+    } finally { setAnalyzingGap(false); }
+  };
+
     if (!confirm("Delete this job and all related data? This cannot be undone.")) return;
     await Promise.all([
       supabase.from("application_assets").delete().eq("job_id", id!),
