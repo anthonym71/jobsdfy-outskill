@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { useConversation } from "@elevenlabs/react";
+import { useConversation, ConversationProvider } from "@elevenlabs/react";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Loader2, Volume2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -10,7 +10,7 @@ interface VoiceInterviewBotProps {
   company?: string;
 }
 
-const VoiceInterviewBot = ({ jobTitle, company }: VoiceInterviewBotProps) => {
+const VoiceInterviewBotInner = ({ jobTitle, company }: VoiceInterviewBotProps) => {
   const { toast } = useToast();
   const [isConnecting, setIsConnecting] = useState(false);
 
@@ -127,5 +127,11 @@ const VoiceInterviewBot = ({ jobTitle, company }: VoiceInterviewBotProps) => {
     </div>
   );
 };
+
+const VoiceInterviewBot = (props: VoiceInterviewBotProps) => (
+  <ConversationProvider>
+    <VoiceInterviewBotInner {...props} />
+  </ConversationProvider>
+);
 
 export default VoiceInterviewBot;
