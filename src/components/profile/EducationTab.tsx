@@ -7,6 +7,7 @@ import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import MediaUploader from "./MediaUploader";
 
 const EducationTab = () => {
   const { user } = useAuth();
@@ -86,6 +87,7 @@ const EducationTab = () => {
             <div><Label>Issuer</Label><Input value={c.issuer || ""} onChange={ev => setCerts(prev => prev.map((x, idx) => idx === i ? { ...x, issuer: ev.target.value } : x))} className="mt-1" /></div>
             <div><Label>Date Issued</Label><Input type="date" value={c.date_issued || ""} onChange={ev => setCerts(prev => prev.map((x, idx) => idx === i ? { ...x, date_issued: ev.target.value } : x))} className="mt-1" /></div>
           </div>
+          <MediaUploader bucket="certificates" folder={c.id || `cert_${i}`} label="Upload Certificate" maxFiles={1} accept=".pdf,.jpg,.jpeg,.png" />
         </div>
       ))}
 

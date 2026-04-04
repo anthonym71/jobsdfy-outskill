@@ -4,10 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2, Sparkles, Lightbulb, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useRef } from "react";
 
 interface SocialAccount {
   id?: string;
@@ -20,17 +21,23 @@ interface SocialAccount {
 const PLATFORMS = ["LinkedIn", "Twitter/X", "GitHub", "Instagram", "TikTok", "Facebook", "YouTube", "Other"];
 
 const AboutMeTab = () => {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [improvingSummary, setImprovingSummary] = useState(false);
+  const [suggestingKeywords, setSuggestingKeywords] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const [profile, setProfile] = useState({
     fullName: "", location: "", headline: "", summary: "",
     yearsExp: "", topSkills: "", industries: "", languages: "",
-    phoneNumber: "", hobbies: "", interests: "", sports: "",
+    phoneNumber: "", hobbies: "", interests: "", sports: "", photoUrl: "",
   });
   const [socials, setSocials] = useState<SocialAccount[]>([]);
+  const [suggestedSkills, setSuggestedSkills] = useState<string[]>([]);
+  const [suggestedIndustries, setSuggestedIndustries] = useState<string[]>([]);
 
   const [nonNegs, setNonNegs] = useState({
     minSalary: "", salaryCurrency: "USD", allowedCountries: "",
@@ -65,6 +72,7 @@ const AboutMeTab = () => {
         hobbies: ((p as any).hobbies || []).join(", "),
         interests: ((p as any).interests || []).join(", "),
         sports: ((p as any).sports || []).join(", "),
+        photoUrl: (p as any).photo_url || "",
       });
     }
 
@@ -94,6 +102,85 @@ const AboutMeTab = () => {
 
   const splitArray = (s: string) => s.split(",").map(x => x.trim()).filter(Boolean);
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Photo too large (max 5MB)", variant: "destructive" });
+      return;
+    }
+    setUploadingPhoto(true);
+    try {
+      const path = `${user.id}/${Date.now()}_${file.name}`;
+      const { error } = await supabase.storage.from("profile-photos").upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from("profile-photos").getPublicUrl(path);
+      setProfile(p => ({ ...p, photoUrl: urlData.publicUrl }));
+      toast({ title: "Photo uploaded" });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const handleImproveSummary = async () => {
+    if (!session) return;
+    setImprovingSummary(true);
+    try {
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-profile-summary`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({}),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || "Failed");
+      setProfile(p => ({ ...p, summary: data.data.summary, headline: data.data.headline }));
+      toast({ title: "Summary improved!", description: data.data.reasoning });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    } finally {
+      setImprovingSummary(false);
+    }
+  };
+
+  const handleSuggestKeywords = async () => {
+    if (!session) return;
+    setSuggestingKeywords(true);
+    try {
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/suggest-profile-keywords`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({}),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || "Failed");
+      setSuggestedSkills(data.data.suggestedSkills || []);
+      setSuggestedIndustries(data.data.suggestedIndustries || []);
+      toast({ title: "Keywords suggested!" });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    } finally {
+      setSuggestingKeywords(false);
+    }
+  };
+
+  const addSuggestedSkill = (skill: string) => {
+    const current = splitArray(profile.topSkills);
+    if (!current.includes(skill)) {
+      setProfile(p => ({ ...p, topSkills: [...current, skill].join(", ") }));
+      setSuggestedSkills(prev => prev.filter(s => s !== skill));
+    }
+  };
+
+  const addSuggestedIndustry = (industry: string) => {
+    const current = splitArray(profile.industries);
+    if (!current.includes(industry)) {
+      setProfile(p => ({ ...p, industries: [...current, industry].join(", ") }));
+      setSuggestedIndustries(prev => prev.filter(s => s !== industry));
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -110,6 +197,7 @@ const AboutMeTab = () => {
         hobbies: splitArray(profile.hobbies),
         interests: splitArray(profile.interests),
         sports: splitArray(profile.sports),
+        photo_url: profile.photoUrl || null,
       } as any, { onConflict: "user_id" });
       if (profileError) throw profileError;
 
@@ -126,17 +214,10 @@ const AboutMeTab = () => {
       }, { onConflict: "user_id" });
       if (nonNegError) throw nonNegError;
 
-      // Save socials
       await supabase.from("social_accounts").delete().eq("user_id", user!.id);
       if (socials.length > 0) {
         const { error: socialError } = await supabase.from("social_accounts").insert(
-          socials.map(s => ({
-            user_id: user!.id,
-            platform: s.platform,
-            url: s.url,
-            followers: s.followers,
-            friends: s.friends,
-          }))
+          socials.map(s => ({ user_id: user!.id, platform: s.platform, url: s.url, followers: s.followers, friends: s.friends }))
         );
         if (socialError) throw socialError;
       }
@@ -156,9 +237,28 @@ const AboutMeTab = () => {
 
   return (
     <div className="space-y-6">
-      {/* Basic Info */}
+      {/* Photo + Basic Info */}
       <section className="rounded-xl border border-border bg-card p-6 space-y-4">
         <h2 className="font-heading text-base font-semibold text-foreground">Basic Information</h2>
+
+        {/* Photo upload */}
+        <div className="flex items-center gap-4">
+          <div className="relative h-20 w-20 rounded-full bg-accent flex items-center justify-center overflow-hidden border-2 border-border">
+            {profile.photoUrl ? (
+              <img src={profile.photoUrl} alt="Profile" className="h-full w-full object-cover" />
+            ) : (
+              <Camera className="h-6 w-6 text-muted-foreground" />
+            )}
+          </div>
+          <div>
+            <input ref={photoInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+            <Button variant="outline" size="sm" onClick={() => photoInputRef.current?.click()} disabled={uploadingPhoto}>
+              {uploadingPhoto ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Camera className="h-4 w-4 mr-1" />}
+              {profile.photoUrl ? "Change Photo" : "Upload Photo"}
+            </Button>
+          </div>
+        </div>
+
         <div className="grid gap-4 sm:grid-cols-2">
           <div><Label>Full Name</Label><Input value={profile.fullName} onChange={e => setProfile(p => ({ ...p, fullName: e.target.value }))} className="mt-1" /></div>
           <div><Label>Email</Label><Input value={user?.email || ""} disabled className="mt-1" /></div>
@@ -170,14 +270,53 @@ const AboutMeTab = () => {
           <div><Label>Location</Label><Input value={profile.location} onChange={e => setProfile(p => ({ ...p, location: e.target.value }))} className="mt-1" /></div>
           <div><Label>Headline</Label><Input value={profile.headline} onChange={e => setProfile(p => ({ ...p, headline: e.target.value }))} className="mt-1" /></div>
           <div><Label>Years of Experience</Label><Input type="number" value={profile.yearsExp} onChange={e => setProfile(p => ({ ...p, yearsExp: e.target.value }))} className="mt-1" /></div>
-          <div className="sm:col-span-2"><Label>Summary</Label><Textarea value={profile.summary} onChange={e => setProfile(p => ({ ...p, summary: e.target.value }))} className="mt-1" rows={3} /></div>
-          <div><Label>Top Skills</Label><Input value={profile.topSkills} onChange={e => setProfile(p => ({ ...p, topSkills: e.target.value }))} className="mt-1" placeholder="React, TypeScript" /></div>
-          <div><Label>Industries</Label><Input value={profile.industries} onChange={e => setProfile(p => ({ ...p, industries: e.target.value }))} className="mt-1" placeholder="SaaS, Fintech" /></div>
+          <div className="sm:col-span-2">
+            <div className="flex items-center justify-between">
+              <Label>Summary</Label>
+              <Button variant="ghost" size="sm" onClick={handleImproveSummary} disabled={improvingSummary} className="text-xs">
+                {improvingSummary ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
+                Improve with AI
+              </Button>
+            </div>
+            <Textarea value={profile.summary} onChange={e => setProfile(p => ({ ...p, summary: e.target.value }))} className="mt-1" rows={3} />
+          </div>
+          <div>
+            <div className="flex items-center justify-between">
+              <Label>Top Skills</Label>
+              <Button variant="ghost" size="sm" onClick={handleSuggestKeywords} disabled={suggestingKeywords} className="text-xs">
+                {suggestingKeywords ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Lightbulb className="h-3 w-3 mr-1" />}
+                Suggest Keywords
+              </Button>
+            </div>
+            <Input value={profile.topSkills} onChange={e => setProfile(p => ({ ...p, topSkills: e.target.value }))} className="mt-1" placeholder="React, TypeScript" />
+            {suggestedSkills.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-1.5">
+                {suggestedSkills.map(s => (
+                  <button key={s} onClick={() => addSuggestedSkill(s)} className="text-[10px] bg-primary/10 text-primary rounded-full px-2 py-0.5 hover:bg-primary/20 transition-colors">
+                    + {s}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <div>
+            <Label>Industries</Label>
+            <Input value={profile.industries} onChange={e => setProfile(p => ({ ...p, industries: e.target.value }))} className="mt-1" placeholder="SaaS, Fintech" />
+            {suggestedIndustries.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-1.5">
+                {suggestedIndustries.map(s => (
+                  <button key={s} onClick={() => addSuggestedIndustry(s)} className="text-[10px] bg-primary/10 text-primary rounded-full px-2 py-0.5 hover:bg-primary/20 transition-colors">
+                    + {s}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <div><Label>Languages</Label><Input value={profile.languages} onChange={e => setProfile(p => ({ ...p, languages: e.target.value }))} className="mt-1" placeholder="English, German" /></div>
         </div>
       </section>
 
-      {/* Hobbies & Interests */}
+      {/* Hobbies */}
       <section className="rounded-xl border border-border bg-card p-6 space-y-4">
         <h2 className="font-heading text-base font-semibold text-foreground">Hobbies & Interests</h2>
         <div className="grid gap-4 sm:grid-cols-3">
