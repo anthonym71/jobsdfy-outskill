@@ -7,7 +7,7 @@ import VerdictBadge from "@/components/VerdictBadge";
 import StatusPill, { type JobStatus } from "@/components/StatusPill";
 import BlockerCard from "@/components/BlockerCard";
 import FitScoreCard from "@/components/FitScoreCard";
-import { Loader2, ArrowRight, ExternalLink, Trash2, MoreVertical, Archive, Bookmark, RotateCcw } from "lucide-react";
+import { Loader2, ArrowRight, ExternalLink, Trash2, MoreVertical, Archive, Bookmark, RotateCcw, FileText, Search, FileDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
