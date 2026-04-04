@@ -26,6 +26,8 @@ import PostJob from "./pages/PostJob";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import ExtensionDownload from "./pages/ExtensionDownload";
+import RecruiterCandidates from "./pages/RecruiterCandidates";
+import ExtensionDownload from "./pages/ExtensionDownload";
 
 const queryClient = new QueryClient();
 
