@@ -115,6 +115,25 @@ const PostJob = () => {
     }
   };
 
+  if (subLoading || countLoading) {
+    return <div className="flex justify-center py-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  }
+
+  if (atLimit) {
+    return (
+      <div className="p-6 md:p-8 max-w-xl mx-auto text-center space-y-4 py-16">
+        <AlertTriangle className="h-10 w-10 text-amber-500 mx-auto" />
+        <h2 className="font-heading text-xl font-bold text-foreground">Job Posting Limit Reached</h2>
+        <p className="text-sm text-muted-foreground">
+          You have {activeJobCount} active job post{activeJobCount !== 1 ? "s" : ""}.
+          {recruiterTier === "free" ? " Free accounts can post up to 3 jobs." : " Your plan allows up to 10 active posts."}
+        </p>
+        <p className="text-sm text-muted-foreground">Upgrade your recruiter plan to post more jobs.</p>
+        <Button asChild><Link to="/app/pricing">View Recruiter Plans</Link></Button>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 md:p-8 max-w-3xl mx-auto space-y-6">
       <div>
