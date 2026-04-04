@@ -6,6 +6,7 @@ import { Check, Copy, RefreshCw, ShieldCheck, Loader2, Clock, FileText, Mail, Me
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useCredits } from "@/hooks/useCredits";
 
 interface AppPack {
   resume: string;
