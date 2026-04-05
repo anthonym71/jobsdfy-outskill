@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, ShieldCheck, Download, Tag, Coins, Search, X, Eye, EyeOff, Mail, MessageSquare, Users, Plus } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, ShieldCheck, Download, Tag, Coins, Search, X, Eye, EyeOff, Mail, MessageSquare, Users, Plus, ArrowUpDown, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -282,105 +283,143 @@ const AdminUsers = () => {
         </div>
       </div>
 
-      {/* Groups summary */}
-      {groups.length > 0 && (
-        <div className="flex gap-2 flex-wrap">
-          {groups.map(g => (
-            <Badge key={g.id} variant="secondary" className="text-xs">{g.name} ({g.member_count})</Badge>
-          ))}
-        </div>
-      )}
+      <Tabs value={activeTab} onValueChange={v => setActiveTab(v as any)}>
+        <TabsList>
+          <TabsTrigger value="users">Users ({users.length})</TabsTrigger>
+          <TabsTrigger value="groups">Groups ({groups.length})</TabsTrigger>
+        </TabsList>
 
-      {/* Filters */}
-      <div className="flex gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input className="pl-9" placeholder="Search by name or email…" value={search} onChange={e => setSearch(e.target.value)} />
-        </div>
-        {allTags.length > 0 && (
-          <Select value={tagFilter} onValueChange={setTagFilter}>
-            <SelectTrigger className="w-36"><SelectValue placeholder="Tag" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Tags</SelectItem>
-              {allTags.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        )}
-        {groups.length > 0 && (
-          <Select value={groupFilter} onValueChange={setGroupFilter}>
-            <SelectTrigger className="w-36"><SelectValue placeholder="Group" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Groups</SelectItem>
-              {groups.map(g => <SelectItem key={g.id} value={g.name}>{g.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        )}
-      </div>
+        <TabsContent value="users" className="space-y-4 mt-4">
+          {/* Filters */}
+          <div className="flex gap-3 flex-wrap">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input className="pl-9" placeholder="Search by name or email…" value={search} onChange={e => setSearch(e.target.value)} />
+            </div>
+            <Select value={sortBy} onValueChange={v => setSortBy(v as any)}>
+              <SelectTrigger className="w-[150px]"><ArrowUpDown className="h-3.5 w-3.5 mr-1" /><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="first">First Name</SelectItem>
+                <SelectItem value="last">Last Name</SelectItem>
+                <SelectItem value="tags">Most Tags</SelectItem>
+              </SelectContent>
+            </Select>
+            {allTags.length > 0 && (
+              <Select value={tagFilter} onValueChange={setTagFilter}>
+                <SelectTrigger className="w-36"><SelectValue placeholder="Tag" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Tags</SelectItem>
+                  {allTags.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+            {groups.length > 0 && (
+              <Select value={groupFilter} onValueChange={setGroupFilter}>
+                <SelectTrigger className="w-36"><SelectValue placeholder="Group" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Groups</SelectItem>
+                  {groups.map(g => <SelectItem key={g.id} value={g.name}>{g.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
 
-      {/* Users Table */}
-      <div className="rounded-xl border border-border overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>First Name</TableHead>
-              <TableHead>Last Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Tags</TableHead>
-              <TableHead>Groups</TableHead>
-              <TableHead>Credits</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.map(u => {
-              const { first, last } = splitName(u.full_name);
-              return (
-                <TableRow key={u.user_id}>
-                  <TableCell className="font-medium text-sm">{first}</TableCell>
-                  <TableCell className="text-sm">{last}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{u.email || "—"}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{u.phone_number || "—"}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1 flex-wrap">
-                      {u.tags.map(t => (
-                        <Badge key={t} variant="secondary" className="text-[10px] gap-0.5">
-                          {t}<button onClick={() => handleRemoveTag(u.user_id, t)} className="hover:text-destructive"><X className="h-2.5 w-2.5" /></button>
-                        </Badge>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1 flex-wrap">
-                      {u.groups.map(g => <Badge key={g} variant="outline" className="text-[10px]">{g}</Badge>)}
-                    </div>
-                  </TableCell>
-                  <TableCell><span className="text-xs font-mono">{u.balance}</span></TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Send SMS" onClick={() => setMessageDialog({ userId: u.user_id, name: u.full_name, phone: u.phone_number, email: u.email, type: "sms" })}>
-                        <MessageSquare className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Send Email" onClick={() => setMessageDialog({ userId: u.user_id, name: u.full_name, phone: u.phone_number, email: u.email, type: "email" })}>
-                        <Mail className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Add Tag" onClick={() => setTagDialog({ userId: u.user_id, name: u.full_name })}>
-                        <Tag className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Add to Group" onClick={() => setAssignGroupDialog({ userId: u.user_id, name: u.full_name })}>
-                        <Users className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Allocate Credits" onClick={() => setCreditDialog({ userId: u.user_id, name: u.full_name })}>
-                        <Coins className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          {/* Users Table */}
+          <div className="rounded-xl border border-border overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>First Name</TableHead>
+                  <TableHead>Last Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Tags</TableHead>
+                  <TableHead>Groups</TableHead>
+                  <TableHead>Credits</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+              </TableHeader>
+              <TableBody>
+                {filtered.map(u => {
+                  const { first, last } = splitName(u.full_name);
+                  return (
+                    <TableRow key={u.user_id}>
+                      <TableCell className="font-medium text-sm">{first}</TableCell>
+                      <TableCell className="text-sm">{last}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{u.email || "—"}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{u.phone_number || "—"}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-1 flex-wrap">
+                          {u.tags.map(t => (
+                            <Badge key={t} variant="secondary" className="text-[10px] gap-0.5">
+                              {t}<button onClick={() => handleRemoveTag(u.user_id, t)} className="hover:text-destructive"><X className="h-2.5 w-2.5" /></button>
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1 flex-wrap">
+                          {u.groups.map(g => <Badge key={g} variant="outline" className="text-[10px]">{g}</Badge>)}
+                        </div>
+                      </TableCell>
+                      <TableCell><span className="text-xs font-mono">{u.balance}</span></TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button size="icon" variant="ghost" className="h-7 w-7" title="Send SMS" onClick={() => setMessageDialog({ userId: u.user_id, name: u.full_name, phone: u.phone_number, email: u.email, type: "sms" })}>
+                            <MessageSquare className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" title="Send Email" onClick={() => setMessageDialog({ userId: u.user_id, name: u.full_name, phone: u.phone_number, email: u.email, type: "email" })}>
+                            <Mail className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" title="Add Tag" onClick={() => setTagDialog({ userId: u.user_id, name: u.full_name })}>
+                            <Tag className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" title="Add to Group" onClick={() => setAssignGroupDialog({ userId: u.user_id, name: u.full_name })}>
+                            <Users className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" title="Allocate Credits" onClick={() => setCreditDialog({ userId: u.user_id, name: u.full_name })}>
+                            <Coins className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="groups" className="space-y-4 mt-4">
+          {groups.length === 0 ? (
+            <div className="rounded-xl border border-border bg-card p-12 text-center">
+              <Users className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+              <p className="font-medium text-foreground">No groups yet</p>
+              <p className="text-sm text-muted-foreground mt-1">Create a group to organize your users.</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {groups.map(g => (
+                <div key={g.id} className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
+                  <div>
+                    <p className="font-medium text-sm text-foreground">{g.name}</p>
+                    {g.description && <p className="text-xs text-muted-foreground mt-0.5">{g.description}</p>}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge variant="secondary" className="text-xs">{g.member_count} members</Badge>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" title="Delete group" onClick={async () => {
+                      await supabase.from("user_group_members").delete().eq("group_id", g.id);
+                      await supabase.from("user_groups").delete().eq("id", g.id);
+                      loadUsers();
+                      toast({ title: `Group "${g.name}" deleted` });
+                    }}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Tag Dialog */}
       <Dialog open={!!tagDialog} onOpenChange={open => !open && setTagDialog(null)}>
