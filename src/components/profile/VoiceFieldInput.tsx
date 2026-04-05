@@ -8,6 +8,8 @@ interface VoiceFieldInputProps {
   options?: string[];
   label?: string;
   className?: string;
+  /** If provided, voice result is appended to this value instead of replacing */
+  currentValue?: string;
 }
 
 const SpeechRecognitionAPI =
