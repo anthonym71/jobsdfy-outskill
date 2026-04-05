@@ -23,7 +23,6 @@ const NewJob = () => {
   const [searchParams] = useSearchParams();
 
   const [autoExtractPending, setAutoExtractPending] = useState(false);
-  const [isExtensionImport, setIsExtensionImport] = useState(false);
 
   // Auto-fill from Chrome extension or mobile share
   useEffect(() => {
@@ -55,13 +54,13 @@ const NewJob = () => {
     }
   }, [searchParams, navigate]);
 
-  // Auto-trigger extraction after extension text is set
+  // Auto-trigger extraction after text/url is set from share/extension
   useEffect(() => {
-    if (autoExtractPending && text.trim()) {
+    if (autoExtractPending && (text.trim() || url.trim())) {
       setAutoExtractPending(false);
       handleExtract();
     }
-  }, [autoExtractPending, text]);
+  }, [autoExtractPending, text, url]);
 
   const parseSalary = (value: unknown) => {
     const parsed = Number.parseInt(String(value ?? ""), 10);
