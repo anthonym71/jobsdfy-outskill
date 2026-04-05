@@ -17,23 +17,20 @@ const SpeechRecognitionAPI =
     ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     : null;
 
-const VoiceFieldInput = ({ onResult, options, label, className }: VoiceFieldInputProps) => {
+const VoiceFieldInput = ({ onResult, options, label, className, currentValue }: VoiceFieldInputProps) => {
   const { toast } = useToast();
   const [listening, setListening] = useState(false);
   const recognitionRef = useRef<any>(null);
+  const handledRef = useRef(false);
 
   const fuzzyMatch = useCallback((spoken: string, opts: string[]): string | null => {
     const lower = spoken.toLowerCase().trim();
-    // Exact match
     const exact = opts.find(o => o.toLowerCase() === lower);
     if (exact) return exact;
-    // Starts with
     const starts = opts.find(o => o.toLowerCase().startsWith(lower) || lower.startsWith(o.toLowerCase()));
     if (starts) return starts;
-    // Contains
     const contains = opts.find(o => o.toLowerCase().includes(lower) || lower.includes(o.toLowerCase()));
     if (contains) return contains;
-    // Try without hyphens/spaces
     const norm = lower.replace(/[-\s]/g, "");
     const normMatch = opts.find(o => o.toLowerCase().replace(/[-\s]/g, "") === norm);
     if (normMatch) return normMatch;
@@ -61,9 +58,14 @@ const VoiceFieldInput = ({ onResult, options, label, className }: VoiceFieldInpu
     recognition.interimResults = false;
     recognition.lang = "en-US";
     recognitionRef.current = recognition;
+    handledRef.current = false;
 
     recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript as string;
+      // Prevent duplicate firing
+      if (handledRef.current) return;
+      handledRef.current = true;
+
+      const transcript = (event.results[0][0].transcript as string).trim();
 
       if (options && options.length > 0) {
         const matched = fuzzyMatch(transcript, options);
@@ -78,7 +80,10 @@ const VoiceFieldInput = ({ onResult, options, label, className }: VoiceFieldInpu
           });
         }
       } else {
-        onResult(transcript);
+        // Append to existing value instead of replacing
+        const existing = (currentValue || "").trim();
+        const newValue = existing ? `${existing} ${transcript}` : transcript;
+        onResult(newValue);
         toast({ title: "✓ Voice captured", description: transcript.slice(0, 80) });
       }
       setListening(false);
@@ -105,7 +110,7 @@ const VoiceFieldInput = ({ onResult, options, label, className }: VoiceFieldInpu
 
     recognition.start();
     setListening(true);
-  }, [listening, onResult, options, label, fuzzyMatch, toast]);
+  }, [listening, onResult, options, label, fuzzyMatch, toast, currentValue]);
 
   return (
     <button

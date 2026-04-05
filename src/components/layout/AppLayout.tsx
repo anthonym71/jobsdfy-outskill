@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, PlusCircle, Briefcase, Settings, LogOut, Menu, X, CreditCard, HelpCircle, ShieldCheck, Users, UserCircle, CalendarDays } from "lucide-react";
+import { LayoutDashboard, PlusCircle, Briefcase, Settings, LogOut, Menu, X, CreditCard, HelpCircle, ShieldCheck, Users, UserCircle, CalendarDays, Coins } from "lucide-react";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { CreditBalance } from "@/components/gamification/CreditWidgets";
 import { supabase } from "@/integrations/supabase/client";
+import { useCredits } from "@/hooks/useCredits";
 
 const baseNavItems: { to: string; icon: any; label: string; end?: boolean }[] = [
   { to: "/app", icon: LayoutDashboard, label: "Dashboard", end: true },
@@ -29,11 +30,15 @@ const AppLayout = () => {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [profileName, setProfileName] = useState("");
+  const { credits } = useCredits();
 
   useEffect(() => {
     if (!user) return;
     supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle()
       .then(({ data }) => setIsAdmin(!!data));
+    supabase.from("user_profiles").select("full_name").eq("user_id", user.id).maybeSingle()
+      .then(({ data }) => setProfileName(data?.full_name || ""));
   }, [user]);
 
   const navItems = isAdmin ? [...baseNavItems, ...adminNavItems] : baseNavItems;
@@ -42,6 +47,20 @@ const AppLayout = () => {
     await signOut();
     navigate("/");
   };
+
+  const displayName = profileName || user?.email?.split("@")[0] || "User";
+  const displayEmail = user?.email || "";
+
+  const userInfoBlock = (
+    <div className="text-right text-xs space-y-0.5 min-w-0">
+      <p className="font-medium text-foreground truncate">{displayName}</p>
+      <p className="text-muted-foreground truncate">{displayEmail}</p>
+      <div className="flex items-center justify-end gap-1 text-primary font-medium">
+        <Coins className="h-3 w-3" />
+        <span>{credits?.balance ?? 0} credits</span>
+      </div>
+    </div>
+  );
 
   const sidebar = (
     <div className="flex h-full flex-col">
@@ -95,9 +114,17 @@ const AppLayout = () => {
           <span className="font-heading text-lg font-bold text-foreground">JobsDFY</span>
           <CreditBalance compact />
         </div>
-        <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
-          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </Button>
+        <div className="flex items-center gap-3">
+          {userInfoBlock}
+          <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+        </div>
+      </div>
+
+      {/* Desktop top bar with user info */}
+      <div className="hidden md:flex fixed top-0 left-60 right-0 z-40 items-center justify-end border-b border-border bg-card px-6 py-2">
+        {userInfoBlock}
       </div>
 
       {/* Mobile sidebar overlay */}
@@ -111,7 +138,7 @@ const AppLayout = () => {
       )}
 
       {/* Main content */}
-      <main className="flex-1 pt-14 md:pt-0 overflow-auto flex flex-col">
+      <main className="flex-1 pt-14 md:pt-12 overflow-auto flex flex-col">
         <div className="flex-1">
           <Outlet />
         </div>
