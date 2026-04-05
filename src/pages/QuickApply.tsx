@@ -235,14 +235,21 @@ const QuickApply = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Delete only the current version's assets
-      await supabase.from("application_assets").delete().eq("job_id", id!).eq("version" as any, activeVersion);
-      const assets = [
-        { job_id: id!, user_id: session!.user.id, asset_type: "resume", content: drafts.resume, version: activeVersion, is_draft: true },
-        { job_id: id!, user_id: session!.user.id, asset_type: "cover_note", content: drafts.coverNote, version: activeVersion, is_draft: true },
-        { job_id: id!, user_id: session!.user.id, asset_type: "recruiter_note", content: drafts.recruiterNote, version: activeVersion, is_draft: true },
-      ];
-      const { error } = await supabase.from("application_assets").insert(assets);
+      // Delete only the current version's assets then re-insert
+      // Since types.ts doesn't know about 'version' column yet, we delete all and re-insert
+      await supabase.from("application_assets").delete().eq("job_id", id!);
+      const allAssets: any[] = [];
+      for (const v of versions) {
+        const data = v.version === activeVersion
+          ? { resume: drafts.resume, coverNote: drafts.coverNote, recruiterNote: drafts.recruiterNote }
+          : { resume: v.resume, coverNote: v.coverNote, recruiterNote: v.recruiterNote };
+        allAssets.push(
+          { job_id: id!, user_id: session!.user.id, asset_type: "resume", content: data.resume, version: v.version, is_draft: v.isDraft },
+          { job_id: id!, user_id: session!.user.id, asset_type: "cover_note", content: data.coverNote, version: v.version, is_draft: v.isDraft },
+          { job_id: id!, user_id: session!.user.id, asset_type: "recruiter_note", content: data.recruiterNote, version: v.version, is_draft: v.isDraft },
+        );
+      }
+      const { error } = await supabase.from("application_assets").insert(allAssets);
       if (error) throw error;
 
       // Update local version state
