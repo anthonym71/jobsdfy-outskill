@@ -1,15 +1,11 @@
 import { useState, useCallback, useRef } from "react";
 import { Mic, MicOff } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 interface VoiceFieldInputProps {
-  /** Called with the transcribed text */
   onResult: (text: string) => void;
-  /** For dropdowns: list of valid option labels to fuzzy-match against */
   options?: string[];
-  /** Label shown in tooltip / aria */
   label?: string;
   className?: string;
 }
@@ -26,19 +22,22 @@ const VoiceFieldInput = ({ onResult, options, label, className }: VoiceFieldInpu
 
   const fuzzyMatch = useCallback((spoken: string, opts: string[]): string | null => {
     const lower = spoken.toLowerCase().trim();
-    // Exact match
     const exact = opts.find(o => o.toLowerCase() === lower);
     if (exact) return exact;
-    // Starts-with match
     const starts = opts.find(o => o.toLowerCase().startsWith(lower));
     if (starts) return starts;
-    // Contains match
     const contains = opts.find(o => o.toLowerCase().includes(lower) || lower.includes(o.toLowerCase()));
     if (contains) return contains;
     return null;
   }, []);
 
-  const startListening = useCallback(() => {
+  const toggle = useCallback(() => {
+    if (listening) {
+      recognitionRef.current?.stop();
+      setListening(false);
+      return;
+    }
+
     if (!SpeechRecognitionAPI) {
       toast({
         title: "Not supported",
@@ -71,6 +70,7 @@ const VoiceFieldInput = ({ onResult, options, label, className }: VoiceFieldInpu
         }
       } else {
         onResult(transcript);
+        toast({ title: "Voice captured", description: transcript.slice(0, 60) + (transcript.length > 60 ? "…" : "") });
       }
       setListening(false);
     };
@@ -78,7 +78,11 @@ const VoiceFieldInput = ({ onResult, options, label, className }: VoiceFieldInpu
     recognition.onerror = (event: any) => {
       console.error("Speech recognition error:", event.error);
       if (event.error === "not-allowed") {
-        toast({ title: "Microphone blocked", description: "Allow microphone access in browser settings.", variant: "destructive" });
+        toast({ title: "Microphone blocked", description: "Allow microphone access in your browser settings.", variant: "destructive" });
+      } else if (event.error === "no-speech") {
+        toast({ title: "No speech detected", description: "Try again and speak clearly.", variant: "destructive" });
+      } else {
+        toast({ title: "Voice input failed", description: `Error: ${event.error}`, variant: "destructive" });
       }
       setListening(false);
     };
@@ -87,32 +91,33 @@ const VoiceFieldInput = ({ onResult, options, label, className }: VoiceFieldInpu
 
     if (options && options.length > 0) {
       toast({ title: `Say one of: ${options.slice(0, 6).join(", ")}${options.length > 6 ? "…" : ""}` });
+    } else {
+      toast({ title: `Listening for ${label || "input"}…`, description: "Speak now." });
     }
 
     recognition.start();
     setListening(true);
-  }, [onResult, options, fuzzyMatch, toast]);
-
-  const stopListening = useCallback(() => {
-    recognitionRef.current?.stop();
-    setListening(false);
-  }, []);
+  }, [listening, onResult, options, label, fuzzyMatch, toast]);
 
   return (
-    <Button
+    <button
       type="button"
-      variant="ghost"
-      size="icon"
-      className={cn("h-6 w-6 p-0 flex-shrink-0", className)}
-      onClick={listening ? stopListening : startListening}
-      title={label ? `Voice input for ${label}` : "Voice input"}
+      onClick={toggle}
+      className={cn(
+        "inline-flex items-center justify-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+        listening
+          ? "text-destructive"
+          : "text-muted-foreground hover:text-primary",
+        className
+      )}
+      title={listening ? "Stop listening" : (label ? `Voice input for ${label}` : "Voice input")}
     >
       {listening ? (
-        <MicOff className="h-3.5 w-3.5 text-destructive animate-pulse" />
+        <MicOff className="h-3.5 w-3.5 animate-pulse" />
       ) : (
-        <Mic className="h-3.5 w-3.5 text-muted-foreground hover:text-primary transition-colors" />
+        <Mic className="h-3.5 w-3.5" />
       )}
-    </Button>
+    </button>
   );
 };
 
