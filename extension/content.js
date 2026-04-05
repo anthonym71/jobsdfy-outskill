@@ -42,7 +42,8 @@
       }
 
       const encoded = encodeURIComponent(text.slice(0, 15000));
-      const targetUrl = `${result.appUrl}/app/new-job?source=extension&text=${encoded}`;
+      const baseUrl = result.appUrl.replace(/\/+$/, '');
+      const targetUrl = `${baseUrl}/app/new-job?source=extension&text=${encoded}`;
       window.open(targetUrl, '_blank');
 
       btn.innerHTML = '✓ Sent!';
