@@ -321,13 +321,55 @@ const AboutMeTab = () => {
         </div>
       </section>
 
-      {/* Hobbies */}
+      {/* Hobbies & Interests */}
       <section className="rounded-xl border border-border bg-card p-6 space-y-4">
         <h2 className="font-heading text-base font-semibold text-foreground">Hobbies & Interests</h2>
         <div className="grid gap-4 sm:grid-cols-3">
-          <div><VoiceLabel onVoiceResult={v => setProfile(p => ({ ...p, hobbies: p.hobbies ? `${p.hobbies}, ${v}` : v }))}>Hobbies</VoiceLabel><Input value={profile.hobbies} onChange={e => setProfile(p => ({ ...p, hobbies: e.target.value }))} className="mt-1" placeholder="Photography, Cooking" /></div>
-          <div><VoiceLabel onVoiceResult={v => setProfile(p => ({ ...p, interests: p.interests ? `${p.interests}, ${v}` : v }))}>Interests</VoiceLabel><Input value={profile.interests} onChange={e => setProfile(p => ({ ...p, interests: e.target.value }))} className="mt-1" placeholder="AI, Startups" /></div>
-          <div><VoiceLabel onVoiceResult={v => setProfile(p => ({ ...p, sports: p.sports ? `${p.sports}, ${v}` : v }))}>Sports</VoiceLabel><Input value={profile.sports} onChange={e => setProfile(p => ({ ...p, sports: e.target.value }))} className="mt-1" placeholder="Running, Tennis" /></div>
+          <div>
+            <div className="flex items-center justify-between">
+              <VoiceLabel onVoiceResult={v => setProfile(p => ({ ...p, hobbies: p.hobbies ? `${p.hobbies}, ${v}` : v }))}>Hobbies</VoiceLabel>
+              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => {
+                const item = prompt("Add a hobby:");
+                if (item?.trim()) setProfile(p => ({ ...p, hobbies: p.hobbies ? `${p.hobbies}, ${item.trim()}` : item.trim() }));
+              }}><Plus className="h-3 w-3 mr-1" />Add</Button>
+            </div>
+            <Input value={profile.hobbies} onChange={e => setProfile(p => ({ ...p, hobbies: e.target.value }))} className="mt-1" placeholder="Photography, Cooking" />
+            {profile.hobbies && <div className="flex flex-wrap gap-1 mt-1.5">{splitArray(profile.hobbies).map(h => (
+              <span key={h} className="text-[10px] bg-accent text-accent-foreground rounded-full px-2 py-0.5 flex items-center gap-1">
+                {h}<button onClick={() => setProfile(p => ({ ...p, hobbies: splitArray(p.hobbies).filter(x => x !== h).join(", ") }))} className="hover:text-destructive"><Trash2 className="h-2.5 w-2.5" /></button>
+              </span>
+            ))}</div>}
+          </div>
+          <div>
+            <div className="flex items-center justify-between">
+              <VoiceLabel onVoiceResult={v => setProfile(p => ({ ...p, interests: p.interests ? `${p.interests}, ${v}` : v }))}>Interests</VoiceLabel>
+              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => {
+                const item = prompt("Add an interest:");
+                if (item?.trim()) setProfile(p => ({ ...p, interests: p.interests ? `${p.interests}, ${item.trim()}` : item.trim() }));
+              }}><Plus className="h-3 w-3 mr-1" />Add</Button>
+            </div>
+            <Input value={profile.interests} onChange={e => setProfile(p => ({ ...p, interests: e.target.value }))} className="mt-1" placeholder="AI, Startups" />
+            {profile.interests && <div className="flex flex-wrap gap-1 mt-1.5">{splitArray(profile.interests).map(h => (
+              <span key={h} className="text-[10px] bg-accent text-accent-foreground rounded-full px-2 py-0.5 flex items-center gap-1">
+                {h}<button onClick={() => setProfile(p => ({ ...p, interests: splitArray(p.interests).filter(x => x !== h).join(", ") }))} className="hover:text-destructive"><Trash2 className="h-2.5 w-2.5" /></button>
+              </span>
+            ))}</div>}
+          </div>
+          <div>
+            <div className="flex items-center justify-between">
+              <VoiceLabel onVoiceResult={v => setProfile(p => ({ ...p, sports: p.sports ? `${p.sports}, ${v}` : v }))}>Sports</VoiceLabel>
+              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => {
+                const item = prompt("Add a sport:");
+                if (item?.trim()) setProfile(p => ({ ...p, sports: p.sports ? `${p.sports}, ${item.trim()}` : item.trim() }));
+              }}><Plus className="h-3 w-3 mr-1" />Add</Button>
+            </div>
+            <Input value={profile.sports} onChange={e => setProfile(p => ({ ...p, sports: e.target.value }))} className="mt-1" placeholder="Running, Tennis" />
+            {profile.sports && <div className="flex flex-wrap gap-1 mt-1.5">{splitArray(profile.sports).map(h => (
+              <span key={h} className="text-[10px] bg-accent text-accent-foreground rounded-full px-2 py-0.5 flex items-center gap-1">
+                {h}<button onClick={() => setProfile(p => ({ ...p, sports: splitArray(p.sports).filter(x => x !== h).join(", ") }))} className="hover:text-destructive"><Trash2 className="h-2.5 w-2.5" /></button>
+              </span>
+            ))}</div>}
+          </div>
         </div>
       </section>
 
