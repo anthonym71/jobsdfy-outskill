@@ -130,6 +130,8 @@ const Onboarding = () => {
         user_id: user.id,
         full_name: form.fullName,
         email: user.email || "",
+        phone_number: phoneNumber.trim() || null,
+        phone_verified: phoneVerified,
         location: form.location,
         headline: form.headline,
         summary: form.summary,
