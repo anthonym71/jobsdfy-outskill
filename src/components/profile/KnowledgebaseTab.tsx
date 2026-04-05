@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Loader2, Plus, Trash2, ChevronDown, Upload, Globe, Eye, EyeOff, Search, Database, FileText, Image, Link } from "lucide-react";
+import { Loader2, Plus, Trash2, ChevronDown, Upload, Globe, Eye, EyeOff, Search, Database, FileText, Image, Link, ShieldCheck, Archive } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +32,10 @@ const KnowledgebaseTab = () => {
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [saving, setSaving] = useState(false);
+  const [assessing, setAssessing] = useState(false);
+  const [assessReport, setAssessReport] = useState("");
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Import state
   const [importing, setImporting] = useState(false);
@@ -111,9 +115,8 @@ const KnowledgebaseTab = () => {
     }
   };
 
-  const handleFileImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
+  const processFile = async (file: File) => {
+    if (!user) return;
     setImporting(true);
     try {
       const text = await file.text();
@@ -128,7 +131,64 @@ const KnowledgebaseTab = () => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
       setImporting(false);
-      e.target.value = "";
+    }
+  };
+
+  const handleFileImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processFile(file);
+    e.target.value = "";
+  };
+
+  const handleFileDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) await processFile(file);
+  };
+
+  const handleAssess = async () => {
+    if (!session) return;
+    setAssessing(true);
+    try {
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/assess-knowledgebase`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({}),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || "Failed");
+      setAssessReport(data.report);
+      toast({ title: "Assessment complete" });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    } finally {
+      setAssessing(false);
+    }
+  };
+
+  const handleArchive = async () => {
+    if (!user) return;
+    // Remove irrelevant and duplicate entries, keep only relevant ones
+    const relevant = entries.filter(e => e.is_relevant);
+    setSaving(true);
+    try {
+      await supabase.from("knowledgebase_entries").delete().eq("user_id", user.id);
+      if (relevant.length > 0) {
+        await supabase.from("knowledgebase_entries").insert(
+          relevant.map(e => ({
+            user_id: user.id, category: e.category, title: e.title, content: e.content,
+            source_type: e.source_type, source_name: e.source_name, is_relevant: true,
+          }))
+        );
+      }
+      toast({ title: "Archived", description: `Kept ${relevant.length} relevant entries, removed ${entries.length - relevant.length} irrelevant.` });
+      loadEntries();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -154,9 +214,17 @@ const KnowledgebaseTab = () => {
           <Database className="h-4 w-4" /> Import Data Sources
         </h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <Label className="text-xs">Upload File (PDF, DOCX, TXT)</Label>
-            <Input type="file" accept=".pdf,.docx,.txt,.doc,.csv" onChange={handleFileImport} disabled={importing} className="mt-1 text-xs" />
+          <div
+            className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors cursor-pointer ${dragOver ? "border-primary bg-primary/5" : "border-border"}`}
+            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={handleFileDrop}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input ref={fileInputRef} type="file" accept=".pdf,.docx,.txt,.doc,.csv" onChange={handleFileImport} disabled={importing} className="hidden" />
+            <Upload className="h-6 w-6 text-muted-foreground mx-auto mb-1" />
+            <p className="text-xs text-muted-foreground">{importing ? "Importing…" : "Drag & drop or click to upload"}</p>
+            <p className="text-[10px] text-muted-foreground">PDF, DOCX, TXT, CSV</p>
           </div>
           <div>
             <Label className="text-xs">Import from URL</Label>
