@@ -44,6 +44,8 @@ const AdminUsers = () => {
   const [groupFilter, setGroupFilter] = useState("all");
   const [allTags, setAllTags] = useState<string[]>([]);
   const [groups, setGroups] = useState<UserGroup[]>([]);
+  const [sortBy, setSortBy] = useState<"first" | "last" | "tags">("first");
+  const [activeTab, setActiveTab] = useState<"users" | "groups">("users");
 
   // Credit allocation dialog
   const [creditDialog, setCreditDialog] = useState<{ userId: string; name: string } | null>(null);
@@ -228,18 +230,22 @@ const AdminUsers = () => {
     URL.revokeObjectURL(a.href);
   };
 
+  const splitName = (name: string) => {
+    const parts = name.trim().split(/\s+/);
+    return { first: parts[0] || "—", last: parts.slice(1).join(" ") || "—" };
+  };
+
   const filtered = users.filter(u => {
     if (search && !u.full_name.toLowerCase().includes(search.toLowerCase()) && !u.email.toLowerCase().includes(search.toLowerCase()) && !u.user_id.includes(search)) return false;
     if (tagFilter !== "all" && !u.tags.includes(tagFilter)) return false;
     if (groupFilter !== "all" && !u.groups.includes(groupFilter)) return false;
     return true;
+  }).sort((a, b) => {
+    if (sortBy === "first") return splitName(a.full_name).first.localeCompare(splitName(b.full_name).first);
+    if (sortBy === "last") return splitName(a.full_name).last.localeCompare(splitName(b.full_name).last);
+    if (sortBy === "tags") return b.tags.length - a.tags.length;
+    return 0;
   });
-
-  // Split full_name into first/last
-  const splitName = (name: string) => {
-    const parts = name.trim().split(/\s+/);
-    return { first: parts[0] || "—", last: parts.slice(1).join(" ") || "—" };
-  };
 
   if (loading) return <div className="flex justify-center py-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   if (!isAdmin) return (
