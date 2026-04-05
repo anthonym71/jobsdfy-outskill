@@ -244,11 +244,11 @@ const WorkHistoryTab = () => {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <VoiceLabel onVoiceResult={v => updateEntry(i, "title", v)}>Job Title</VoiceLabel>
+              <VoiceLabel onVoiceResult={v => updateEntry(i, "title", v)} currentValue={entry.title}>Job Title</VoiceLabel>
               <Input value={entry.title} onChange={e => updateEntry(i, "title", e.target.value)} className="mt-1" />
             </div>
             <div>
-              <VoiceLabel onVoiceResult={v => updateEntry(i, "company", v)}>Company</VoiceLabel>
+              <VoiceLabel onVoiceResult={v => updateEntry(i, "company", v)} currentValue={entry.company}>Company</VoiceLabel>
               <Input value={entry.company} onChange={e => updateEntry(i, "company", e.target.value)} className="mt-1" />
             </div>
             <div>
@@ -259,7 +259,7 @@ const WorkHistoryTab = () => {
               </Select>
             </div>
             <div>
-              <VoiceLabel onVoiceResult={v => updateEntry(i, "location", v)}>Location</VoiceLabel>
+              <VoiceLabel onVoiceResult={v => updateEntry(i, "location", v)} currentValue={entry.location}>Location</VoiceLabel>
               <Input value={entry.location} onChange={e => updateEntry(i, "location", e.target.value)} className="mt-1" />
             </div>
             <div>
@@ -318,21 +318,21 @@ const WorkHistoryTab = () => {
           </div>
 
           <div>
-            <VoiceLabel onVoiceResult={v => updateEntry(i, "description", (entry.description ? entry.description + " " : "") + v)}>Description</VoiceLabel>
+            <VoiceLabel onVoiceResult={v => updateEntry(i, "description", v)} currentValue={entry.description}>Description</VoiceLabel>
             <Textarea value={entry.description} onChange={e => updateEntry(i, "description", e.target.value)} className="mt-1" rows={3} />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div>
-              <VoiceLabel onVoiceResult={v => updateEntry(i, "awards", v)}>Awards</VoiceLabel>
+              <VoiceLabel onVoiceResult={v => updateEntry(i, "awards", v)} currentValue={entry.awards}>Awards</VoiceLabel>
               <Input value={entry.awards} onChange={e => updateEntry(i, "awards", e.target.value)} className="mt-1" />
             </div>
             <div>
-              <VoiceLabel onVoiceResult={v => updateEntry(i, "achievements", v)}>Achievements</VoiceLabel>
+              <VoiceLabel onVoiceResult={v => updateEntry(i, "achievements", v)} currentValue={entry.achievements}>Achievements</VoiceLabel>
               <Input value={entry.achievements} onChange={e => updateEntry(i, "achievements", e.target.value)} className="mt-1" />
             </div>
             <div>
-              <VoiceLabel onVoiceResult={v => updateEntry(i, "performance", v)}>Performance</VoiceLabel>
+              <VoiceLabel onVoiceResult={v => updateEntry(i, "performance", v)} currentValue={entry.performance}>Performance</VoiceLabel>
               <Input value={entry.performance} onChange={e => updateEntry(i, "performance", e.target.value)} className="mt-1" />
             </div>
           </div>
