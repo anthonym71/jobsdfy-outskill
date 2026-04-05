@@ -138,35 +138,6 @@ const NewJob = () => {
 
       const extractedData = data.data;
       setExtracted(extractedData);
-
-      if (isExtensionImport) {
-        setSaving(true);
-        setIsExtensionImport(false);
-
-        try {
-          const job = await saveJobRecord(extractedData, {
-            sourceType: "text",
-            sourceInput: input,
-          });
-
-          toast({
-            title: "Job imported",
-            description: "Saved to Jobs and opening the dealbreaker check.",
-          });
-
-          navigate(`/app/dealbreakers/${job.id}`);
-          return;
-        } catch (err: any) {
-          console.error("Auto-save error:", err);
-          toast({
-            title: "Job extracted but not saved",
-            description: err.message || "Please review the extraction and save it manually.",
-            variant: "destructive",
-          });
-        } finally {
-          setSaving(false);
-        }
-      }
     } catch (err) {
       console.error("Extraction error:", err);
       toast({ title: "Network error", description: "Could not reach the extraction service.", variant: "destructive" });
