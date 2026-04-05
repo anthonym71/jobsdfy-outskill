@@ -518,6 +518,45 @@ export type Database = {
         }
         Relationships: []
       }
+      knowledgebase_entries: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          id: string
+          is_relevant: boolean
+          source_name: string | null
+          source_type: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_relevant?: boolean
+          source_name?: string | null
+          source_type?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_relevant?: boolean
+          source_name?: string | null
+          source_type?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       phone_change_requests: {
         Row: {
           created_at: string
@@ -937,6 +976,56 @@ export type Database = {
         }
         Relationships: []
       }
+      user_group_members: {
+        Row: {
+          added_at: string
+          group_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          group_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          group_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "user_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_groups: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       user_non_negotiables: {
         Row: {
           allowed_countries: string[] | null
@@ -985,6 +1074,7 @@ export type Database = {
       user_profiles: {
         Row: {
           created_at: string
+          email: string | null
           full_name: string
           headline: string | null
           hobbies: string[] | null
@@ -1005,6 +1095,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          email?: string | null
           full_name?: string
           headline?: string | null
           hobbies?: string[] | null
@@ -1025,6 +1116,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          email?: string | null
           full_name?: string
           headline?: string | null
           hobbies?: string[] | null

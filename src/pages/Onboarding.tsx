@@ -129,6 +129,7 @@ const Onboarding = () => {
       const { error: profileError } = await supabase.from("user_profiles").upsert({
         user_id: user.id,
         full_name: form.fullName,
+        email: user.email || "",
         location: form.location,
         headline: form.headline,
         summary: form.summary,
@@ -136,7 +137,7 @@ const Onboarding = () => {
         top_skills: splitArray(form.topSkills),
         industries: splitArray(form.industries),
         languages_spoken: splitArray(form.languages),
-      }, { onConflict: "user_id" });
+      } as any, { onConflict: "user_id" });
 
       if (profileError) throw profileError;
 

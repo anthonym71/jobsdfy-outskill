@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Plus, Trash2 } from "lucide-react";
+import VoiceCVBuilderDialog from "./VoiceCVBuilder";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,7 +58,10 @@ const EducationTab = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="font-heading text-base font-semibold text-foreground">Education</h2>
-        <Button size="sm" onClick={addEdu}><Plus className="h-4 w-4 mr-1" />Add</Button>
+        <div className="flex gap-2">
+          <VoiceCVBuilderDialog category="education" categoryLabel="Education" />
+          <Button size="sm" onClick={addEdu}><Plus className="h-4 w-4 mr-1" />Add</Button>
+        </div>
       </div>
       {entries.map((e, i) => (
         <div key={i} className="rounded-xl border border-border bg-card p-5 space-y-3">

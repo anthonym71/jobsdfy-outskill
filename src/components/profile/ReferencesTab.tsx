@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Plus, Trash2 } from "lucide-react";
+import VoiceCVBuilderDialog from "./VoiceCVBuilder";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,7 +51,10 @@ const ReferencesTab = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="font-heading text-base font-semibold text-foreground">References & Testimonials</h2>
-        <Button size="sm" onClick={addRef}><Plus className="h-4 w-4 mr-1" />Add Reference</Button>
+        <div className="flex gap-2">
+          <VoiceCVBuilderDialog category="references" categoryLabel="References" />
+          <Button size="sm" onClick={addRef}><Plus className="h-4 w-4 mr-1" />Add Reference</Button>
+        </div>
       </div>
 
       {refs.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">No references added yet.</p>}
