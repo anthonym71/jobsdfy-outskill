@@ -29,6 +29,7 @@ import ExtensionDownload from "./pages/ExtensionDownload";
 import RecruiterCandidates from "./pages/RecruiterCandidates";
 import Tasks from "./pages/Tasks";
 import AdminAuditLog from "./pages/AdminAuditLog";
+import OnboardingGuard from "./components/OnboardingGuard";
 
 const queryClient = new QueryClient();
 
