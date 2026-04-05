@@ -47,9 +47,9 @@ const seekerTiers = [
     price: "Free",
     period: "",
     description: "Everything you need to get started — no trial, no expiry.",
-    features: ["3 free credits", "Job extraction from any format", "Dealbreaker check", "Basic fit scoring", "Profile & CV upload", "Chrome extension", "Community support"],
+    features: ["12 free credits", "First job check always free", "Job extraction from any format", "Dealbreaker check", "Basic fit scoring", "Profile & CV upload", "Chrome extension", "Community support"],
     highlight: false,
-    cta: "Start Free Forever",
+    cta: "Check Your First Job Free",
   },
   {
     name: "Pro",
@@ -83,13 +83,13 @@ const creditPacks = [
 ];
 
 const faqs = [
-  { q: "Is it really free forever?", a: "Yes. The Free plan gives you 3 credits — no trial period, no credit card required, no expiry. Use them whenever you want. Need more? Buy credit packs anytime or subscribe for monthly credits." },
+  { q: "Is it really free forever?", a: "Yes. The Free plan gives you 12 credits and your first job check is always free — no trial period, no credit card required, no expiry. Use them whenever you want. Need more? Buy credit packs anytime or subscribe for monthly credits." },
   { q: "How does JobsDFY extract job information?", a: "Paste a URL, raw text, screenshot, or voice note. Our AI extracts the job title, company, salary, location, requirements, and more into structured fields you can review and edit." },
   { q: "What dealbreakers does it check for?", a: "Salary range, visa/work authorisation, location/remote mismatch, language requirements, mandatory certifications, years of experience, travel requirements, and industry exclusions." },
   { q: "Is my data private?", a: "Absolutely. Your profile, preferences, and job data are only visible to you. We never share your information with employers or third parties." },
   { q: "Does JobsDFY auto-apply for me?", a: "Never. Nothing goes out without your explicit approval. We generate drafts that you review, edit, and send yourself." },
   { q: "Does it work with LinkedIn?", a: "Yes! Our Chrome extension lets you send jobs from LinkedIn with one click. You can also Smart Paste — just Ctrl+A, Ctrl+C any job page and paste the raw content." },
-  { q: "What are credits?", a: "Credits power AI features like fit scoring, CV generation, and cover letters. Free users get 3 credits. Pro gets 30/month, Premium gets 100/month. You can also buy credit packs anytime." },
+  { q: "What are credits?", a: "Credits power AI features like fit scoring, CV generation, and cover letters. Free users get 12 credits and their first job check is free. Pro gets 30/month, Premium gets 100/month. You can also buy credit packs anytime." },
   { q: "What personality assessments are included?", a: "DRIVE, Big Five (OCEAN), DISC, Myers-Briggs type indicator, Core Personality Archetypes, 6 Human Needs Assessment, and more — with detailed reports and career insights." },
 ];
 
@@ -144,7 +144,7 @@ const Landing = () => {
               >
                 <Link to="/auth?mode=signup">
                   <Button size="lg" className="text-sm sm:text-base px-6 sm:px-8 py-5 sm:py-6">
-                    Start Free — No Card Required
+                    Check Your First Job Free
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
@@ -156,7 +156,7 @@ const Landing = () => {
                 initial="hidden" animate="visible" custom={4} variants={fadeUp}
                 className="mt-4 text-xs text-muted-foreground"
               >
-                ✓ Free forever &nbsp;·&nbsp; ✓ No credit card &nbsp;·&nbsp; ✓ Nothing auto-sends
+                ✓ 12 free credits &nbsp;·&nbsp; ✓ First job check free &nbsp;·&nbsp; ✓ No credit card &nbsp;·&nbsp; ✓ Nothing auto-sends
               </motion.p>
             </div>
 
@@ -415,7 +415,7 @@ const Landing = () => {
           <p className="mt-3 text-sm text-muted-foreground">Set up in 2 minutes. Free forever — no credit card, no catch.</p>
           <Link to="/auth?mode=signup">
             <Button size="lg" className="mt-6 text-sm sm:text-base px-8 py-5 sm:py-6">
-              Start Free Forever <ArrowRight className="ml-2 h-4 w-4" />
+              Check Your First Job Free <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
           <p className="mt-3 text-xs text-muted-foreground">
