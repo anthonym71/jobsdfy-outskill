@@ -32,16 +32,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         // Log sign-in events for audit trail
         if (event === "SIGNED_IN" && session?.user) {
-          const u = session.user;
-          supabase.from("user_profiles").select("full_name").eq("user_id", u.id).maybeSingle()
-            .then(({ data: profile }) => {
-              supabase.functions.invoke("support-tickets", {
-                body: {} // no-op just to have a valid invocation pattern
-              }).catch(() => {});
-              // Insert audit log — use service-level insert if admin, otherwise edge function
-              // For now, use a simple approach: only admins can insert, so we skip for non-admins
-              // The audit_logs table requires admin role to insert, so we'll track via a lightweight approach
-            });
+          setTimeout(() => {
+            supabase.functions.invoke("log-event", {
+              body: { action: "login", description: "User signed in" },
+            }).catch(() => {});
+          }, 0);
         }
       }
     );
