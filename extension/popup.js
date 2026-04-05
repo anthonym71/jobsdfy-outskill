@@ -79,9 +79,14 @@ sendBtn.addEventListener('click', async () => {
 
     const { appUrl } = await chrome.storage.local.get(['appUrl']);
     
-    const encoded = encodeURIComponent(result.text.slice(0, 15000));
     const baseUrl = (appUrl || DEFAULT_APP_URL).replace(/\/+$/, '');
-    const targetUrl = `${baseUrl}/app/new-job?source=extension&text=${encoded}`;
+    const params = new URLSearchParams({
+      source: 'extension',
+      text: result.text.slice(0, 15000),
+      url: result.url || '',
+      title: result.title || '',
+    });
+    const targetUrl = `${baseUrl}/app/new-job?${params.toString()}`;
     
     chrome.tabs.create({ url: targetUrl });
     setStatus('Sent! Opening JobsDFY…', 'success');

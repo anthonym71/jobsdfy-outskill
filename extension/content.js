@@ -36,9 +36,14 @@
 
     chrome.storage.local.get(['appUrl'], (result) => {
       const appUrl = result.appUrl || DEFAULT_APP_URL;
-      const encoded = encodeURIComponent(text.slice(0, 15000));
       const baseUrl = appUrl.replace(/\/+$/, '');
-      const targetUrl = `${baseUrl}/app/new-job?source=extension&text=${encoded}`;
+      const params = new URLSearchParams({
+        source: 'extension',
+        text: text.slice(0, 15000),
+        url: window.location.href,
+        title: document.title,
+      });
+      const targetUrl = `${baseUrl}/app/new-job?${params.toString()}`;
       window.open(targetUrl, '_blank');
 
       btn.innerHTML = '✓ Sent!';

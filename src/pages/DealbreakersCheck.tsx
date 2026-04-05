@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import VerdictBadge, { type Verdict } from "@/components/VerdictBadge";
 import BlockerCard from "@/components/BlockerCard";
-import { ArrowRight, Bookmark, Eye, SkipForward, ShieldAlert, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bookmark, ShieldAlert, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -37,7 +37,7 @@ interface AnalysisResult {
 const DealbreakersCheck = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, session } = useAuth();
+  const { session } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -142,11 +142,11 @@ const DealbreakersCheck = () => {
       {/* Actions */}
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-between rounded-xl border border-border bg-card p-5">
         <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/app")}><SkipForward className="mr-1.5 h-4 w-4" />Skip</Button>
+          <Button variant="ghost" size="sm" onClick={() => navigate(-1)}><ArrowLeft className="mr-1.5 h-4 w-4" />Back</Button>
           <Button variant="outline" size="sm" onClick={handleSave}><Bookmark className="mr-1.5 h-4 w-4" />Save</Button>
         </div>
         <Button size="sm" onClick={() => navigate(`/app/decision/${id}`)}>
-          Continue Anyway
+          Approved & Continue
           <ArrowRight className="ml-1.5 h-4 w-4" />
         </Button>
       </div>
