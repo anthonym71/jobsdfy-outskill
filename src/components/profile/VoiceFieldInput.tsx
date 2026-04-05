@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from "react";
-import { Mic, MicOff } from "lucide-react";
+import { Mic } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -22,12 +22,19 @@ const VoiceFieldInput = ({ onResult, options, label, className }: VoiceFieldInpu
 
   const fuzzyMatch = useCallback((spoken: string, opts: string[]): string | null => {
     const lower = spoken.toLowerCase().trim();
+    // Exact match
     const exact = opts.find(o => o.toLowerCase() === lower);
     if (exact) return exact;
-    const starts = opts.find(o => o.toLowerCase().startsWith(lower));
+    // Starts with
+    const starts = opts.find(o => o.toLowerCase().startsWith(lower) || lower.startsWith(o.toLowerCase()));
     if (starts) return starts;
+    // Contains
     const contains = opts.find(o => o.toLowerCase().includes(lower) || lower.includes(o.toLowerCase()));
     if (contains) return contains;
+    // Try without hyphens/spaces
+    const norm = lower.replace(/[-\s]/g, "");
+    const normMatch = opts.find(o => o.toLowerCase().replace(/[-\s]/g, "") === norm);
+    if (normMatch) return normMatch;
     return null;
   }, []);
 
@@ -41,7 +48,7 @@ const VoiceFieldInput = ({ onResult, options, label, className }: VoiceFieldInpu
     if (!SpeechRecognitionAPI) {
       toast({
         title: "Not supported",
-        description: "Voice input requires Chrome, Edge, or Safari.",
+        description: "Voice input requires Chrome, Edge, or Safari (not in iframe preview — publish first).",
         variant: "destructive",
       });
       return;
@@ -60,39 +67,38 @@ const VoiceFieldInput = ({ onResult, options, label, className }: VoiceFieldInpu
         const matched = fuzzyMatch(transcript, options);
         if (matched) {
           onResult(matched);
-          toast({ title: `Selected: ${matched}` });
+          toast({ title: `✓ ${matched}` });
         } else {
           toast({
-            title: "No match found",
-            description: `You said "${transcript}". Options: ${options.join(", ")}`,
+            title: "No match",
+            description: `You said "${transcript}". Try: ${options.slice(0, 5).join(", ")}`,
             variant: "destructive",
           });
         }
       } else {
         onResult(transcript);
-        toast({ title: "Voice captured", description: transcript.slice(0, 60) + (transcript.length > 60 ? "…" : "") });
+        toast({ title: "✓ Voice captured", description: transcript.slice(0, 80) });
       }
       setListening(false);
     };
 
     recognition.onerror = (event: any) => {
-      console.error("Speech recognition error:", event.error);
-      if (event.error === "not-allowed") {
-        toast({ title: "Microphone blocked", description: "Allow microphone access in your browser settings.", variant: "destructive" });
-      } else if (event.error === "no-speech") {
-        toast({ title: "No speech detected", description: "Try again and speak clearly.", variant: "destructive" });
-      } else {
-        toast({ title: "Voice input failed", description: `Error: ${event.error}`, variant: "destructive" });
-      }
+      console.error("Speech error:", event.error);
+      const messages: Record<string, string> = {
+        "not-allowed": "Microphone blocked — check browser settings. Won't work in iframe preview.",
+        "no-speech": "No speech detected — try again.",
+        "aborted": "Cancelled.",
+      };
+      toast({ title: messages[event.error] || `Error: ${event.error}`, variant: "destructive" });
       setListening(false);
     };
 
     recognition.onend = () => setListening(false);
 
     if (options && options.length > 0) {
-      toast({ title: `Say one of: ${options.slice(0, 6).join(", ")}${options.length > 6 ? "…" : ""}` });
+      toast({ title: `🎤 Say: ${options.slice(0, 5).join(", ")}${options.length > 5 ? "…" : ""}` });
     } else {
-      toast({ title: `Listening for ${label || "input"}…`, description: "Speak now." });
+      toast({ title: `🎤 Listening for ${label || "input"}…` });
     }
 
     recognition.start();
@@ -106,17 +112,18 @@ const VoiceFieldInput = ({ onResult, options, label, className }: VoiceFieldInpu
       className={cn(
         "inline-flex items-center justify-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
         listening
-          ? "text-destructive"
+          ? "text-primary"
           : "text-muted-foreground hover:text-primary",
         className
       )}
       title={listening ? "Stop listening" : (label ? `Voice input for ${label}` : "Voice input")}
     >
-      {listening ? (
-        <MicOff className="h-3.5 w-3.5 animate-pulse" />
-      ) : (
+      <span className="relative inline-flex">
         <Mic className="h-3.5 w-3.5" />
-      )}
+        {listening && (
+          <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-destructive animate-pulse" />
+        )}
+      </span>
     </button>
   );
 };
