@@ -315,9 +315,26 @@ const KnowledgebaseTab = () => {
         </div>
       )}
 
-      <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
-        {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving…</> : "Save Knowledgebase"}
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        <Button onClick={handleSave} disabled={saving}>
+          {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving…</> : "Save Knowledgebase"}
+        </Button>
+        <Button variant="outline" onClick={handleAssess} disabled={assessing} className="gap-1.5">
+          {assessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+          Assess All Data
+        </Button>
+        <Button variant="outline" onClick={handleArchive} disabled={saving} className="gap-1.5">
+          <Archive className="h-4 w-4" />
+          Archive & Clean
+        </Button>
+      </div>
+
+      {assessReport && (
+        <div className="rounded-xl border border-border bg-card p-5 space-y-2">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-primary" />Assessment Report</h3>
+          <div className="prose prose-sm max-w-none text-sm text-muted-foreground whitespace-pre-wrap">{assessReport}</div>
+        </div>
+      )}
     </div>
   );
 };

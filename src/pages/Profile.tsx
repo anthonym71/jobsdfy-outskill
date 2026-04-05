@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Briefcase, GraduationCap, Award, MessageSquare, Users, FileText, Database, TrendingUp, BookOpen, Brain } from "lucide-react";
+import { User, Briefcase, GraduationCap, Award, MessageSquare, Users, FileText, Database, TrendingUp, BookOpen, Brain, Crown, Bookmark, Lightbulb, Share2 } from "lucide-react";
 import AboutMeTab from "@/components/profile/AboutMeTab";
 import WorkHistoryTab from "@/components/profile/WorkHistoryTab";
 import EducationTab from "@/components/profile/EducationTab";
@@ -11,6 +11,10 @@ import KnowledgebaseTab from "@/components/profile/KnowledgebaseTab";
 import TimelineTab from "@/components/profile/TimelineTab";
 import CoursesTab from "@/components/profile/CoursesTab";
 import AssessmentsTab from "@/components/profile/AssessmentsTab";
+import AutobiographyTab from "@/components/profile/AutobiographyTab";
+import BooksTab from "@/components/profile/BooksTab";
+import MemoryDumpTab from "@/components/profile/MemoryDumpTab";
+import SocialPostsTab from "@/components/profile/SocialPostsTab";
 
 const Profile = () => {
   return (
@@ -32,6 +36,10 @@ const Profile = () => {
           <TabsTrigger value="references" className="gap-1.5"><Users className="h-4 w-4" />References</TabsTrigger>
           <TabsTrigger value="achievements" className="gap-1.5"><Award className="h-4 w-4" />Achievements</TabsTrigger>
           <TabsTrigger value="knowledgebase" className="gap-1.5"><Database className="h-4 w-4" />Knowledgebase</TabsTrigger>
+          <TabsTrigger value="autobiography" className="gap-1.5"><Crown className="h-4 w-4" />Autobiography</TabsTrigger>
+          <TabsTrigger value="books" className="gap-1.5"><Bookmark className="h-4 w-4" />Books</TabsTrigger>
+          <TabsTrigger value="memorydump" className="gap-1.5"><Lightbulb className="h-4 w-4" />Memory Dump</TabsTrigger>
+          <TabsTrigger value="socialposts" className="gap-1.5"><Share2 className="h-4 w-4" />Social Media</TabsTrigger>
           <TabsTrigger value="interview" className="gap-1.5"><MessageSquare className="h-4 w-4" />Interview Practice</TabsTrigger>
         </TabsList>
 
@@ -45,6 +53,10 @@ const Profile = () => {
         <TabsContent value="references"><ReferencesTab /></TabsContent>
         <TabsContent value="achievements"><AchievementsTab /></TabsContent>
         <TabsContent value="knowledgebase"><KnowledgebaseTab /></TabsContent>
+        <TabsContent value="autobiography"><AutobiographyTab /></TabsContent>
+        <TabsContent value="books"><BooksTab /></TabsContent>
+        <TabsContent value="memorydump"><MemoryDumpTab /></TabsContent>
+        <TabsContent value="socialposts"><SocialPostsTab /></TabsContent>
         <TabsContent value="interview"><InterviewPracticeTab /></TabsContent>
       </Tabs>
     </div>
