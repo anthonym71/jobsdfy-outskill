@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 const DEFAULT_AGENT_ID = "agent_9501kncarackfv1vkxevndvsjahk";
+const CV_BUILDER_AGENT_ID = "agent_4401knf25x6rfjzrqg5yymf5x3bd";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -42,10 +43,13 @@ serve(async (req) => {
 
     // Accept optional agent_id from request body
     let agentId = DEFAULT_AGENT_ID;
+    const PROFILE_CATEGORIES = ["work", "about", "education", "references", "achievements"];
     try {
       const body = await req.json();
       if (body?.agent_id) {
         agentId = body.agent_id;
+      } else if (body?.category && PROFILE_CATEGORIES.includes(body.category)) {
+        agentId = CV_BUILDER_AGENT_ID;
       }
     } catch {
       // No body or invalid JSON — use default
