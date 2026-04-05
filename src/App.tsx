@@ -28,6 +28,7 @@ import NotFound from "./pages/NotFound";
 import ExtensionDownload from "./pages/ExtensionDownload";
 import RecruiterCandidates from "./pages/RecruiterCandidates";
 import Tasks from "./pages/Tasks";
+import AdminAuditLog from "./pages/AdminAuditLog";
 
 const queryClient = new QueryClient();
 
