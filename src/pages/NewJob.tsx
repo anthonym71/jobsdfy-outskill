@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link2, FileText, Image, Mic, ArrowRight, Sparkles, AlertTriangle, ClipboardPaste, Chrome } from "lucide-react";
+import { Link2, FileText, Image, Mic, ArrowRight, Sparkles, AlertTriangle, ClipboardPaste, Chrome, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,43 +23,44 @@ const NewJob = () => {
   const [searchParams] = useSearchParams();
 
   const [autoExtractPending, setAutoExtractPending] = useState(false);
-  const [isExtensionImport, setIsExtensionImport] = useState(false);
 
-  // Auto-fill from Chrome extension
+  // Auto-fill from Chrome extension or mobile share
   useEffect(() => {
     const source = searchParams.get("source");
     const extText = searchParams.get("text");
     const shareUrl = searchParams.get("url");
-    const shareTitle = searchParams.get("title");
 
     if (source === "extension" && extText) {
       setText(extText);
-      setIsExtensionImport(true);
       setTab("text");
       setAutoExtractPending(true);
       navigate("/app/new-job", { replace: true });
     } else if (shareUrl || (extText && !source)) {
-      // PWA share target or bookmarklet — got a URL
+      // PWA share target or bookmarklet
+      // Mobile share often puts the URL inside the "text" field
+      const urlInText = extText?.match(/https?:\/\/\S+/)?.[0];
       if (shareUrl) {
         setUrl(shareUrl);
+        setTab("url");
+      } else if (urlInText) {
+        setUrl(urlInText);
         setTab("url");
       } else if (extText) {
         setText(extText);
         setTab("text");
       }
-      setIsExtensionImport(true);
       setAutoExtractPending(true);
       navigate("/app/new-job", { replace: true });
     }
   }, [searchParams, navigate]);
 
-  // Auto-trigger extraction after extension text is set
+  // Auto-trigger extraction after text/url is set from share/extension
   useEffect(() => {
-    if (autoExtractPending && text.trim()) {
+    if (autoExtractPending && (text.trim() || url.trim())) {
       setAutoExtractPending(false);
       handleExtract();
     }
-  }, [autoExtractPending, text]);
+  }, [autoExtractPending, text, url]);
 
   const parseSalary = (value: unknown) => {
     const parsed = Number.parseInt(String(value ?? ""), 10);
@@ -137,35 +138,6 @@ const NewJob = () => {
 
       const extractedData = data.data;
       setExtracted(extractedData);
-
-      if (isExtensionImport) {
-        setSaving(true);
-        setIsExtensionImport(false);
-
-        try {
-          const job = await saveJobRecord(extractedData, {
-            sourceType: "text",
-            sourceInput: input,
-          });
-
-          toast({
-            title: "Job imported",
-            description: "Saved to Jobs and opening the dealbreaker check.",
-          });
-
-          navigate(`/app/dealbreakers/${job.id}`);
-          return;
-        } catch (err: any) {
-          console.error("Auto-save error:", err);
-          toast({
-            title: "Job extracted but not saved",
-            description: err.message || "Please review the extraction and save it manually.",
-            variant: "destructive",
-          });
-        } finally {
-          setSaving(false);
-        }
-      }
     } catch (err) {
       console.error("Extraction error:", err);
       toast({ title: "Network error", description: "Could not reach the extraction service.", variant: "destructive" });
@@ -174,22 +146,34 @@ const NewJob = () => {
     }
   };
 
+  const getEditedValues = () => {
+    const formEl = document.getElementById("extraction-form") as HTMLFormElement;
+    const formData = new FormData(formEl);
+    const edited: Record<string, string> = {};
+    formData.forEach((val, key) => { edited[key] = val as string; });
+    return { ...extracted, ...edited };
+  };
+
+  const handleSaveToJobs = async () => {
+    if (!user || !extracted) return;
+    setSaving(true);
+    try {
+      await saveJobRecord(getEditedValues());
+      toast({ title: "Job saved", description: "Added to your Jobs list." });
+      navigate("/app/jobs");
+    } catch (err: any) {
+      console.error("Save error:", err);
+      toast({ title: "Error saving job", description: err.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleContinue = async () => {
     if (!user || !extracted) return;
     setSaving(true);
-
     try {
-      // Collect edited values from the form
-      const formEl = document.getElementById("extraction-form") as HTMLFormElement;
-      const formData = new FormData(formEl);
-      const edited: Record<string, string> = {};
-      formData.forEach((val, key) => { edited[key] = val as string; });
-
-      const job = await saveJobRecord({
-        ...extracted,
-        ...edited,
-      });
-
+      const job = await saveJobRecord(getEditedValues());
       navigate(`/app/dealbreakers/${job.id}`);
     } catch (err: any) {
       console.error("Save error:", err);
@@ -311,6 +295,10 @@ const NewJob = () => {
 
           <div className="flex gap-3 justify-end">
             <Button variant="outline" onClick={() => setExtracted(null)}>Start Over</Button>
+            <Button variant="secondary" onClick={handleSaveToJobs} disabled={saving}>
+              <Save className="mr-2 h-4 w-4" />
+              Save to Jobs
+            </Button>
             <Button onClick={handleContinue} disabled={saving}>
               {saving ? "Saving…" : "Continue to Dealbreaker Check"}
               <ArrowRight className="ml-2 h-4 w-4" />

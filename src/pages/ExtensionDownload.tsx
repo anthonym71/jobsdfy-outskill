@@ -117,16 +117,16 @@ const ExtensionDownload = () => {
                 <Share2 className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-heading text-base font-semibold text-foreground">Option 1: Install & Share (Recommended)</h3>
-                <p className="text-xs text-muted-foreground">Works on iPhone & Android — no app store needed</p>
+               <h3 className="font-heading text-base font-semibold text-foreground">Option 1: Install & Share (Recommended)</h3>
+                <p className="text-xs text-muted-foreground">Works with LinkedIn, Indeed & any app — iPhone & Android</p>
               </div>
             </div>
             <ol className="space-y-3">
               {[
-                "Open www.jobsdfy.com in your mobile browser.",
+                "Open www.jobsdfy.com in your mobile browser (Chrome or Safari).",
                 "Install the app:\n• iPhone: Tap the Share icon → \"Add to Home Screen\"\n• Android: Tap the browser menu → \"Install app\" or \"Add to Home Screen\"",
-                "Now on any job page, tap Share → choose \"JobsDFY\".",
-                "The job URL is automatically sent to JobsDFY for extraction!",
+                "Open the LinkedIn app (or any job site), find a job you like.",
+                "Tap Share → choose \"JobsDFY\" from the share menu.\nThe job is automatically sent and extracted!",
               ].map((step, i) => (
                 <li key={i} className="flex gap-3">
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
@@ -136,6 +136,12 @@ const ExtensionDownload = () => {
                 </li>
               ))}
             </ol>
+            <div className="rounded-lg bg-accent/50 p-3">
+              <p className="text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">💡 Works with LinkedIn App!</span>{" "}
+                When you share from the LinkedIn mobile app, it sends the job URL directly to JobsDFY. This also works with Indeed, Glassdoor, and any app with a Share button.
+              </p>
+            </div>
           </div>
 
           {/* Bookmarklet */}
