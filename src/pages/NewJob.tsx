@@ -22,6 +22,8 @@ const NewJob = () => {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
 
+  const [autoExtractPending, setAutoExtractPending] = useState(false);
+
   // Auto-fill from Chrome extension
   useEffect(() => {
     const source = searchParams.get("source");
@@ -29,10 +31,18 @@ const NewJob = () => {
     if (source === "extension" && extText) {
       setText(decodeURIComponent(extText));
       setTab("text");
-      // Clean up URL
+      setAutoExtractPending(true);
       navigate("/app/new-job", { replace: true });
     }
   }, [searchParams, navigate]);
+
+  // Auto-trigger extraction after extension text is set
+  useEffect(() => {
+    if (autoExtractPending && text.trim()) {
+      setAutoExtractPending(false);
+      handleExtract();
+    }
+  }, [autoExtractPending, text]);
 
   const handleExtract = async () => {
     const input = tab === "url" ? url.trim() : text.trim();
