@@ -29,10 +29,25 @@ const NewJob = () => {
   useEffect(() => {
     const source = searchParams.get("source");
     const extText = searchParams.get("text");
+    const shareUrl = searchParams.get("url");
+    const shareTitle = searchParams.get("title");
+
     if (source === "extension" && extText) {
       setText(extText);
       setIsExtensionImport(true);
       setTab("text");
+      setAutoExtractPending(true);
+      navigate("/app/new-job", { replace: true });
+    } else if (shareUrl || (extText && !source)) {
+      // PWA share target or bookmarklet — got a URL
+      if (shareUrl) {
+        setUrl(shareUrl);
+        setTab("url");
+      } else if (extText) {
+        setText(extText);
+        setTab("text");
+      }
+      setIsExtensionImport(true);
       setAutoExtractPending(true);
       navigate("/app/new-job", { replace: true });
     }
