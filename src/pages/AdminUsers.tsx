@@ -241,6 +241,14 @@ const AdminUsers = () => {
         updated_at: new Date().toISOString(),
       }).eq("user_id", editDialog.user_id);
       if (error) throw error;
+      // Audit log
+      await supabase.from("audit_logs").insert({
+        user_id: user?.id,
+        user_email: user?.email || "",
+        user_name: "",
+        action: "edit_user",
+        description: `Updated profile for ${editForm.full_name} (${editForm.email})`,
+      });
       toast({ title: "User updated" });
       setEditDialog(null);
       loadUsers();
@@ -259,6 +267,13 @@ const AdminUsers = () => {
         updated_at: new Date().toISOString(),
       } as any).eq("user_id", suspendDialog.userId);
       if (error) throw error;
+      await supabase.from("audit_logs").insert({
+        user_id: user?.id,
+        user_email: user?.email || "",
+        user_name: "",
+        action: suspendAction === "active" ? "reactivate_user" : `${suspendAction}_user`,
+        description: `${suspendAction === "active" ? "Reactivated" : suspendAction === "suspended" ? "Suspended" : "Cancelled"} account for ${suspendDialog.name}. Reason: ${suspendReason || "N/A"}`,
+      });
       toast({ title: suspendAction === "active" ? "Account reactivated" : `Account ${suspendAction}` });
       setSuspendDialog(null); setSuspendReason("");
       loadUsers();
