@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, Plus, Trash2, Sparkles, Lightbulb, Camera } from "lucide-react";
+import VoiceCVBuilderDialog from "./VoiceCVBuilder";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +19,7 @@ interface SocialAccount {
   friends: number;
 }
 
-const PLATFORMS = ["LinkedIn", "Twitter/X", "GitHub", "Instagram", "TikTok", "Facebook", "YouTube", "Other"];
+const PLATFORMS = ["LinkedIn", "Twitter/X", "GitHub", "Instagram", "TikTok", "Facebook", "YouTube", "WhatsApp", "Telegram", "Google Business", "Pinterest", "Reddit", "Snapchat", "Threads", "URL/Website", "iMessage", "Other"];
 
 const AboutMeTab = () => {
   const { user, session } = useAuth();
@@ -239,7 +240,10 @@ const AboutMeTab = () => {
     <div className="space-y-6">
       {/* Photo + Basic Info */}
       <section className="rounded-xl border border-border bg-card p-6 space-y-4">
-        <h2 className="font-heading text-base font-semibold text-foreground">Basic Information</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="font-heading text-base font-semibold text-foreground">Basic Information</h2>
+          <VoiceCVBuilderDialog category="about" categoryLabel="About Me" />
+        </div>
 
         {/* Photo upload */}
         <div className="flex items-center gap-4">

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Loader2, Trophy, Brain, Heart, Flame } from "lucide-react";
+import VoiceCVBuilderDialog from "./VoiceCVBuilder";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
