@@ -50,7 +50,7 @@ const AutobiographyTab = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
-        <Crown className="h-5 w-5 text-amber-500" />
+        <Crown className="h-5 w-5 text-primary" />
         <div>
           <h2 className="font-heading text-base font-semibold text-foreground">Autobiography</h2>
           <p className="text-sm text-muted-foreground">Premium feature — AI-generated stories from your knowledgebase.</p>

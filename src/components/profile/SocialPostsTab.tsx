@@ -38,9 +38,9 @@ const SocialPostsTab = () => {
     setAdding(true);
     const { error } = await supabase.from("social_posts").insert({
       user_id: user.id, post_type: postType, content,
-      platforms: platforms.filter(p => p.url.trim()),
+      platforms: JSON.parse(JSON.stringify(platforms.filter(p => p.url.trim()))),
       follow_up_task: followUpTask, follow_up_done: false,
-    });
+    } as any);
     if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
     else {
       toast({ title: "Post added" });
