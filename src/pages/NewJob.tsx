@@ -270,7 +270,16 @@ const NewJob = () => {
         <div className="space-y-6">
           <form id="extraction-form" className="rounded-xl border border-border bg-card p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="font-heading text-lg font-semibold text-foreground">Extraction Preview</h2>
+              <div className="flex items-center gap-3">
+                <h2 className="font-heading text-lg font-semibold text-foreground">Extraction Preview</h2>
+                {(() => {
+                  const src = extracted?.applicationUrl || url;
+                  const idMatch = src?.match(/\/view\/(\d+)/) || src?.match(/currentJobId=(\d+)/);
+                  return idMatch ? (
+                    <span className="text-xs font-mono bg-accent text-muted-foreground rounded-full px-2.5 py-0.5">#{idMatch[1]}</span>
+                  ) : null;
+                })()}
+              </div>
               <span className="text-xs text-muted-foreground bg-accent rounded-full px-2.5 py-1">AI extracted</span>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">

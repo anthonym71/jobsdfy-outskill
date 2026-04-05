@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
-import { Download, Chrome, Loader2, Phone, Mail, User } from "lucide-react";
+import { Download, Chrome, Loader2, Phone, Mail, User, Copy, Gift } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +21,7 @@ const Settings = () => {
   const [originalPhone, setOriginalPhone] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [referralLink, setReferralLink] = useState("");
 
   // Email change
   const [newEmail, setNewEmail] = useState("");
@@ -35,13 +36,23 @@ const Settings = () => {
   useEffect(() => {
     if (!user) return;
     setEmail(user.email || "");
-    supabase.from("user_profiles").select("full_name, phone_number").eq("user_id", user.id).maybeSingle()
+    supabase.from("user_profiles").select("full_name, phone_number, referral_link").eq("user_id", user.id).maybeSingle()
       .then(({ data }) => {
         if (data) {
           setFullName(data.full_name || "");
           setOriginalName(data.full_name || "");
           setPhone(data.phone_number || "");
           setOriginalPhone(data.phone_number || "");
+          // Generate referral link if not set
+          const baseUrl = window.location.origin;
+          if (data.referral_link) {
+            setReferralLink(data.referral_link);
+          } else {
+            const code = user.id.slice(0, 8);
+            const link = `${baseUrl}/auth?mode=signup&ref=${code}`;
+            setReferralLink(link);
+            supabase.from("user_profiles").update({ referral_link: link }).eq("user_id", user.id);
+          }
         }
         setLoading(false);
       });
