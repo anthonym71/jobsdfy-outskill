@@ -39,9 +39,12 @@ export type Database = {
           content: string | null
           created_at: string
           id: string
+          is_draft: boolean
           job_id: string
+          submitted_at: string | null
           updated_at: string
           user_id: string
+          version: number
         }
         Insert: {
           approved?: boolean | null
@@ -49,9 +52,12 @@ export type Database = {
           content?: string | null
           created_at?: string
           id?: string
+          is_draft?: boolean
           job_id: string
+          submitted_at?: string | null
           updated_at?: string
           user_id: string
+          version?: number
         }
         Update: {
           approved?: boolean | null
@@ -59,9 +65,12 @@ export type Database = {
           content?: string | null
           created_at?: string
           id?: string
+          is_draft?: boolean
           job_id?: string
+          submitted_at?: string | null
           updated_at?: string
           user_id?: string
+          version?: number
         }
         Relationships: [
           {

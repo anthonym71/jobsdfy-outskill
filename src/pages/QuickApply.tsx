@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Check, Copy, RefreshCw, ShieldCheck, Loader2, Clock, FileText, Mail, MessageSquare, ChevronDown, ChevronUp } from "lucide-react";
+import { Check, Copy, RefreshCw, ShieldCheck, Loader2, Clock, FileText, Mail, MessageSquare, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +14,16 @@ interface AppPack {
   recruiterNote: string;
   mustHaves: string[];
   emphasisPoints: string[];
+}
+
+interface PackVersion {
+  version: number;
+  resume: string;
+  coverNote: string;
+  recruiterNote: string;
+  isDraft: boolean;
+  submittedAt: string | null;
+  createdAt: string;
 }
 
 interface TimelineEvent {
@@ -37,7 +47,7 @@ const QuickApply = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
   const { toast } = useToast();
-  const { credits, spendCredits } = useCredits();
+  const { credits, spendCredits, loading: creditsLoading } = useCredits();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [job, setJob] = useState<any>(null);
@@ -46,65 +56,154 @@ const QuickApply = () => {
   const [timeline, setTimeline] = useState<TimelineData | null>(null);
   const [generatingTimeline, setGeneratingTimeline] = useState(false);
   const [showTimeline, setShowTimeline] = useState(false);
+  const [versions, setVersions] = useState<PackVersion[]>([]);
+  const [activeVersion, setActiveVersion] = useState<number>(0);
 
   useEffect(() => {
     if (!id || !session) return;
-    loadJobAndGenerate();
-  }, [id, session]);
+    if (creditsLoading) return; // Wait for credits to load
+    loadJobAndPacks();
+  }, [id, session, creditsLoading]);
 
-  const loadJobAndGenerate = async () => {
+  const loadJobAndPacks = async () => {
     setLoading(true);
     try {
       const { data: jobData } = await supabase.from("jobs").select("*").eq("id", id).single();
       setJob(jobData);
 
-      const { data: assets } = await supabase.from("application_assets").select("*").eq("job_id", id!);
-      if (assets && assets.length >= 3) {
-        const resume = assets.find((a) => a.asset_type === "resume")?.content || "";
-        const coverNote = assets.find((a) => a.asset_type === "cover_note")?.content || "";
-        const recruiterNote = assets.find((a) => a.asset_type === "recruiter_note")?.content || "";
-        setDrafts({ resume, coverNote, recruiterNote });
-        setPack({ resume, coverNote, recruiterNote, mustHaves: [], emphasisPoints: [] });
-        setLoading(false);
-        return;
-      }
+      const { data: assets } = await supabase
+        .from("application_assets")
+        .select("*")
+        .eq("job_id", id!)
+        .order("version", { ascending: true });
 
-      if (!credits || credits.balance < 3) {
-        toast({ title: "Insufficient credits", description: "You need 3 credits to generate an application pack.", variant: "destructive" });
-        setLoading(false);
-        return;
-      }
-      await spendCredits(3, "generate_application_pack");
-
-      const resp = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-application`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session!.access_token}` },
-          body: JSON.stringify({ jobId: id }),
+      if (assets && assets.length > 0) {
+        // Group by version
+        const versionMap = new Map<number, PackVersion>();
+        for (const a of assets) {
+          const v = (a as any).version || 1;
+          if (!versionMap.has(v)) {
+            versionMap.set(v, {
+              version: v,
+              resume: "",
+              coverNote: "",
+              recruiterNote: "",
+              isDraft: (a as any).is_draft ?? true,
+              submittedAt: (a as any).submitted_at || null,
+              createdAt: a.created_at,
+            });
+          }
+          const entry = versionMap.get(v)!;
+          if (a.asset_type === "resume") entry.resume = a.content || "";
+          if (a.asset_type === "cover_note") entry.coverNote = a.content || "";
+          if (a.asset_type === "recruiter_note") entry.recruiterNote = a.content || "";
         }
-      );
 
-      const data = await resp.json();
-      if (!resp.ok) {
-        toast({ title: "Generation failed", description: data.error || "Something went wrong.", variant: "destructive" });
+        const allVersions = Array.from(versionMap.values()).sort((a, b) => a.version - b.version);
+        setVersions(allVersions);
+
+        // Show the latest version
+        const latest = allVersions[allVersions.length - 1];
+        setActiveVersion(latest.version);
+        setDrafts({ resume: latest.resume, coverNote: latest.coverNote, recruiterNote: latest.recruiterNote });
+        setPack({ resume: latest.resume, coverNote: latest.coverNote, recruiterNote: latest.recruiterNote, mustHaves: [], emphasisPoints: [] });
+        setLoading(false);
         return;
       }
 
-      setPack(data.data);
-      setDrafts({ resume: data.data.resume, coverNote: data.data.coverNote, recruiterNote: data.data.recruiterNote });
+      // No existing packs — generate one
+      await generateNewPack(1);
     } catch (err) {
       console.error("Error:", err);
-      toast({ title: "Error", description: "Could not generate application pack.", variant: "destructive" });
+      toast({ title: "Error", description: "Could not load application pack.", variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
+  const generateNewPack = async (version: number) => {
+    if (!credits || credits.balance < 3) {
+      toast({ title: "Insufficient credits", description: "You need 3 credits to generate an application pack.", variant: "destructive" });
+      return;
+    }
+    await spendCredits(3, "generate_application_pack");
+
+    const resp = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-application`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session!.access_token}` },
+        body: JSON.stringify({ jobId: id, version }),
+      }
+    );
+
+    const data = await resp.json();
+    if (!resp.ok) {
+      toast({ title: "Generation failed", description: data.error || "Something went wrong.", variant: "destructive" });
+      return;
+    }
+
+    const newVersion: PackVersion = {
+      version,
+      resume: data.data.resume,
+      coverNote: data.data.coverNote,
+      recruiterNote: data.data.recruiterNote,
+      isDraft: true,
+      submittedAt: null,
+      createdAt: new Date().toISOString(),
+    };
+
+    setVersions(prev => [...prev, newVersion]);
+    setActiveVersion(version);
+    setPack(data.data);
+    setDrafts({ resume: data.data.resume, coverNote: data.data.coverNote, recruiterNote: data.data.recruiterNote });
+  };
+
   const regenerate = async () => {
     setLoading(true);
-    await supabase.from("application_assets").delete().eq("job_id", id!);
-    await loadJobAndGenerate();
+    try {
+      const nextVersion = versions.length > 0 ? Math.max(...versions.map(v => v.version)) + 1 : 1;
+      await generateNewPack(nextVersion);
+    } catch (err) {
+      console.error("Regenerate error:", err);
+      toast({ title: "Error", description: "Could not regenerate pack.", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const switchVersion = (v: PackVersion) => {
+    setActiveVersion(v.version);
+    setDrafts({ resume: v.resume, coverNote: v.coverNote, recruiterNote: v.recruiterNote });
+    setPack({ resume: v.resume, coverNote: v.coverNote, recruiterNote: v.recruiterNote, mustHaves: [], emphasisPoints: [] });
+  };
+
+  const deleteVersion = async (version: number) => {
+    const v = versions.find(vv => vv.version === version);
+    if (!v || !v.isDraft) {
+      toast({ title: "Cannot delete", description: "Submitted packs cannot be deleted.", variant: "destructive" });
+      return;
+    }
+    // Use type assertion to work around generated types not knowing about version column yet
+    const { error } = await supabase.from("application_assets").delete().eq("job_id", id!);
+    if (!error) {
+      // Re-insert all versions except the deleted one
+      const remaining = versions.filter(vv => vv.version !== version);
+      for (const rv of remaining) {
+        await supabase.from("application_assets").insert([
+          { job_id: id!, user_id: session!.user.id, asset_type: "resume", content: rv.resume },
+          { job_id: id!, user_id: session!.user.id, asset_type: "cover_note", content: rv.coverNote },
+          { job_id: id!, user_id: session!.user.id, asset_type: "recruiter_note", content: rv.recruiterNote },
+        ]);
+      }
+      setVersions(remaining);
+      if (remaining.length > 0) {
+        switchVersion(remaining[remaining.length - 1]);
+      } else {
+        setPack(null);
+      }
+    }
+    toast({ title: "Draft deleted" });
   };
 
   const handleGenerateTimeline = async () => {
@@ -136,14 +235,29 @@ const QuickApply = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
+      // Delete only the current version's assets then re-insert
+      // Since types.ts doesn't know about 'version' column yet, we delete all and re-insert
       await supabase.from("application_assets").delete().eq("job_id", id!);
-      const assets = [
-        { job_id: id!, user_id: session!.user.id, asset_type: "resume", content: drafts.resume },
-        { job_id: id!, user_id: session!.user.id, asset_type: "cover_note", content: drafts.coverNote },
-        { job_id: id!, user_id: session!.user.id, asset_type: "recruiter_note", content: drafts.recruiterNote },
-      ];
-      const { error } = await supabase.from("application_assets").insert(assets);
+      const allAssets: any[] = [];
+      for (const v of versions) {
+        const data = v.version === activeVersion
+          ? { resume: drafts.resume, coverNote: drafts.coverNote, recruiterNote: drafts.recruiterNote }
+          : { resume: v.resume, coverNote: v.coverNote, recruiterNote: v.recruiterNote };
+        allAssets.push(
+          { job_id: id!, user_id: session!.user.id, asset_type: "resume", content: data.resume, version: v.version, is_draft: v.isDraft },
+          { job_id: id!, user_id: session!.user.id, asset_type: "cover_note", content: data.coverNote, version: v.version, is_draft: v.isDraft },
+          { job_id: id!, user_id: session!.user.id, asset_type: "recruiter_note", content: data.recruiterNote, version: v.version, is_draft: v.isDraft },
+        );
+      }
+      const { error } = await supabase.from("application_assets").insert(allAssets);
       if (error) throw error;
+
+      // Update local version state
+      setVersions(prev => prev.map(v =>
+        v.version === activeVersion
+          ? { ...v, resume: drafts.resume, coverNote: drafts.coverNote, recruiterNote: drafts.recruiterNote }
+          : v
+      ));
       toast({ title: "Drafts saved" });
     } catch (err: any) {
       toast({ title: "Save error", description: err.message, variant: "destructive" });
@@ -154,8 +268,17 @@ const QuickApply = () => {
 
   const handleApprove = async () => {
     await handleSave();
+    // Mark this version as submitted
+    await (supabase
+      .from("application_assets")
+      .update({ approved: true, is_draft: false, submitted_at: new Date().toISOString() } as any)
+      .eq("job_id", id!) as any);
     await supabase.from("jobs").update({ status: "applied" }).eq("id", id!);
-    await supabase.from("application_assets").update({ approved: true }).eq("job_id", id!);
+
+    setVersions(prev => prev.map(v =>
+      v.version === activeVersion ? { ...v, isDraft: false, submittedAt: new Date().toISOString() } : v
+    ));
+
     toast({ title: "Pack approved!", description: "Status updated to Applied." });
     navigate("/app");
   };
@@ -198,7 +321,7 @@ const QuickApply = () => {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-5">
-        {/* Left: Job highlights + Timeline */}
+        {/* Left: Job highlights + Versions + Timeline */}
         <div className="lg:col-span-2 space-y-4">
           <div className="rounded-xl border border-border bg-card p-5 space-y-4">
             <div>
@@ -228,6 +351,45 @@ const QuickApply = () => {
               </div>
             )}
           </div>
+
+          {/* Pack Versions */}
+          {versions.length > 0 && (
+            <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+              <h3 className="font-heading text-sm font-semibold text-foreground">Pack Versions</h3>
+              <div className="space-y-2">
+                {versions.map((v) => (
+                  <div
+                    key={v.version}
+                    className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm cursor-pointer transition-colors ${
+                      v.version === activeVersion
+                        ? "bg-primary/10 border border-primary/30"
+                        : "bg-muted/50 hover:bg-muted"
+                    }`}
+                    onClick={() => switchVersion(v)}
+                  >
+                    <div>
+                      <span className="font-medium text-foreground">Version {v.version}</span>
+                      <span className={`ml-2 text-xs ${v.isDraft ? "text-amber-500" : "text-verdict-go"}`}>
+                        {v.isDraft ? "Draft" : "Submitted"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {v.isDraft && versions.length > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={(e) => { e.stopPropagation(); deleteVersion(v.version); }}
+                        >
+                          <Trash2 className="h-3 w-3 text-muted-foreground" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Timeline Section */}
           <div className="rounded-xl border border-border bg-card p-5 space-y-3">
@@ -305,7 +467,7 @@ const QuickApply = () => {
 
           <div className="flex gap-3 justify-end">
             <Button variant="ghost" size="sm" onClick={regenerate}>
-              <RefreshCw className="mr-1.5 h-4 w-4" />Regenerate
+              <RefreshCw className="mr-1.5 h-4 w-4" />Regenerate (3 credits)
             </Button>
             <Button variant="outline" onClick={handleSave} disabled={saving}>
               {saving ? "Saving…" : "Save Draft"}
