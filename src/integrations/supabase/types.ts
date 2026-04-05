@@ -1132,6 +1132,9 @@ export type Database = {
           phone_verified: boolean | null
           photo_url: string | null
           sports: string[] | null
+          status: string
+          status_reason: string | null
+          status_updated_at: string | null
           summary: string | null
           top_skills: string[] | null
           updated_at: string
@@ -1153,6 +1156,9 @@ export type Database = {
           phone_verified?: boolean | null
           photo_url?: string | null
           sports?: string[] | null
+          status?: string
+          status_reason?: string | null
+          status_updated_at?: string | null
           summary?: string | null
           top_skills?: string[] | null
           updated_at?: string
@@ -1174,6 +1180,9 @@ export type Database = {
           phone_verified?: boolean | null
           photo_url?: string | null
           sports?: string[] | null
+          status?: string
+          status_reason?: string | null
+          status_updated_at?: string | null
           summary?: string | null
           top_skills?: string[] | null
           updated_at?: string
