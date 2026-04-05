@@ -24,6 +24,7 @@ const baseNavItems: { to: string; icon: any; label: string; end?: boolean }[] = 
 const adminNavItems: { to: string; icon: any; label: string; end?: boolean }[] = [
   { to: "/app/admin", icon: ShieldCheck, label: "Admin" },
   { to: "/app/admin/users", icon: Users, label: "Users" },
+  { to: "/app/admin/logs", icon: ClipboardList, label: "Events Log" },
 ];
 
 const AppLayout = () => {
