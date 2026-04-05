@@ -18,11 +18,13 @@ const Auth = () => {
   const { toast } = useToast();
   const { user, isLoading } = useAuth();
 
+  const returnTo = searchParams.get("returnTo") || "/app";
+
   useEffect(() => {
     if (!isLoading && user) {
-      navigate("/app", { replace: true });
+      navigate(returnTo, { replace: true });
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, navigate, returnTo]);
 
   const [emailSent, setEmailSent] = useState(false);
 
@@ -45,7 +47,7 @@ const Auth = () => {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate("/app");
+        navigate(returnTo);
       }
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
