@@ -1,21 +1,35 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Briefcase, ShieldOff, Zap, Search, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { PlusCircle, Briefcase, ShieldOff, Zap, Search, Loader2, Gift, Copy } from "lucide-react";
 import VerdictBadge from "@/components/VerdictBadge";
 import StatusPill from "@/components/StatusPill";
 import EmptyState from "@/components/EmptyState";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [referralLink, setReferralLink] = useState("");
 
   useEffect(() => {
     if (!user) return;
     loadJobs();
+    // Load referral link
+    supabase.from("user_profiles").select("referral_link").eq("user_id", user.id).maybeSingle()
+      .then(({ data }) => {
+        if (data?.referral_link) {
+          setReferralLink(data.referral_link);
+        } else {
+          const link = `${window.location.origin}/auth?mode=signup&ref=${user.id.slice(0, 8)}`;
+          setReferralLink(link);
+        }
+      });
   }, [user]);
 
   const loadJobs = async () => {
@@ -112,6 +126,26 @@ const Dashboard = () => {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Referral Widget */}
+      <div className="rounded-xl border border-primary/20 bg-primary/5 p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <Gift className="h-8 w-8 text-primary shrink-0" />
+          <div className="min-w-0">
+            <p className="font-heading text-sm font-semibold text-foreground">Invite a Friend — Both Get 5 Credits</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Share your link and earn credits when friends sign up.</p>
+          </div>
+        </div>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Input value={referralLink} readOnly className="bg-muted text-xs flex-1 sm:w-48" />
+          <Button size="sm" variant="outline" onClick={() => {
+            navigator.clipboard.writeText(referralLink);
+            toast({ title: "Copied!", description: "Referral link copied to clipboard." });
+          }}>
+            <Copy className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );

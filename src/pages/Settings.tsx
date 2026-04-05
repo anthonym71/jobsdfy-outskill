@@ -237,6 +237,26 @@ const Settings = () => {
 
       <Separator />
 
+      {/* Referral / Invite a Friend */}
+      <section className="rounded-xl border border-primary/20 bg-primary/5 p-6 space-y-3">
+        <div className="flex items-center gap-2">
+          <Gift className="h-5 w-5 text-primary" />
+          <h2 className="font-heading text-base font-semibold text-foreground">Invite a Friend — Both Get 5 Credits</h2>
+        </div>
+        <p className="text-sm text-muted-foreground">Share your unique link. When a friend signs up, you both get 5 bonus credits!</p>
+        <div className="flex gap-2">
+          <Input value={referralLink} readOnly className="bg-muted text-xs" />
+          <Button size="sm" variant="outline" onClick={() => {
+            navigator.clipboard.writeText(referralLink);
+            toast({ title: "Copied!", description: "Referral link copied to clipboard." });
+          }}>
+            <Copy className="h-4 w-4" />
+          </Button>
+        </div>
+      </section>
+
+      <Separator />
+
       {/* Danger Zone */}
       <section className="rounded-xl border border-destructive/20 bg-card p-6 space-y-3">
         <h2 className="font-heading text-base font-semibold text-destructive">Danger Zone</h2>
