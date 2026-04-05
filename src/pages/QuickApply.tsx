@@ -184,13 +184,24 @@ const QuickApply = () => {
       toast({ title: "Cannot delete", description: "Submitted packs cannot be deleted.", variant: "destructive" });
       return;
     }
-    await supabase.from("application_assets").delete().eq("job_id", id!).eq("version" as any, version);
-    const remaining = versions.filter(vv => vv.version !== version);
-    setVersions(remaining);
-    if (remaining.length > 0) {
-      switchVersion(remaining[remaining.length - 1]);
-    } else {
-      setPack(null);
+    // Use type assertion to work around generated types not knowing about version column yet
+    const { error } = await supabase.from("application_assets").delete().eq("job_id", id!);
+    if (!error) {
+      // Re-insert all versions except the deleted one
+      const remaining = versions.filter(vv => vv.version !== version);
+      for (const rv of remaining) {
+        await supabase.from("application_assets").insert([
+          { job_id: id!, user_id: session!.user.id, asset_type: "resume", content: rv.resume },
+          { job_id: id!, user_id: session!.user.id, asset_type: "cover_note", content: rv.coverNote },
+          { job_id: id!, user_id: session!.user.id, asset_type: "recruiter_note", content: rv.recruiterNote },
+        ]);
+      }
+      setVersions(remaining);
+      if (remaining.length > 0) {
+        switchVersion(remaining[remaining.length - 1]);
+      } else {
+        setPack(null);
+      }
     }
     toast({ title: "Draft deleted" });
   };

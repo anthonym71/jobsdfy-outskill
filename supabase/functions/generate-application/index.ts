@@ -198,12 +198,11 @@ Use the tool provided to return structured output.`;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminClient = createClient(supabaseUrl, serviceKey);
 
-    await adminClient.from("application_assets").delete().eq("job_id", jobId);
-
+    // Don't delete old versions — insert new version
     const assets = [
-      { job_id: jobId, user_id: user.id, asset_type: "resume", content: result.resume },
-      { job_id: jobId, user_id: user.id, asset_type: "cover_note", content: result.coverNote },
-      { job_id: jobId, user_id: user.id, asset_type: "recruiter_note", content: result.recruiterNote },
+      { job_id: jobId, user_id: user.id, asset_type: "resume", content: result.resume, version, is_draft: true },
+      { job_id: jobId, user_id: user.id, asset_type: "cover_note", content: result.coverNote, version, is_draft: true },
+      { job_id: jobId, user_id: user.id, asset_type: "recruiter_note", content: result.recruiterNote, version, is_draft: true },
     ];
     await adminClient.from("application_assets").insert(assets);
 
