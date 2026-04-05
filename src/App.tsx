@@ -27,6 +27,7 @@ import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import ExtensionDownload from "./pages/ExtensionDownload";
 import RecruiterCandidates from "./pages/RecruiterCandidates";
+import Tasks from "./pages/Tasks";
 
 const queryClient = new QueryClient();
 
@@ -73,6 +74,7 @@ const App = () => (
                 <Route path="/app/recruiter/candidates" element={<RecruiterCandidates />} />
                 <Route path="/app/admin" element={<AdminHelpdesk />} />
                 <Route path="/app/admin/users" element={<AdminUsers />} />
+                <Route path="/app/tasks" element={<Tasks />} />
                 <Route path="/app/extension" element={<ExtensionDownload />} />
               </Route>
             </Route>
