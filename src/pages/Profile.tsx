@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Briefcase, GraduationCap, Award, MessageSquare, Users, FileText, Database } from "lucide-react";
+import { User, Briefcase, GraduationCap, Award, MessageSquare, Users, FileText, Database, TrendingUp, BookOpen, Brain } from "lucide-react";
 import AboutMeTab from "@/components/profile/AboutMeTab";
 import WorkHistoryTab from "@/components/profile/WorkHistoryTab";
 import EducationTab from "@/components/profile/EducationTab";
@@ -8,6 +8,9 @@ import AchievementsTab from "@/components/profile/AchievementsTab";
 import InterviewPracticeTab from "@/components/profile/InterviewPracticeTab";
 import CVVersionsTab from "@/components/profile/CVVersionsTab";
 import KnowledgebaseTab from "@/components/profile/KnowledgebaseTab";
+import TimelineTab from "@/components/profile/TimelineTab";
+import CoursesTab from "@/components/profile/CoursesTab";
+import AssessmentsTab from "@/components/profile/AssessmentsTab";
 
 const Profile = () => {
   return (
@@ -22,7 +25,10 @@ const Profile = () => {
           <TabsTrigger value="about" className="gap-1.5"><User className="h-4 w-4" />About Me</TabsTrigger>
           <TabsTrigger value="work" className="gap-1.5"><Briefcase className="h-4 w-4" />Work History</TabsTrigger>
           <TabsTrigger value="education" className="gap-1.5"><GraduationCap className="h-4 w-4" />Education</TabsTrigger>
+          <TabsTrigger value="timeline" className="gap-1.5"><TrendingUp className="h-4 w-4" />Timeline</TabsTrigger>
           <TabsTrigger value="cvversions" className="gap-1.5"><FileText className="h-4 w-4" />CV Versions</TabsTrigger>
+          <TabsTrigger value="courses" className="gap-1.5"><BookOpen className="h-4 w-4" />Courses</TabsTrigger>
+          <TabsTrigger value="assessments" className="gap-1.5"><Brain className="h-4 w-4" />Assessments</TabsTrigger>
           <TabsTrigger value="references" className="gap-1.5"><Users className="h-4 w-4" />References</TabsTrigger>
           <TabsTrigger value="achievements" className="gap-1.5"><Award className="h-4 w-4" />Achievements</TabsTrigger>
           <TabsTrigger value="knowledgebase" className="gap-1.5"><Database className="h-4 w-4" />Knowledgebase</TabsTrigger>
@@ -32,7 +38,10 @@ const Profile = () => {
         <TabsContent value="about"><AboutMeTab /></TabsContent>
         <TabsContent value="work"><WorkHistoryTab /></TabsContent>
         <TabsContent value="education"><EducationTab /></TabsContent>
+        <TabsContent value="timeline"><TimelineTab /></TabsContent>
         <TabsContent value="cvversions"><CVVersionsTab /></TabsContent>
+        <TabsContent value="courses"><CoursesTab /></TabsContent>
+        <TabsContent value="assessments"><AssessmentsTab /></TabsContent>
         <TabsContent value="references"><ReferencesTab /></TabsContent>
         <TabsContent value="achievements"><AchievementsTab /></TabsContent>
         <TabsContent value="knowledgebase"><KnowledgebaseTab /></TabsContent>

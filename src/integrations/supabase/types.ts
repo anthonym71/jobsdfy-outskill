@@ -112,6 +112,63 @@ export type Database = {
         }
         Relationships: []
       }
+      courses: {
+        Row: {
+          achievement_level: string | null
+          category: string | null
+          certificate_url: string | null
+          completed_at: string | null
+          created_at: string
+          grade: string | null
+          id: string
+          is_recommended: boolean
+          notes: string | null
+          provider: string | null
+          recommended_by: string | null
+          started_at: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_level?: string | null
+          category?: string | null
+          certificate_url?: string | null
+          completed_at?: string | null
+          created_at?: string
+          grade?: string | null
+          id?: string
+          is_recommended?: boolean
+          notes?: string | null
+          provider?: string | null
+          recommended_by?: string | null
+          started_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_level?: string | null
+          category?: string | null
+          certificate_url?: string | null
+          completed_at?: string | null
+          created_at?: string
+          grade?: string | null
+          id?: string
+          is_recommended?: boolean
+          notes?: string | null
+          provider?: string | null
+          recommended_by?: string | null
+          started_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           action: Database["public"]["Enums"]["credit_action"]
