@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 const DEFAULT_AGENT_ID = "agent_9501kncarackfv1vkxevndvsjahk";
+const CV_BUILDER_AGENT_ID = "agent_4401knf25x6rfjzrqg5yymf5x3bd";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
