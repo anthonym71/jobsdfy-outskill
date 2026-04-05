@@ -43,10 +43,13 @@ serve(async (req) => {
 
     // Accept optional agent_id from request body
     let agentId = DEFAULT_AGENT_ID;
+    const PROFILE_CATEGORIES = ["work", "about", "education", "references", "achievements"];
     try {
       const body = await req.json();
       if (body?.agent_id) {
         agentId = body.agent_id;
+      } else if (body?.category && PROFILE_CATEGORIES.includes(body.category)) {
+        agentId = CV_BUILDER_AGENT_ID;
       }
     } catch {
       // No body or invalid JSON — use default
