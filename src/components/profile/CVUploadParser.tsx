@@ -386,18 +386,15 @@ const CVUploadParser = ({ onImportComplete }: CVUploadParserProps) => {
           <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Work History</h4>
           {conflicts.workHistoryConflicts.map((c: any, i: number) => {
             const parsed = parsedData?.workHistory?.[c.parsedIndex];
+            const pi = c.parsedIndex;
             return (
-              <div key={i} className="rounded-lg bg-accent/30 p-3 space-y-1">
+              <div key={i} className="rounded-lg bg-accent/30 p-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     {c.type === "new" && <CheckCircle className="h-3.5 w-3.5 text-verdict-go" />}
                     {c.type === "conflict" && <AlertTriangle className="h-3.5 w-3.5 text-verdict-review" />}
                     {c.type === "match" && <XCircle className="h-3.5 w-3.5 text-muted-foreground" />}
-                    {editingField === `work_title_${i}` ? (
-                      <Input className="h-6 text-xs w-40" value={parsed?.title || ""} onChange={e => updateParsedField(`workHistory.${c.parsedIndex}.title`, e.target.value)} onBlur={() => setEditingField(null)} autoFocus />
-                    ) : (
-                      <span className="text-sm font-medium text-foreground">{c.parsedTitle} <button onClick={() => setEditingField(`work_title_${i}`)}><Pencil className="h-2.5 w-2.5 inline text-muted-foreground hover:text-primary" /></button></span>
-                    )}
+                    <span className="text-xs font-medium text-muted-foreground uppercase">{c.type === "new" ? "New" : c.type === "conflict" ? "Conflict" : "Match"}</span>
                   </div>
                   <select
                     className="rounded-md border border-input bg-background px-2 py-1 text-xs"
@@ -409,11 +406,54 @@ const CVUploadParser = ({ onImportComplete }: CVUploadParserProps) => {
                     <option value="skip">Skip</option>
                   </select>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {c.parsedCompany}
-                  {parsed?.startYear ? ` · ${parsed.startYear}${parsed.endYear ? `–${parsed.endYear}` : "–Present"}` : ""}
-                  {c.differences?.length > 0 ? ` · ${c.differences.join(", ")}` : ""}
-                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[10px] text-muted-foreground">Company</label>
+                    <Input className="h-7 text-xs mt-0.5" value={parsed?.company || ""} onChange={e => updateParsedField(`workHistory.${pi}.company`, e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground">Job Title</label>
+                    <Input className="h-7 text-xs mt-0.5" value={parsed?.title || ""} onChange={e => updateParsedField(`workHistory.${pi}.title`, e.target.value)} />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                  <div>
+                    <label className="text-[10px] text-muted-foreground">Start Day</label>
+                    <Input className="h-7 text-xs mt-0.5" type="number" min={0} max={31} placeholder="DD" value={parsed?.startDay || ""} onChange={e => updateParsedField(`workHistory.${pi}.startDay`, e.target.value ? parseInt(e.target.value) : null)} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground">Start Month</label>
+                    <Input className="h-7 text-xs mt-0.5" type="number" min={0} max={12} placeholder="MM" value={parsed?.startMonth || ""} onChange={e => updateParsedField(`workHistory.${pi}.startMonth`, e.target.value ? parseInt(e.target.value) : null)} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground">Start Year</label>
+                    <Input className="h-7 text-xs mt-0.5" type="number" min={1950} max={2030} placeholder="YYYY" value={parsed?.startYear || ""} onChange={e => updateParsedField(`workHistory.${pi}.startYear`, e.target.value ? parseInt(e.target.value) : null)} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground">End Day</label>
+                    <Input className="h-7 text-xs mt-0.5" type="number" min={0} max={31} placeholder="DD" value={parsed?.endDay || ""} onChange={e => updateParsedField(`workHistory.${pi}.endDay`, e.target.value ? parseInt(e.target.value) : null)} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground">End Month</label>
+                    <Input className="h-7 text-xs mt-0.5" type="number" min={0} max={12} placeholder="MM" value={parsed?.endMonth || ""} onChange={e => updateParsedField(`workHistory.${pi}.endMonth`, e.target.value ? parseInt(e.target.value) : null)} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground">End Year</label>
+                    <Input className="h-7 text-xs mt-0.5" type="number" min={1950} max={2030} placeholder="YYYY" value={parsed?.endYear || ""} onChange={e => updateParsedField(`workHistory.${pi}.endYear`, e.target.value ? parseInt(e.target.value) : null)} />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-muted-foreground">Achievements</label>
+                  <textarea
+                    className="mt-0.5 w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs min-h-[48px] resize-y"
+                    value={parsed?.achievements || ""}
+                    onChange={e => updateParsedField(`workHistory.${pi}.achievements`, e.target.value)}
+                    placeholder="Key achievements in this role..."
+                  />
+                </div>
               </div>
             );
           })}
