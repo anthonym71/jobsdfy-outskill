@@ -40,9 +40,19 @@ serve(async (req) => {
       });
     }
 
-    // Get signed URL for WebSocket connection (more compatible than WebRTC token)
+    // Accept optional agent_id from request body
+    let agentId = DEFAULT_AGENT_ID;
+    try {
+      const body = await req.json();
+      if (body?.agent_id) {
+        agentId = body.agent_id;
+      }
+    } catch {
+      // No body or invalid JSON — use default
+    }
+
     const response = await fetch(
-      `https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id=${DEFAULT_AGENT_ID}`,
+      `https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id=${agentId}`,
       { headers: { "xi-api-key": ELEVENLABS_API_KEY } }
     );
 

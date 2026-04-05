@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import VoiceCVBuilderDialog from "./VoiceCVBuilder";
+import VoiceLabel from "./VoiceLabel";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -67,15 +67,15 @@ const EducationTab = () => {
         <div key={i} className="rounded-xl border border-border bg-card p-5 space-y-3">
           <div className="flex justify-between"><h3 className="text-sm font-medium text-foreground">{e.institution || `Entry ${i + 1}`}</h3><Button size="icon" variant="ghost" onClick={() => setEntries(prev => prev.filter((_, idx) => idx !== i))}><Trash2 className="h-4 w-4 text-destructive" /></Button></div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <div><Label>Institution</Label><Input value={e.institution} onChange={ev => setEntries(prev => prev.map((x, idx) => idx === i ? { ...x, institution: ev.target.value } : x))} className="mt-1" /></div>
-            <div><Label>Degree</Label><Input value={e.degree || ""} onChange={ev => setEntries(prev => prev.map((x, idx) => idx === i ? { ...x, degree: ev.target.value } : x))} className="mt-1" /></div>
-            <div><Label>Field of Study</Label><Input value={e.field || ""} onChange={ev => setEntries(prev => prev.map((x, idx) => idx === i ? { ...x, field: ev.target.value } : x))} className="mt-1" /></div>
+            <div><VoiceLabel onVoiceResult={v => setEntries(prev => prev.map((x, idx) => idx === i ? { ...x, institution: v } : x))}>Institution</VoiceLabel><Input value={e.institution} onChange={ev => setEntries(prev => prev.map((x, idx) => idx === i ? { ...x, institution: ev.target.value } : x))} className="mt-1" /></div>
+            <div><VoiceLabel onVoiceResult={v => setEntries(prev => prev.map((x, idx) => idx === i ? { ...x, degree: v } : x))}>Degree</VoiceLabel><Input value={e.degree || ""} onChange={ev => setEntries(prev => prev.map((x, idx) => idx === i ? { ...x, degree: ev.target.value } : x))} className="mt-1" /></div>
+            <div><VoiceLabel onVoiceResult={v => setEntries(prev => prev.map((x, idx) => idx === i ? { ...x, field: v } : x))}>Field of Study</VoiceLabel><Input value={e.field || ""} onChange={ev => setEntries(prev => prev.map((x, idx) => idx === i ? { ...x, field: ev.target.value } : x))} className="mt-1" /></div>
             <div className="flex gap-2">
-              <div className="flex-1"><Label>Start Year</Label><Input type="number" value={e.start_year || ""} onChange={ev => setEntries(prev => prev.map((x, idx) => idx === i ? { ...x, start_year: Number(ev.target.value) || null } : x))} className="mt-1" /></div>
-              <div className="flex-1"><Label>End Year</Label><Input type="number" value={e.end_year || ""} onChange={ev => setEntries(prev => prev.map((x, idx) => idx === i ? { ...x, end_year: Number(ev.target.value) || null } : x))} className="mt-1" /></div>
+              <div className="flex-1"><VoiceLabel onVoiceResult={v => { const y = parseInt(v); if (y) setEntries(prev => prev.map((x, idx) => idx === i ? { ...x, start_year: y } : x)); }}>Start Year</VoiceLabel><Input type="number" value={e.start_year || ""} onChange={ev => setEntries(prev => prev.map((x, idx) => idx === i ? { ...x, start_year: Number(ev.target.value) || null } : x))} className="mt-1" /></div>
+              <div className="flex-1"><VoiceLabel onVoiceResult={v => { const y = parseInt(v); if (y) setEntries(prev => prev.map((x, idx) => idx === i ? { ...x, end_year: y } : x)); }}>End Year</VoiceLabel><Input type="number" value={e.end_year || ""} onChange={ev => setEntries(prev => prev.map((x, idx) => idx === i ? { ...x, end_year: Number(ev.target.value) || null } : x))} className="mt-1" /></div>
             </div>
           </div>
-          <div><Label>Description</Label><Textarea value={e.description || ""} onChange={ev => setEntries(prev => prev.map((x, idx) => idx === i ? { ...x, description: ev.target.value } : x))} className="mt-1" rows={2} /></div>
+          <div><VoiceLabel onVoiceResult={v => setEntries(prev => prev.map((x, idx) => idx === i ? { ...x, description: (x.description || "") + " " + v } : x))}>Description</VoiceLabel><Textarea value={e.description || ""} onChange={ev => setEntries(prev => prev.map((x, idx) => idx === i ? { ...x, description: ev.target.value } : x))} className="mt-1" rows={2} /></div>
         </div>
       ))}
 
@@ -87,9 +87,9 @@ const EducationTab = () => {
         <div key={i} className="rounded-xl border border-border bg-card p-5 space-y-3">
           <div className="flex justify-between"><h3 className="text-sm font-medium text-foreground">{c.name || `Certificate ${i + 1}`}</h3><Button size="icon" variant="ghost" onClick={() => setCerts(prev => prev.filter((_, idx) => idx !== i))}><Trash2 className="h-4 w-4 text-destructive" /></Button></div>
           <div className="grid gap-3 sm:grid-cols-3">
-            <div><Label>Name</Label><Input value={c.name} onChange={ev => setCerts(prev => prev.map((x, idx) => idx === i ? { ...x, name: ev.target.value } : x))} className="mt-1" /></div>
-            <div><Label>Issuer</Label><Input value={c.issuer || ""} onChange={ev => setCerts(prev => prev.map((x, idx) => idx === i ? { ...x, issuer: ev.target.value } : x))} className="mt-1" /></div>
-            <div><Label>Date Issued</Label><Input type="date" value={c.date_issued || ""} onChange={ev => setCerts(prev => prev.map((x, idx) => idx === i ? { ...x, date_issued: ev.target.value } : x))} className="mt-1" /></div>
+            <div><VoiceLabel onVoiceResult={v => setCerts(prev => prev.map((x, idx) => idx === i ? { ...x, name: v } : x))}>Name</VoiceLabel><Input value={c.name} onChange={ev => setCerts(prev => prev.map((x, idx) => idx === i ? { ...x, name: ev.target.value } : x))} className="mt-1" /></div>
+            <div><VoiceLabel onVoiceResult={v => setCerts(prev => prev.map((x, idx) => idx === i ? { ...x, issuer: v } : x))}>Issuer</VoiceLabel><Input value={c.issuer || ""} onChange={ev => setCerts(prev => prev.map((x, idx) => idx === i ? { ...x, issuer: ev.target.value } : x))} className="mt-1" /></div>
+            <div><VoiceLabel onVoiceResult={v => setCerts(prev => prev.map((x, idx) => idx === i ? { ...x, date_issued: v } : x))}>Date Issued</VoiceLabel><Input type="date" value={c.date_issued || ""} onChange={ev => setCerts(prev => prev.map((x, idx) => idx === i ? { ...x, date_issued: ev.target.value } : x))} className="mt-1" /></div>
           </div>
           <MediaUploader bucket="certificates" folder={c.id || `cert_${i}`} label="Upload Certificate" maxFiles={1} accept=".pdf,.jpg,.jpeg,.png" />
         </div>

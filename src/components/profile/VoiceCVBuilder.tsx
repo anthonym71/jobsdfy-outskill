@@ -10,9 +10,10 @@ interface VoiceCVBuilderProps {
   category: string;
   categoryLabel: string;
   onDataExtracted?: (data: any) => void;
+  agentId?: string;
 }
 
-const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose }: VoiceCVBuilderProps & { onClose: () => void }) => {
+const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose, agentId }: VoiceCVBuilderProps & { onClose: () => void }) => {
   const { toast } = useToast();
   const [isConnecting, setIsConnecting] = useState(false);
   const [transcript, setTranscript] = useState<string[]>([]);
@@ -40,7 +41,6 @@ const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose
     },
   });
 
-  // Poll volume levels
   useEffect(() => {
     if (conversation.status !== "connected") return;
     const poll = () => {
@@ -56,7 +56,9 @@ const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose
     setIsConnecting(true);
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
-      const { data, error } = await supabase.functions.invoke("elevenlabs-conversation-token");
+      const { data, error } = await supabase.functions.invoke("elevenlabs-conversation-token", {
+        body: { agent_id: agentId, category },
+      });
       if (error || !data?.signed_url) throw new Error(data?.error || error?.message || "Failed to get signed URL");
 
       await conversation.startSession({ signedUrl: data.signed_url });
@@ -69,7 +71,7 @@ const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose
     } finally {
       setIsConnecting(false);
     }
-  }, [conversation, toast]);
+  }, [conversation, toast, agentId, category]);
 
   const stopAndExtract = useCallback(async () => {
     await conversation.endSession();
@@ -93,7 +95,6 @@ const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose
 
   const isConnected = conversation.status === "connected";
 
-  // Generate waveform bars from volume
   const generateBars = (volume: number, count: number) =>
     Array.from({ length: count }, (_, i) => {
       const base = 4;
@@ -107,7 +108,6 @@ const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose
 
   return (
     <div className="space-y-5">
-      {/* Joby Avatar & Status */}
       <div className="flex flex-col items-center gap-3">
         <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/30">
           <img src="/joby-192.png" alt="Joby" className="h-16 w-16 rounded-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
@@ -122,10 +122,8 @@ const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose
         </div>
       </div>
 
-      {/* Waveform Visualization */}
       {isConnected && (
         <div className="space-y-3">
-          {/* Output (Joby speaking) */}
           <div className="flex items-center gap-2">
             <Volume2 className="h-3.5 w-3.5 text-primary flex-shrink-0" />
             <div className="flex items-center gap-[2px] h-8 flex-1 justify-center">
@@ -135,7 +133,6 @@ const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose
             </div>
             <span className="text-[10px] text-muted-foreground w-12">Speaker</span>
           </div>
-          {/* Input (User mic) */}
           <div className="flex items-center gap-2">
             <Mic className="h-3.5 w-3.5 text-verdict-go flex-shrink-0" />
             <div className="flex items-center gap-[2px] h-8 flex-1 justify-center">
@@ -148,7 +145,6 @@ const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose
         </div>
       )}
 
-      {/* Transcript preview */}
       {transcript.length > 0 && (
         <div className="max-h-32 overflow-y-auto rounded-lg bg-accent/30 p-3 text-xs text-muted-foreground space-y-1">
           {transcript.slice(-6).map((line, i) => (
@@ -157,7 +153,6 @@ const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose
         </div>
       )}
 
-      {/* Controls */}
       <div className="flex justify-center gap-3">
         {!isConnected ? (
           <Button onClick={startConversation} disabled={isConnecting} className="gap-2">
@@ -173,7 +168,7 @@ const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose
   );
 };
 
-const VoiceCVBuilderDialog = ({ category, categoryLabel, onDataExtracted }: VoiceCVBuilderProps) => {
+const VoiceCVBuilderDialog = ({ category, categoryLabel, onDataExtracted, agentId }: VoiceCVBuilderProps) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -194,6 +189,7 @@ const VoiceCVBuilderDialog = ({ category, categoryLabel, onDataExtracted }: Voic
               category={category}
               categoryLabel={categoryLabel}
               onDataExtracted={onDataExtracted}
+              agentId={agentId}
               onClose={() => setOpen(false)}
             />
           </ConversationProvider>

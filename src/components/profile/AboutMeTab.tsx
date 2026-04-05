@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, Plus, Trash2, Sparkles, Lightbulb, Camera } from "lucide-react";
+import VoiceLabel from "./VoiceLabel";
 import VoiceCVBuilderDialog from "./VoiceCVBuilder";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -264,19 +265,19 @@ const AboutMeTab = () => {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <div><Label>Full Name</Label><Input value={profile.fullName} onChange={e => setProfile(p => ({ ...p, fullName: e.target.value }))} className="mt-1" /></div>
+          <div><VoiceLabel onVoiceResult={v => setProfile(p => ({ ...p, fullName: v }))}>Full Name</VoiceLabel><Input value={profile.fullName} onChange={e => setProfile(p => ({ ...p, fullName: e.target.value }))} className="mt-1" /></div>
           <div><Label>Email</Label><Input value={user?.email || ""} disabled className="mt-1" /></div>
           <div>
             <Label>Phone Number</Label>
             <Input value={profile.phoneNumber || "Not set"} disabled className="mt-1" />
             <p className="text-xs text-muted-foreground mt-1">Phone changes require admin approval.</p>
           </div>
-          <div><Label>Location</Label><Input value={profile.location} onChange={e => setProfile(p => ({ ...p, location: e.target.value }))} className="mt-1" /></div>
-          <div><Label>Headline</Label><Input value={profile.headline} onChange={e => setProfile(p => ({ ...p, headline: e.target.value }))} className="mt-1" /></div>
-          <div><Label>Years of Experience</Label><Input type="number" value={profile.yearsExp} onChange={e => setProfile(p => ({ ...p, yearsExp: e.target.value }))} className="mt-1" /></div>
+          <div><VoiceLabel onVoiceResult={v => setProfile(p => ({ ...p, location: v }))}>Location</VoiceLabel><Input value={profile.location} onChange={e => setProfile(p => ({ ...p, location: e.target.value }))} className="mt-1" /></div>
+          <div><VoiceLabel onVoiceResult={v => setProfile(p => ({ ...p, headline: v }))}>Headline</VoiceLabel><Input value={profile.headline} onChange={e => setProfile(p => ({ ...p, headline: e.target.value }))} className="mt-1" /></div>
+          <div><VoiceLabel onVoiceResult={v => setProfile(p => ({ ...p, yearsExp: v.replace(/\D/g, "") }))}>Years of Experience</VoiceLabel><Input type="number" value={profile.yearsExp} onChange={e => setProfile(p => ({ ...p, yearsExp: e.target.value }))} className="mt-1" /></div>
           <div className="sm:col-span-2">
             <div className="flex items-center justify-between">
-              <Label>Summary</Label>
+              <VoiceLabel onVoiceResult={v => setProfile(p => ({ ...p, summary: (p.summary ? p.summary + " " : "") + v }))}>Summary</VoiceLabel>
               <Button variant="ghost" size="sm" onClick={handleImproveSummary} disabled={improvingSummary} className="text-xs">
                 {improvingSummary ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
                 Improve with AI
@@ -286,7 +287,7 @@ const AboutMeTab = () => {
           </div>
           <div>
             <div className="flex items-center justify-between">
-              <Label>Top Skills</Label>
+              <VoiceLabel onVoiceResult={v => setProfile(p => ({ ...p, topSkills: p.topSkills ? `${p.topSkills}, ${v}` : v }))}>Top Skills</VoiceLabel>
               <Button variant="ghost" size="sm" onClick={handleSuggestKeywords} disabled={suggestingKeywords} className="text-xs">
                 {suggestingKeywords ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Lightbulb className="h-3 w-3 mr-1" />}
                 Suggest Keywords
@@ -304,7 +305,7 @@ const AboutMeTab = () => {
             )}
           </div>
           <div>
-            <Label>Industries</Label>
+            <VoiceLabel onVoiceResult={v => setProfile(p => ({ ...p, industries: p.industries ? `${p.industries}, ${v}` : v }))}>Industries</VoiceLabel>
             <Input value={profile.industries} onChange={e => setProfile(p => ({ ...p, industries: e.target.value }))} className="mt-1" placeholder="SaaS, Fintech" />
             {suggestedIndustries.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1.5">
@@ -316,7 +317,7 @@ const AboutMeTab = () => {
               </div>
             )}
           </div>
-          <div><Label>Languages</Label><Input value={profile.languages} onChange={e => setProfile(p => ({ ...p, languages: e.target.value }))} className="mt-1" placeholder="English, German" /></div>
+          <div><VoiceLabel onVoiceResult={v => setProfile(p => ({ ...p, languages: p.languages ? `${p.languages}, ${v}` : v }))}>Languages</VoiceLabel><Input value={profile.languages} onChange={e => setProfile(p => ({ ...p, languages: e.target.value }))} className="mt-1" placeholder="English, German" /></div>
         </div>
       </section>
 
@@ -324,9 +325,9 @@ const AboutMeTab = () => {
       <section className="rounded-xl border border-border bg-card p-6 space-y-4">
         <h2 className="font-heading text-base font-semibold text-foreground">Hobbies & Interests</h2>
         <div className="grid gap-4 sm:grid-cols-3">
-          <div><Label>Hobbies</Label><Input value={profile.hobbies} onChange={e => setProfile(p => ({ ...p, hobbies: e.target.value }))} className="mt-1" placeholder="Photography, Cooking" /></div>
-          <div><Label>Interests</Label><Input value={profile.interests} onChange={e => setProfile(p => ({ ...p, interests: e.target.value }))} className="mt-1" placeholder="AI, Startups" /></div>
-          <div><Label>Sports</Label><Input value={profile.sports} onChange={e => setProfile(p => ({ ...p, sports: e.target.value }))} className="mt-1" placeholder="Running, Tennis" /></div>
+          <div><VoiceLabel onVoiceResult={v => setProfile(p => ({ ...p, hobbies: p.hobbies ? `${p.hobbies}, ${v}` : v }))}>Hobbies</VoiceLabel><Input value={profile.hobbies} onChange={e => setProfile(p => ({ ...p, hobbies: e.target.value }))} className="mt-1" placeholder="Photography, Cooking" /></div>
+          <div><VoiceLabel onVoiceResult={v => setProfile(p => ({ ...p, interests: p.interests ? `${p.interests}, ${v}` : v }))}>Interests</VoiceLabel><Input value={profile.interests} onChange={e => setProfile(p => ({ ...p, interests: e.target.value }))} className="mt-1" placeholder="AI, Startups" /></div>
+          <div><VoiceLabel onVoiceResult={v => setProfile(p => ({ ...p, sports: p.sports ? `${p.sports}, ${v}` : v }))}>Sports</VoiceLabel><Input value={profile.sports} onChange={e => setProfile(p => ({ ...p, sports: e.target.value }))} className="mt-1" placeholder="Running, Tennis" /></div>
         </div>
       </section>
 

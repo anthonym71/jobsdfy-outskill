@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Plus, Trash2, Sparkles } from "lucide-react";
 import VoiceCVBuilderDialog from "./VoiceCVBuilder";
+import VoiceLabel from "./VoiceLabel";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,7 +42,8 @@ interface WorkEntry {
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const YEARS = Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i);
-const EMPLOYMENT_TYPES = ["Full-time", "Part-time", "Contract", "Freelance", "Internship", "Volunteer"];
+const EMPLOYMENT_TYPES = ["Full-time", "Part-time", "Contract", "Freelance", "Fractional", "Internship", "Volunteer"];
+const LOCATION_TYPES = ["Onsite", "Remote", "Hybrid"];
 
 const emptyEntry = (): WorkEntry => ({
   title: "", company: "", employment_type: "Full-time", is_current: false, is_concurrent: false,
@@ -141,6 +143,31 @@ const WorkHistoryTab = () => {
     toast({ title: "STAR bullets applied!" });
   };
 
+  const handleVoiceDataExtracted = (data: any) => {
+    if (!data) return;
+    const jobs = Array.isArray(data) ? data : [data];
+    const newEntries: WorkEntry[] = jobs.map((j: any) => ({
+      title: j.title || j.job_title || "",
+      company: j.company || "",
+      employment_type: j.employment_type || "Full-time",
+      is_current: j.is_current || false,
+      is_concurrent: j.is_concurrent || false,
+      start_month: j.start_month || null,
+      start_year: j.start_year || null,
+      end_month: j.end_month || null,
+      end_year: j.end_year || null,
+      location: j.location || "",
+      location_type: j.location_type || "onsite",
+      description: j.description || "",
+      awards: j.awards || "",
+      achievements: j.achievements || "",
+      performance: j.performance || "",
+      skills: j.skills || [],
+    }));
+    setEntries(prev => [...prev, ...newEntries]);
+    toast({ title: `${newEntries.length} job(s) added from voice input` });
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -180,7 +207,7 @@ const WorkHistoryTab = () => {
           <p className="text-sm text-muted-foreground">Add your work experience or upload a CV to auto-populate.</p>
         </div>
         <div className="flex gap-2">
-          <VoiceCVBuilderDialog category="work" categoryLabel="Work History" />
+          <VoiceCVBuilderDialog category="work" categoryLabel="Work History" onDataExtracted={handleVoiceDataExtracted} />
           <Button size="sm" variant="outline" onClick={() => setShowUpload(!showUpload)}>
             {showUpload ? "Hide Upload" : "Upload CV"}
           </Button>
@@ -216,18 +243,27 @@ const WorkHistoryTab = () => {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div><Label>Job Title</Label><Input value={entry.title} onChange={e => updateEntry(i, "title", e.target.value)} className="mt-1" /></div>
-            <div><Label>Company</Label><Input value={entry.company} onChange={e => updateEntry(i, "company", e.target.value)} className="mt-1" /></div>
             <div>
-              <Label>Employment Type</Label>
+              <VoiceLabel onVoiceResult={v => updateEntry(i, "title", v)}>Job Title</VoiceLabel>
+              <Input value={entry.title} onChange={e => updateEntry(i, "title", e.target.value)} className="mt-1" />
+            </div>
+            <div>
+              <VoiceLabel onVoiceResult={v => updateEntry(i, "company", v)}>Company</VoiceLabel>
+              <Input value={entry.company} onChange={e => updateEntry(i, "company", e.target.value)} className="mt-1" />
+            </div>
+            <div>
+              <VoiceLabel onVoiceResult={v => updateEntry(i, "employment_type", v)} options={EMPLOYMENT_TYPES}>Employment Type</VoiceLabel>
               <Select value={entry.employment_type} onValueChange={v => updateEntry(i, "employment_type", v)}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>{EMPLOYMENT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div><Label>Location</Label><Input value={entry.location} onChange={e => updateEntry(i, "location", e.target.value)} className="mt-1" /></div>
             <div>
-              <Label>Location Type</Label>
+              <VoiceLabel onVoiceResult={v => updateEntry(i, "location", v)}>Location</VoiceLabel>
+              <Input value={entry.location} onChange={e => updateEntry(i, "location", e.target.value)} className="mt-1" />
+            </div>
+            <div>
+              <VoiceLabel onVoiceResult={v => updateEntry(i, "location_type", v.toLowerCase())} options={LOCATION_TYPES}>Location Type</VoiceLabel>
               <Select value={entry.location_type} onValueChange={v => updateEntry(i, "location_type", v)}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -241,28 +277,28 @@ const WorkHistoryTab = () => {
 
           <div className="grid gap-4 sm:grid-cols-4">
             <div>
-              <Label>Start Month</Label>
+              <VoiceLabel onVoiceResult={v => { const m = MONTHS.findIndex(m => m.toLowerCase().startsWith(v.toLowerCase().slice(0,3))); if (m >= 0) updateEntry(i, "start_month", m + 1); }} options={MONTHS}>Start Month</VoiceLabel>
               <Select value={String(entry.start_month || "")} onValueChange={v => updateEntry(i, "start_month", Number(v))}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Month" /></SelectTrigger>
                 <SelectContent>{MONTHS.map((m, mi) => <SelectItem key={mi} value={String(mi + 1)}>{m}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Start Year</Label>
+              <VoiceLabel onVoiceResult={v => { const y = parseInt(v); if (y && YEARS.includes(y)) updateEntry(i, "start_year", y); }} options={YEARS.slice(0, 10).map(String)}>Start Year</VoiceLabel>
               <Select value={String(entry.start_year || "")} onValueChange={v => updateEntry(i, "start_year", Number(v))}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Year" /></SelectTrigger>
                 <SelectContent>{YEARS.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
-              <Label>End Month</Label>
+              <VoiceLabel onVoiceResult={v => { const m = MONTHS.findIndex(m => m.toLowerCase().startsWith(v.toLowerCase().slice(0,3))); if (m >= 0) updateEntry(i, "end_month", m + 1); }} options={MONTHS}>End Month</VoiceLabel>
               <Select value={String(entry.end_month || "")} onValueChange={v => updateEntry(i, "end_month", Number(v))} disabled={entry.is_current}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Month" /></SelectTrigger>
                 <SelectContent>{MONTHS.map((m, mi) => <SelectItem key={mi} value={String(mi + 1)}>{m}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
-              <Label>End Year</Label>
+              <VoiceLabel onVoiceResult={v => { const y = parseInt(v); if (y && YEARS.includes(y)) updateEntry(i, "end_year", y); }} options={YEARS.slice(0, 10).map(String)}>End Year</VoiceLabel>
               <Select value={String(entry.end_year || "")} onValueChange={v => updateEntry(i, "end_year", Number(v))} disabled={entry.is_current}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Year" /></SelectTrigger>
                 <SelectContent>{YEARS.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
@@ -281,18 +317,28 @@ const WorkHistoryTab = () => {
             </label>
           </div>
 
-          <div><Label>Description</Label><Textarea value={entry.description} onChange={e => updateEntry(i, "description", e.target.value)} className="mt-1" rows={3} /></div>
-
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div><Label>Awards</Label><Input value={entry.awards} onChange={e => updateEntry(i, "awards", e.target.value)} className="mt-1" /></div>
-            <div><Label>Achievements</Label><Input value={entry.achievements} onChange={e => updateEntry(i, "achievements", e.target.value)} className="mt-1" /></div>
-            <div><Label>Performance</Label><Input value={entry.performance} onChange={e => updateEntry(i, "performance", e.target.value)} className="mt-1" /></div>
+          <div>
+            <VoiceLabel onVoiceResult={v => updateEntry(i, "description", (entry.description ? entry.description + " " : "") + v)}>Description</VoiceLabel>
+            <Textarea value={entry.description} onChange={e => updateEntry(i, "description", e.target.value)} className="mt-1" rows={3} />
           </div>
 
-          {/* Media upload */}
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div>
+              <VoiceLabel onVoiceResult={v => updateEntry(i, "awards", v)}>Awards</VoiceLabel>
+              <Input value={entry.awards} onChange={e => updateEntry(i, "awards", e.target.value)} className="mt-1" />
+            </div>
+            <div>
+              <VoiceLabel onVoiceResult={v => updateEntry(i, "achievements", v)}>Achievements</VoiceLabel>
+              <Input value={entry.achievements} onChange={e => updateEntry(i, "achievements", e.target.value)} className="mt-1" />
+            </div>
+            <div>
+              <VoiceLabel onVoiceResult={v => updateEntry(i, "performance", v)}>Performance</VoiceLabel>
+              <Input value={entry.performance} onChange={e => updateEntry(i, "performance", e.target.value)} className="mt-1" />
+            </div>
+          </div>
+
           <MediaUploader bucket="work-media" folder={entry.id || `entry_${i}`} label="Upload Evidence" maxFiles={3} accept="image/*,.pdf,.doc,.docx" />
 
-          {/* Skills */}
           <div>
             <Label>Skills (max 5 per role)</Label>
             <div className="flex flex-wrap gap-2 mt-1">
@@ -319,7 +365,6 @@ const WorkHistoryTab = () => {
         </Button>
       )}
 
-      {/* STAR Preview Dialog */}
       <Dialog open={!!starPreview} onOpenChange={() => setStarPreview(null)}>
         <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
