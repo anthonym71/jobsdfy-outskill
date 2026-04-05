@@ -322,6 +322,9 @@ const AboutMeTab = () => {
         </div>
       </section>
 
+      {/* Photo Gallery */}
+      <PhotoGallerySection />
+
       {/* Hobbies & Interests */}
       <section className="rounded-xl border border-border bg-card p-6 space-y-4">
         <h2 className="font-heading text-base font-semibold text-foreground">Hobbies & Interests</h2>

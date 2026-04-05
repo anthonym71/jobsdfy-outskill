@@ -24,18 +24,20 @@ serve(async (req) => {
     const { targetRole, targetIndustry, versionName } = await req.json();
     if (!targetRole) return new Response(JSON.stringify({ error: "Target role required" }), { status: 400, headers: corsHeaders });
 
-    // Load all profile data
-    const [profileRes, workRes, eduRes, certRes] = await Promise.all([
+    // Load all profile data including knowledgebase
+    const [profileRes, workRes, eduRes, certRes, kbRes] = await Promise.all([
       supabase.from("user_profiles").select("*").eq("user_id", user.id).single(),
       supabase.from("work_history").select("*").eq("user_id", user.id).order("sort_order"),
       supabase.from("education").select("*").eq("user_id", user.id),
       supabase.from("certificates").select("*").eq("user_id", user.id),
+      supabase.from("knowledgebase_entries").select("*").eq("user_id", user.id).eq("is_relevant", true),
     ]);
 
     const profile = profileRes.data;
     const work = workRes.data || [];
     const edu = eduRes.data || [];
     const certs = certRes.data || [];
+    const kb = kbRes.data || [];
 
     if (!profile) return new Response(JSON.stringify({ error: "No profile found" }), { status: 404, headers: corsHeaders });
 
@@ -45,6 +47,7 @@ serve(async (req) => {
     const workText = work.map(w => `${w.title} at ${w.company} (${w.start_year}-${w.is_current ? "Present" : w.end_year}): ${w.description || ""} | Achievements: ${w.achievements || ""} | Skills: ${(w.skills || []).join(", ")}`).join("\n");
     const eduText = edu.map(e => `${e.degree || ""} ${e.field || ""} at ${e.institution} (${e.start_year}-${e.end_year})`).join("\n");
     const certText = certs.map(c => `${c.name} - ${c.issuer || "?"}`).join("\n");
+    const kbText = kb.length > 0 ? kb.map(k => `[${k.category}] ${k.title}: ${k.content}`).join("\n") : "";
 
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -52,8 +55,8 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: `You are an elite executive CV writer. Create a role-positioned CV version targeting: "${targetRole}"${targetIndustry ? ` in the ${targetIndustry} industry` : ""}. Rewrite the summary, reorder/emphasize relevant experience, highlight transferable skills, and use ATS-optimized keywords for the target role. Use STAR methodology for all bullets. Never fabricate experience.` },
-          { role: "user", content: `CANDIDATE:\nName: ${profile.full_name}\nHeadline: ${profile.headline || ""}\nSummary: ${profile.summary || ""}\nSkills: ${(profile.top_skills || []).join(", ")}\n\nWORK HISTORY:\n${workText}\n\nEDUCATION:\n${eduText}\n\nCERTIFICATES:\n${certText}` },
+          { role: "system", content: `You are an elite executive CV writer. Create a role-positioned CV version targeting: "${targetRole}"${targetIndustry ? ` in the ${targetIndustry} industry` : ""}. Rewrite the summary, reorder/emphasize relevant experience, highlight transferable skills, and use ATS-optimized keywords for the target role. Use STAR methodology for all bullets. Never fabricate experience. Use Work History, Education, and Certificates as the primary source of truth. Use Knowledgebase as supplementary context for additional details, skills, and achievements.` },
+          { role: "user", content: `CANDIDATE:\nName: ${profile.full_name}\nHeadline: ${profile.headline || ""}\nSummary: ${profile.summary || ""}\nSkills: ${(profile.top_skills || []).join(", ")}\n\nWORK HISTORY (PRIMARY):\n${workText}\n\nEDUCATION (PRIMARY):\n${eduText}\n\nCERTIFICATES:\n${certText}${kbText ? `\n\nKNOWLEDGEBASE (SUPPLEMENTARY):\n${kbText}` : ""}` },
         ],
         tools: [{
           type: "function",
