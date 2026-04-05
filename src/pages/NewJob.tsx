@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link2, FileText, Image, Mic, ArrowRight, Sparkles, AlertTriangle, ClipboardPaste, Chrome } from "lucide-react";
+import { Link2, FileText, Image, Mic, ArrowRight, Sparkles, AlertTriangle, ClipboardPaste, Chrome, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -295,6 +295,10 @@ const NewJob = () => {
 
           <div className="flex gap-3 justify-end">
             <Button variant="outline" onClick={() => setExtracted(null)}>Start Over</Button>
+            <Button variant="secondary" onClick={handleSaveToJobs} disabled={saving}>
+              <Save className="mr-2 h-4 w-4" />
+              Save to Jobs
+            </Button>
             <Button onClick={handleContinue} disabled={saving}>
               {saving ? "Saving…" : "Continue to Dealbreaker Check"}
               <ArrowRight className="ml-2 h-4 w-4" />
