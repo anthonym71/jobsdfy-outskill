@@ -25,29 +25,31 @@ const NewJob = () => {
   const [autoExtractPending, setAutoExtractPending] = useState(false);
   const [isExtensionImport, setIsExtensionImport] = useState(false);
 
-  // Auto-fill from Chrome extension
+  // Auto-fill from Chrome extension or mobile share
   useEffect(() => {
     const source = searchParams.get("source");
     const extText = searchParams.get("text");
     const shareUrl = searchParams.get("url");
-    const shareTitle = searchParams.get("title");
 
     if (source === "extension" && extText) {
       setText(extText);
-      setIsExtensionImport(true);
       setTab("text");
       setAutoExtractPending(true);
       navigate("/app/new-job", { replace: true });
     } else if (shareUrl || (extText && !source)) {
-      // PWA share target or bookmarklet — got a URL
+      // PWA share target or bookmarklet
+      // Mobile share often puts the URL inside the "text" field
+      const urlInText = extText?.match(/https?:\/\/\S+/)?.[0];
       if (shareUrl) {
         setUrl(shareUrl);
+        setTab("url");
+      } else if (urlInText) {
+        setUrl(urlInText);
         setTab("url");
       } else if (extText) {
         setText(extText);
         setTab("text");
       }
-      setIsExtensionImport(true);
       setAutoExtractPending(true);
       navigate("/app/new-job", { replace: true });
     }
