@@ -146,22 +146,34 @@ const NewJob = () => {
     }
   };
 
+  const getEditedValues = () => {
+    const formEl = document.getElementById("extraction-form") as HTMLFormElement;
+    const formData = new FormData(formEl);
+    const edited: Record<string, string> = {};
+    formData.forEach((val, key) => { edited[key] = val as string; });
+    return { ...extracted, ...edited };
+  };
+
+  const handleSaveToJobs = async () => {
+    if (!user || !extracted) return;
+    setSaving(true);
+    try {
+      await saveJobRecord(getEditedValues());
+      toast({ title: "Job saved", description: "Added to your Jobs list." });
+      navigate("/app/jobs");
+    } catch (err: any) {
+      console.error("Save error:", err);
+      toast({ title: "Error saving job", description: err.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleContinue = async () => {
     if (!user || !extracted) return;
     setSaving(true);
-
     try {
-      // Collect edited values from the form
-      const formEl = document.getElementById("extraction-form") as HTMLFormElement;
-      const formData = new FormData(formEl);
-      const edited: Record<string, string> = {};
-      formData.forEach((val, key) => { edited[key] = val as string; });
-
-      const job = await saveJobRecord({
-        ...extracted,
-        ...edited,
-      });
-
+      const job = await saveJobRecord(getEditedValues());
       navigate(`/app/dealbreakers/${job.id}`);
     } catch (err: any) {
       console.error("Save error:", err);
