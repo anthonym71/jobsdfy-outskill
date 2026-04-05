@@ -29,6 +29,7 @@ import ExtensionDownload from "./pages/ExtensionDownload";
 import RecruiterCandidates from "./pages/RecruiterCandidates";
 import Tasks from "./pages/Tasks";
 import AdminAuditLog from "./pages/AdminAuditLog";
+import OnboardingGuard from "./components/OnboardingGuard";
 
 const queryClient = new QueryClient();
 
@@ -62,26 +63,28 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/onboarding" element={<Onboarding />} />
-              <Route element={<AppLayout />}>
-                <Route path="/app" element={<Dashboard />} />
-                <Route path="/app/new-job" element={<NewJob />} />
-                <Route path="/app/dealbreakers/:id" element={<DealbreakersCheck />} />
-                <Route path="/app/decision/:id" element={<FastDecision />} />
-                <Route path="/app/apply/:id" element={<QuickApply />} />
-                <Route path="/app/jobs" element={<Jobs />} />
-                <Route path="/app/jobs/:id" element={<JobDetail />} />
-                <Route path="/app/settings" element={<Settings />} />
-                <Route path="/app/profile" element={<Profile />} />
-                <Route path="/app/calendar" element={<Calendar />} />
-                <Route path="/app/pricing" element={<Pricing />} />
-                <Route path="/app/support" element={<Support />} />
-                <Route path="/app/post-job" element={<PostJob />} />
-                <Route path="/app/recruiter/candidates" element={<RecruiterCandidates />} />
-                <Route path="/app/admin" element={<AdminHelpdesk />} />
-                <Route path="/app/admin/users" element={<AdminUsers />} />
-                <Route path="/app/admin/logs" element={<AdminAuditLog />} />
-                <Route path="/app/tasks" element={<Tasks />} />
-                <Route path="/app/extension" element={<ExtensionDownload />} />
+              <Route element={<OnboardingGuard />}>
+                <Route element={<AppLayout />}>
+                  <Route path="/app" element={<Dashboard />} />
+                  <Route path="/app/new-job" element={<NewJob />} />
+                  <Route path="/app/dealbreakers/:id" element={<DealbreakersCheck />} />
+                  <Route path="/app/decision/:id" element={<FastDecision />} />
+                  <Route path="/app/apply/:id" element={<QuickApply />} />
+                  <Route path="/app/jobs" element={<Jobs />} />
+                  <Route path="/app/jobs/:id" element={<JobDetail />} />
+                  <Route path="/app/settings" element={<Settings />} />
+                  <Route path="/app/profile" element={<Profile />} />
+                  <Route path="/app/calendar" element={<Calendar />} />
+                  <Route path="/app/pricing" element={<Pricing />} />
+                  <Route path="/app/support" element={<Support />} />
+                  <Route path="/app/post-job" element={<PostJob />} />
+                  <Route path="/app/recruiter/candidates" element={<RecruiterCandidates />} />
+                  <Route path="/app/admin" element={<AdminHelpdesk />} />
+                  <Route path="/app/admin/users" element={<AdminUsers />} />
+                  <Route path="/app/admin/logs" element={<AdminAuditLog />} />
+                  <Route path="/app/tasks" element={<Tasks />} />
+                  <Route path="/app/extension" element={<ExtensionDownload />} />
+                </Route>
               </Route>
             </Route>
             <Route path="*" element={<NotFound />} />
