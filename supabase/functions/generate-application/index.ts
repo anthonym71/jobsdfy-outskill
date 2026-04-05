@@ -57,7 +57,7 @@ serve(async (req) => {
       });
     }
 
-    const { jobId } = await req.json();
+    const { jobId, version = 1 } = await req.json();
 
     const [jobRes, profileRes, workHistoryRes, educationRes] = await Promise.all([
       supabase.from("jobs").select("*").eq("id", jobId).eq("user_id", user.id).single(),
