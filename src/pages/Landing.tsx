@@ -7,7 +7,8 @@ import {
   GraduationCap, Target, Clock, TrendingUp, Briefcase, Crown, Star
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import jobyMascot from "@/assets/joby-mascot.png";
 
 const fadeUp = {
@@ -95,6 +96,13 @@ const faqs = [
 
 const Landing = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  // Track page view
+  useEffect(() => {
+    supabase.functions.invoke("track-pageview", {
+      body: { page: "/", referrer: document.referrer },
+    }).catch(() => {});
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
