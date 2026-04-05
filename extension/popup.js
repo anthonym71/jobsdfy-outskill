@@ -7,15 +7,22 @@ const connectedSection = document.getElementById('connected-section');
 const savedUrlEl = document.getElementById('saved-url');
 const statusEl = document.getElementById('status');
 
+const DEFAULT_APP_URL = 'https://www.jobsdfy.com';
+
 function setStatus(text, type = '') {
   statusEl.textContent = text;
   statusEl.className = 'status ' + type;
 }
 
-// Load saved URL
+// Load saved URL — default to jobsdfy.com
 chrome.storage.local.get(['appUrl'], (result) => {
   if (result.appUrl) {
     showConnected(result.appUrl);
+  } else {
+    // Auto-save the default URL
+    chrome.storage.local.set({ appUrl: DEFAULT_APP_URL }, () => {
+      showConnected(DEFAULT_APP_URL);
+    });
   }
 });
 
@@ -32,7 +39,7 @@ saveBtn.addEventListener('click', () => {
 editBtn.addEventListener('click', () => {
   configSection.style.display = 'block';
   connectedSection.style.display = 'none';
-  chrome.storage.local.get(['appUrl'], (r) => { appUrlInput.value = r.appUrl || ''; });
+  chrome.storage.local.get(['appUrl'], (r) => { appUrlInput.value = r.appUrl || DEFAULT_APP_URL; });
 });
 
 sendBtn.addEventListener('click', async () => {
@@ -45,7 +52,6 @@ sendBtn.addEventListener('click', async () => {
     const [{ result }] = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       func: () => {
-        // Try to get the main job content
         const selectors = [
           '.jobs-description__content',
           '.job-view-layout',
@@ -73,13 +79,12 @@ sendBtn.addEventListener('click', async () => {
 
     const { appUrl } = await chrome.storage.local.get(['appUrl']);
     
-    // Navigate to the app with the text as a URL parameter
     const encoded = encodeURIComponent(result.text.slice(0, 15000));
-    const baseUrl = appUrl.replace(/\/+$/, '');
+    const baseUrl = (appUrl || DEFAULT_APP_URL).replace(/\/+$/, '');
     const targetUrl = `${baseUrl}/app/new-job?source=extension&text=${encoded}`;
     
     chrome.tabs.create({ url: targetUrl });
-    setStatus('Sent! Opening AI Job OS…', 'success');
+    setStatus('Sent! Opening JobsDFY…', 'success');
   } catch (err) {
     setStatus('Error: ' + err.message, 'error');
   }
