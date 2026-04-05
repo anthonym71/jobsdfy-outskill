@@ -1,7 +1,7 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Upload, FileText, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Loader2, Upload, FileText, CheckCircle, XCircle, AlertTriangle, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,14 +14,15 @@ const CVUploadParser = ({ onImportComplete }: CVUploadParserProps) => {
   const { user, session } = useAuth();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [step, setStep] = useState<"upload" | "parsing" | "conflicts" | "importing">("upload");
+  const [step, setStep] = useState<"upload" | "parsing" | "review" | "importing">("upload");
   const [parsedData, setParsedData] = useState<any>(null);
   const [conflicts, setConflicts] = useState<any>(null);
   const [selectedActions, setSelectedActions] = useState<Record<string, string>>({});
+  const [dragging, setDragging] = useState(false);
+  const [editingField, setEditingField] = useState<string | null>(null);
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user || !session) return;
+  const processFile = async (file: File) => {
+    if (!user || !session) return;
 
     if (file.size > 5 * 1024 * 1024) {
       toast({ title: "File too large", description: "Maximum 5MB", variant: "destructive" });
@@ -36,17 +37,65 @@ const CVUploadParser = ({ onImportComplete }: CVUploadParserProps) => {
       const { error: uploadError } = await supabase.storage.from("cv-uploads").upload(path, file);
       if (uploadError) throw uploadError;
 
-      // Read file as text (for now, we'll extract text client-side for txt/docx)
-      const text = await file.text();
+      // For PDFs: read as base64 and use Vision API on server side
+      // For text files: read as text
+      const isPdf = file.name.toLowerCase().endsWith(".pdf");
+      let cvText = "";
 
-      // Call parse-cv edge function
+      if (isPdf) {
+        // Convert PDF to base64 and send to server for extraction
+        const arrayBuffer = await file.arrayBuffer();
+        const base64 = btoa(
+          new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
+        );
+
+        const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-cv`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ pdfBase64: base64, fileName: file.name }),
+        });
+
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error || "Parsing failed");
+        setParsedData(data.data);
+
+        // Detect conflicts
+        const conflictResp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/detect-cv-conflicts`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ parsedCV: data.data }),
+        });
+
+        const conflictData = await conflictResp.json();
+        if (!conflictResp.ok) throw new Error(conflictData.error || "Conflict detection failed");
+        setConflicts(conflictData.data);
+        initDefaults(conflictData.data);
+        setStep("review");
+        return;
+      }
+
+      // Text-based files
+      cvText = await file.text();
+
+      if (cvText.trim().length < 50) {
+        toast({ title: "CV text too short", description: "The extracted text is too short. Try a different format.", variant: "destructive" });
+        setStep("upload");
+        return;
+      }
+
       const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-cv`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ cvText: text }),
+        body: JSON.stringify({ cvText }),
       });
 
       const data = await resp.json();
@@ -54,7 +103,7 @@ const CVUploadParser = ({ onImportComplete }: CVUploadParserProps) => {
 
       setParsedData(data.data);
 
-      // Now detect conflicts
+      // Detect conflicts
       const conflictResp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/detect-cv-conflicts`, {
         method: "POST",
         headers: {
@@ -66,27 +115,63 @@ const CVUploadParser = ({ onImportComplete }: CVUploadParserProps) => {
 
       const conflictData = await conflictResp.json();
       if (!conflictResp.ok) throw new Error(conflictData.error || "Conflict detection failed");
-
       setConflicts(conflictData.data);
-
-      // Set default selections
-      const defaults: Record<string, string> = {};
-      conflictData.data.workHistoryConflicts?.forEach((c: any, i: number) => {
-        defaults[`work_${i}`] = c.recommendation;
-      });
-      conflictData.data.educationConflicts?.forEach((c: any, i: number) => {
-        defaults[`edu_${i}`] = c.recommendation;
-      });
-      conflictData.data.profileConflicts?.forEach((c: any, i: number) => {
-        defaults[`profile_${i}`] = c.recommendation === "keep_existing" ? "skip" : "use_new";
-      });
-      setSelectedActions(defaults);
-
-      setStep("conflicts");
+      initDefaults(conflictData.data);
+      setStep("review");
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
       setStep("upload");
     }
+  };
+
+  const initDefaults = (conflictData: any) => {
+    const defaults: Record<string, string> = {};
+    conflictData.workHistoryConflicts?.forEach((_: any, i: number) => {
+      defaults[`work_${i}`] = "add";
+    });
+    conflictData.educationConflicts?.forEach((_: any, i: number) => {
+      defaults[`edu_${i}`] = "add";
+    });
+    conflictData.profileConflicts?.forEach((c: any, i: number) => {
+      defaults[`profile_${i}`] = c.recommendation === "keep_existing" ? "skip" : "use_new";
+    });
+    setSelectedActions(defaults);
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) await processFile(file);
+  };
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) await processFile(file);
+  }, [user, session]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+  }, []);
+
+  // Inline editing for parsed data
+  const updateParsedField = (path: string, value: any) => {
+    setParsedData((prev: any) => {
+      const copy = JSON.parse(JSON.stringify(prev));
+      const keys = path.split(".");
+      let obj = copy;
+      for (let i = 0; i < keys.length - 1; i++) {
+        obj = obj[keys[i]];
+      }
+      obj[keys[keys.length - 1]] = value;
+      return copy;
+    });
   };
 
   const handleImport = async () => {
@@ -94,7 +179,7 @@ const CVUploadParser = ({ onImportComplete }: CVUploadParserProps) => {
     setStep("importing");
 
     try {
-      // Import work history entries marked as "add"
+      // Import work history
       const workToAdd = conflicts?.workHistoryConflicts?.filter((_: any, i: number) =>
         selectedActions[`work_${i}`] === "add" || selectedActions[`work_${i}`] === "replace"
       ) || [];
@@ -159,7 +244,7 @@ const CVUploadParser = ({ onImportComplete }: CVUploadParserProps) => {
         });
       }
 
-      // Update profile fields if selected
+      // Update profile fields
       const profileUpdates: any = {};
       conflicts?.profileConflicts?.forEach((c: any, i: number) => {
         if (selectedActions[`profile_${i}`] === "use_new") {
@@ -190,12 +275,22 @@ const CVUploadParser = ({ onImportComplete }: CVUploadParserProps) => {
 
   if (step === "upload") {
     return (
-      <div className="rounded-xl border-2 border-dashed border-border bg-card/50 p-8 text-center">
+      <div
+        className={`rounded-xl border-2 border-dashed p-8 text-center transition-colors cursor-pointer ${
+          dragging ? "border-primary bg-primary/10" : "border-border bg-card/50 hover:border-primary/50"
+        }`}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onClick={() => fileInputRef.current?.click()}
+      >
         <FileText className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-        <p className="text-sm font-medium text-foreground mb-1">Upload your CV</p>
-        <p className="text-xs text-muted-foreground mb-4">Supports .txt, .docx, .pdf (text-based)</p>
+        <p className="text-sm font-medium text-foreground mb-1">
+          {dragging ? "Drop your CV here" : "Drag & drop your CV here"}
+        </p>
+        <p className="text-xs text-muted-foreground mb-4">or click to browse · Supports .pdf, .txt, .docx (max 5MB)</p>
         <input ref={fileInputRef} type="file" accept=".txt,.docx,.pdf,.doc" onChange={handleFileSelect} className="hidden" />
-        <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+        <Button variant="outline" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}>
           <Upload className="h-4 w-4 mr-1" />Choose File
         </Button>
       </div>
@@ -221,13 +316,43 @@ const CVUploadParser = ({ onImportComplete }: CVUploadParserProps) => {
     );
   }
 
-  // Conflicts view
+  // Review view with editable fields
   return (
     <div className="rounded-xl border border-border bg-card p-5 space-y-5">
       <div>
         <h3 className="font-heading text-sm font-semibold text-foreground">CV Import Review</h3>
-        <p className="text-xs text-muted-foreground mt-0.5">{conflicts?.summary}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">Review the extracted data below. Click <Pencil className="h-3 w-3 inline" /> to edit any field before importing.</p>
       </div>
+
+      {/* Parsed summary */}
+      {parsedData && (
+        <div className="rounded-lg bg-accent/20 p-3 space-y-2">
+          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Extracted Data Summary</h4>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div><span className="text-muted-foreground">Name: </span>
+              {editingField === "fullName" ? (
+                <Input className="h-6 text-xs inline-flex w-40" value={parsedData.fullName || ""} onChange={e => updateParsedField("fullName", e.target.value)} onBlur={() => setEditingField(null)} autoFocus />
+              ) : (
+                <span className="text-foreground">{parsedData.fullName || "—"} <button onClick={() => setEditingField("fullName")}><Pencil className="h-2.5 w-2.5 inline text-muted-foreground hover:text-primary" /></button></span>
+              )}
+            </div>
+            <div><span className="text-muted-foreground">Email: </span><span className="text-foreground">{parsedData.email || "—"}</span></div>
+            <div><span className="text-muted-foreground">Phone: </span><span className="text-foreground">{parsedData.phone || "—"}</span></div>
+            <div><span className="text-muted-foreground">Location: </span><span className="text-foreground">{parsedData.location || "—"}</span></div>
+            <div className="col-span-2"><span className="text-muted-foreground">Headline: </span>
+              {editingField === "headline" ? (
+                <Input className="h-6 text-xs inline-flex w-full" value={parsedData.headline || ""} onChange={e => updateParsedField("headline", e.target.value)} onBlur={() => setEditingField(null)} autoFocus />
+              ) : (
+                <span className="text-foreground">{parsedData.headline || "—"} <button onClick={() => setEditingField("headline")}><Pencil className="h-2.5 w-2.5 inline text-muted-foreground hover:text-primary" /></button></span>
+              )}
+            </div>
+            {parsedData.topSkills?.length > 0 && (
+              <div className="col-span-2"><span className="text-muted-foreground">Skills: </span><span className="text-foreground">{parsedData.topSkills.join(", ")}</span></div>
+            )}
+          </div>
+          <p className="text-[10px] text-muted-foreground italic">Source: imported from uploaded CV</p>
+        </div>
+      )}
 
       {/* Profile conflicts */}
       {conflicts?.profileConflicts?.length > 0 && (
@@ -255,36 +380,47 @@ const CVUploadParser = ({ onImportComplete }: CVUploadParserProps) => {
         </div>
       )}
 
-      {/* Work history conflicts */}
+      {/* Work history */}
       {conflicts?.workHistoryConflicts?.length > 0 && (
         <div className="space-y-2">
           <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Work History</h4>
-          {conflicts.workHistoryConflicts.map((c: any, i: number) => (
-            <div key={i} className="rounded-lg bg-accent/30 p-3 flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-1.5">
-                  {c.type === "new" && <CheckCircle className="h-3.5 w-3.5 text-verdict-go" />}
-                  {c.type === "conflict" && <AlertTriangle className="h-3.5 w-3.5 text-verdict-review" />}
-                  {c.type === "match" && <XCircle className="h-3.5 w-3.5 text-muted-foreground" />}
-                  <span className="text-sm font-medium text-foreground">{c.parsedTitle}</span>
+          {conflicts.workHistoryConflicts.map((c: any, i: number) => {
+            const parsed = parsedData?.workHistory?.[c.parsedIndex];
+            return (
+              <div key={i} className="rounded-lg bg-accent/30 p-3 space-y-1">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    {c.type === "new" && <CheckCircle className="h-3.5 w-3.5 text-verdict-go" />}
+                    {c.type === "conflict" && <AlertTriangle className="h-3.5 w-3.5 text-verdict-review" />}
+                    {c.type === "match" && <XCircle className="h-3.5 w-3.5 text-muted-foreground" />}
+                    {editingField === `work_title_${i}` ? (
+                      <Input className="h-6 text-xs w-40" value={parsed?.title || ""} onChange={e => updateParsedField(`workHistory.${c.parsedIndex}.title`, e.target.value)} onBlur={() => setEditingField(null)} autoFocus />
+                    ) : (
+                      <span className="text-sm font-medium text-foreground">{c.parsedTitle} <button onClick={() => setEditingField(`work_title_${i}`)}><Pencil className="h-2.5 w-2.5 inline text-muted-foreground hover:text-primary" /></button></span>
+                    )}
+                  </div>
+                  <select
+                    className="rounded-md border border-input bg-background px-2 py-1 text-xs"
+                    value={selectedActions[`work_${i}`] || "skip"}
+                    onChange={e => setSelectedActions(p => ({ ...p, [`work_${i}`]: e.target.value }))}
+                  >
+                    <option value="add">Add</option>
+                    <option value="replace">Replace</option>
+                    <option value="skip">Skip</option>
+                  </select>
                 </div>
-                <p className="text-xs text-muted-foreground">{c.parsedCompany}{c.differences?.length > 0 ? ` • ${c.differences.join(", ")}` : ""}</p>
+                <p className="text-xs text-muted-foreground">
+                  {c.parsedCompany}
+                  {parsed?.startYear ? ` · ${parsed.startYear}${parsed.endYear ? `–${parsed.endYear}` : "–Present"}` : ""}
+                  {c.differences?.length > 0 ? ` · ${c.differences.join(", ")}` : ""}
+                </p>
               </div>
-              <select
-                className="rounded-md border border-input bg-background px-2 py-1 text-xs"
-                value={selectedActions[`work_${i}`] || "skip"}
-                onChange={e => setSelectedActions(p => ({ ...p, [`work_${i}`]: e.target.value }))}
-              >
-                <option value="add">Add</option>
-                <option value="replace">Replace</option>
-                <option value="skip">Skip</option>
-              </select>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {/* Education conflicts */}
+      {/* Education */}
       {conflicts?.educationConflicts?.length > 0 && (
         <div className="space-y-2">
           <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Education</h4>
@@ -308,7 +444,7 @@ const CVUploadParser = ({ onImportComplete }: CVUploadParserProps) => {
         </div>
       )}
 
-      {/* New certificates */}
+      {/* Certificates */}
       {conflicts?.newCertificates?.filter((c: any) => c.isNew).length > 0 && (
         <div className="space-y-1">
           <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">New Certificates</h4>

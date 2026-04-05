@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ShieldCheck, Download, Tag, Coins, Search, X, Eye, EyeOff, Mail, MessageSquare, Users, Plus, ArrowUpDown, Trash2 } from "lucide-react";
+import { Loader2, ShieldCheck, Download, Tag, Coins, Search, X, Eye, EyeOff, Mail, MessageSquare, Users, Plus, ArrowUpDown, Trash2, Pencil, Ban, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +25,8 @@ interface UserRow {
   lifetime_earned?: number;
   tags: string[];
   groups: string[];
+  status: string;
+  status_reason: string | null;
 }
 
 interface UserGroup {
@@ -72,6 +74,17 @@ const AdminUsers = () => {
   const [messageSubject, setMessageSubject] = useState("");
   const [sending, setSending] = useState(false);
 
+  // Edit user dialog
+  const [editDialog, setEditDialog] = useState<UserRow | null>(null);
+  const [editForm, setEditForm] = useState({ full_name: "", email: "", phone_number: "" });
+  const [editSaving, setEditSaving] = useState(false);
+
+  // Suspend/cancel dialog
+  const [suspendDialog, setSuspendDialog] = useState<{ userId: string; name: string; currentStatus: string } | null>(null);
+  const [suspendAction, setSuspendAction] = useState<"suspended" | "cancelled" | "active">("suspended");
+  const [suspendReason, setSuspendReason] = useState("");
+  const [suspendSaving, setSuspendSaving] = useState(false);
+
   useEffect(() => {
     if (user) loadUsers();
   }, [user]);
@@ -101,7 +114,6 @@ const AdminUsers = () => {
       });
       setAllTags(Array.from(tagSet).sort());
 
-      // Build group membership map
       const groupMap = new Map<string, string>((groupRes.data || []).map((g: any) => [g.id, g.name]));
       const userGroupsMap = new Map<string, string[]>();
       const groupMemberCounts = new Map<string, number>();
@@ -132,6 +144,8 @@ const AdminUsers = () => {
           lifetime_earned: c?.lifetime_earned ?? 0,
           tags: tagsMap.get(p.user_id) || [],
           groups: userGroupsMap.get(p.user_id) || [],
+          status: (p as any).status || "active",
+          status_reason: (p as any).status_reason || null,
         };
       });
       setUsers(userRows);
@@ -208,7 +222,6 @@ const AdminUsers = () => {
         toast({ title: "SMS sent", description: `Message sent to ${messageDialog.name}` });
       } else {
         if (!messageDialog.email) throw new Error("User has no email");
-        // Open mailto link as fallback
         window.open(`mailto:${messageDialog.email}?subject=${encodeURIComponent(messageSubject)}&body=${encodeURIComponent(messageBody)}`, "_blank");
         toast({ title: "Email client opened" });
       }
@@ -217,11 +230,47 @@ const AdminUsers = () => {
     finally { setSending(false); }
   };
 
+  const handleEditUser = async () => {
+    if (!editDialog) return;
+    setEditSaving(true);
+    try {
+      const { error } = await supabase.from("user_profiles").update({
+        full_name: editForm.full_name.trim(),
+        email: editForm.email.trim() || null,
+        phone_number: editForm.phone_number.trim() || null,
+        updated_at: new Date().toISOString(),
+      }).eq("user_id", editDialog.user_id);
+      if (error) throw error;
+      toast({ title: "User updated" });
+      setEditDialog(null);
+      loadUsers();
+    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+    finally { setEditSaving(false); }
+  };
+
+  const handleSuspendUser = async () => {
+    if (!suspendDialog) return;
+    setSuspendSaving(true);
+    try {
+      const { error } = await supabase.from("user_profiles").update({
+        status: suspendAction,
+        status_reason: suspendReason.trim() || null,
+        status_updated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      } as any).eq("user_id", suspendDialog.userId);
+      if (error) throw error;
+      toast({ title: suspendAction === "active" ? "Account reactivated" : `Account ${suspendAction}` });
+      setSuspendDialog(null); setSuspendReason("");
+      loadUsers();
+    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+    finally { setSuspendSaving(false); }
+  };
+
   const exportCSV = () => {
-    const headers = ["Name","Email","Phone","Location","Headline","Balance","Lifetime Earned","Tags","Groups","Joined"];
+    const headers = ["Name","Email","Phone","Location","Headline","Status","Balance","Lifetime Earned","Tags","Groups","Joined"];
     const rows = filtered.map(u => [
       u.full_name, u.email, u.phone_number || "", u.location || "",
-      u.headline || "", u.balance, u.lifetime_earned, u.tags.join("; "), u.groups.join("; "),
+      u.headline || "", u.status, u.balance, u.lifetime_earned, u.tags.join("; "), u.groups.join("; "),
       new Date(u.created_at).toLocaleDateString()
     ]);
     const csv = [headers.join(","), ...rows.map(r => r.map(v => `"${v}"`).join(","))].join("\n");
@@ -333,8 +382,8 @@ const AdminUsers = () => {
                   <TableHead>Last Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Phone</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Tags</TableHead>
-                  <TableHead>Groups</TableHead>
                   <TableHead>Credits</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -343,11 +392,16 @@ const AdminUsers = () => {
                 {filtered.map(u => {
                   const { first, last } = splitName(u.full_name);
                   return (
-                    <TableRow key={u.user_id}>
+                    <TableRow key={u.user_id} className={u.status !== "active" ? "opacity-60" : ""}>
                       <TableCell className="font-medium text-sm">{first}</TableCell>
                       <TableCell className="text-sm">{last}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{u.email || "—"}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{u.phone_number || "—"}</TableCell>
+                      <TableCell>
+                        <Badge variant={u.status === "active" ? "default" : "destructive"} className="text-[10px]">
+                          {u.status}
+                        </Badge>
+                      </TableCell>
                       <TableCell>
                         <div className="flex gap-1 flex-wrap">
                           {u.tags.map(t => (
@@ -357,14 +411,22 @@ const AdminUsers = () => {
                           ))}
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1 flex-wrap">
-                          {u.groups.map(g => <Badge key={g} variant="outline" className="text-[10px]">{g}</Badge>)}
-                        </div>
-                      </TableCell>
                       <TableCell><span className="text-xs font-mono">{u.balance}</span></TableCell>
                       <TableCell>
                         <div className="flex gap-1">
+                          <Button size="icon" variant="ghost" className="h-7 w-7" title="Edit User" onClick={() => {
+                            setEditDialog(u);
+                            setEditForm({ full_name: u.full_name, email: u.email, phone_number: u.phone_number || "" });
+                          }}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" title={u.status === "active" ? "Suspend/Cancel" : "Reactivate"} onClick={() => {
+                            setSuspendDialog({ userId: u.user_id, name: u.full_name, currentStatus: u.status });
+                            setSuspendAction(u.status === "active" ? "suspended" : "active");
+                            setSuspendReason(u.status_reason || "");
+                          }}>
+                            {u.status === "active" ? <Ban className="h-3.5 w-3.5" /> : <CheckCircle className="h-3.5 w-3.5 text-verdict-go" />}
+                          </Button>
                           <Button size="icon" variant="ghost" className="h-7 w-7" title="Send SMS" onClick={() => setMessageDialog({ userId: u.user_id, name: u.full_name, phone: u.phone_number, email: u.email, type: "sms" })}>
                             <MessageSquare className="h-3.5 w-3.5" />
                           </Button>
@@ -373,9 +435,6 @@ const AdminUsers = () => {
                           </Button>
                           <Button size="icon" variant="ghost" className="h-7 w-7" title="Add Tag" onClick={() => setTagDialog({ userId: u.user_id, name: u.full_name })}>
                             <Tag className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" title="Add to Group" onClick={() => setAssignGroupDialog({ userId: u.user_id, name: u.full_name })}>
-                            <Users className="h-3.5 w-3.5" />
                           </Button>
                           <Button size="icon" variant="ghost" className="h-7 w-7" title="Allocate Credits" onClick={() => setCreditDialog({ userId: u.user_id, name: u.full_name })}>
                             <Coins className="h-3.5 w-3.5" />
@@ -420,6 +479,65 @@ const AdminUsers = () => {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Edit User Dialog */}
+      <Dialog open={!!editDialog} onOpenChange={open => !open && setEditDialog(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit User: {editDialog?.full_name}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div><Label>Full Name</Label><Input value={editForm.full_name} onChange={e => setEditForm(p => ({ ...p, full_name: e.target.value }))} className="mt-1" /></div>
+            <div><Label>Email</Label><Input value={editForm.email} onChange={e => setEditForm(p => ({ ...p, email: e.target.value }))} className="mt-1" /></div>
+            <div><Label>Phone Number</Label><Input value={editForm.phone_number} onChange={e => setEditForm(p => ({ ...p, phone_number: e.target.value }))} placeholder="+1234567890" className="mt-1" /></div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleEditUser} disabled={editSaving || !editForm.full_name.trim()}>
+              {editSaving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Suspend/Cancel/Reactivate Dialog */}
+      <Dialog open={!!suspendDialog} onOpenChange={open => !open && setSuspendDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {suspendDialog?.currentStatus === "active" ? "Suspend or Cancel Account" : "Reactivate Account"}: {suspendDialog?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {suspendDialog?.currentStatus === "active" ? (
+              <div>
+                <Label>Action</Label>
+                <Select value={suspendAction} onValueChange={v => setSuspendAction(v as any)}>
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="suspended">Suspend (temporary)</SelectItem>
+                    <SelectItem value="cancelled">Cancel (permanent)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : null}
+            <div>
+              <Label>Reason</Label>
+              <Textarea value={suspendReason} onChange={e => setSuspendReason(e.target.value)} placeholder="e.g. Chargeback, abuse, non-payment…" rows={3} className="mt-1" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant={suspendDialog?.currentStatus === "active" ? "destructive" : "default"}
+              onClick={handleSuspendUser}
+              disabled={suspendSaving}
+            >
+              {suspendSaving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+              {suspendDialog?.currentStatus === "active"
+                ? suspendAction === "suspended" ? "Suspend Account" : "Cancel Account"
+                : "Reactivate Account"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Tag Dialog */}
       <Dialog open={!!tagDialog} onOpenChange={open => !open && setTagDialog(null)}>
