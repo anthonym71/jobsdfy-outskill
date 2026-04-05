@@ -27,11 +27,11 @@ const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose
     onDisconnect: () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
     },
-    onMessage: (message) => {
-      if (message.type === "user_transcript") {
-        setTranscript(prev => [...prev, `You: ${(message as any).user_transcription_event?.user_transcript || ""}`]);
-      } else if (message.type === "agent_response") {
-        setTranscript(prev => [...prev, `Joby: ${(message as any).agent_response_event?.agent_response || ""}`]);
+    onMessage: (message: any) => {
+      if (message?.type === "user_transcript") {
+        setTranscript(prev => [...prev, `You: ${message?.user_transcription_event?.user_transcript || ""}`]);
+      } else if (message?.type === "agent_response") {
+        setTranscript(prev => [...prev, `Joby: ${message?.agent_response_event?.agent_response || ""}`]);
       }
     },
     onError: (error) => {
