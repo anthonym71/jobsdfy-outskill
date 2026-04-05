@@ -83,10 +83,16 @@ const Jobs = () => {
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="new">New</SelectItem>
-                <SelectItem value="blocked">Blocked</SelectItem>
-                <SelectItem value="reviewing">Reviewing</SelectItem>
+                <SelectItem value="listed">Listed</SelectItem>
                 <SelectItem value="saved">Saved</SelectItem>
                 <SelectItem value="applied">Applied</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="interview">Interview</SelectItem>
+                <SelectItem value="pending_decision">Pending Decision</SelectItem>
+                <SelectItem value="closed">Closed</SelectItem>
+                <SelectItem value="lost">Lost</SelectItem>
+                <SelectItem value="blocked">Blocked</SelectItem>
+                <SelectItem value="reviewing">Reviewing</SelectItem>
                 <SelectItem value="archived">Archived</SelectItem>
               </SelectContent>
             </Select>
