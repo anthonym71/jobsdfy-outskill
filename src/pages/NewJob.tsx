@@ -23,13 +23,15 @@ const NewJob = () => {
   const [searchParams] = useSearchParams();
 
   const [autoExtractPending, setAutoExtractPending] = useState(false);
+  const [isExtensionImport, setIsExtensionImport] = useState(false);
 
   // Auto-fill from Chrome extension
   useEffect(() => {
     const source = searchParams.get("source");
     const extText = searchParams.get("text");
     if (source === "extension" && extText) {
-      setText(decodeURIComponent(extText));
+      setText(extText);
+      setIsExtensionImport(true);
       setTab("text");
       setAutoExtractPending(true);
       navigate("/app/new-job", { replace: true });
@@ -43,6 +45,47 @@ const NewJob = () => {
       handleExtract();
     }
   }, [autoExtractPending, text]);
+
+  const parseSalary = (value: unknown) => {
+    const parsed = Number.parseInt(String(value ?? ""), 10);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  };
+
+  const saveJobRecord = async (
+    values: Record<string, any>,
+    options?: {
+      sourceType?: "url" | "text" | "screenshot" | "voice";
+      sourceInput?: string;
+    }
+  ) => {
+    if (!user) throw new Error("You must be signed in to save a job.");
+
+    const sourceType = options?.sourceType ?? (tab as "url" | "text" | "screenshot" | "voice");
+    const sourceInput = options?.sourceInput ?? (sourceType === "url" ? url : text);
+
+    const { data: job, error } = await supabase.from("jobs").insert({
+      user_id: user.id,
+      title: values.title || "",
+      company: values.company || "",
+      location: values.location || "",
+      salary_min: parseSalary(values.salaryMin),
+      salary_max: parseSalary(values.salaryMax),
+      salary_currency: values.salaryCurrency || "USD",
+      work_model: values.workModel || "",
+      employment_type: values.employmentType || "",
+      visa_policy: values.visaPolicy || "",
+      language_requirements: values.languageRequirements || "",
+      recruiter_name: values.recruiterName || "",
+      description: values.description || "",
+      requirements_summary: values.requirementsSummary || "",
+      application_url: values.applicationUrl || "",
+      source_type: sourceType,
+      source_input: sourceInput,
+    }).select().single();
+
+    if (error) throw error;
+    return job;
+  };
 
   const handleExtract = async () => {
     const input = tab === "url" ? url.trim() : text.trim();
@@ -77,7 +120,37 @@ const NewJob = () => {
         return;
       }
 
-      setExtracted(data.data);
+      const extractedData = data.data;
+      setExtracted(extractedData);
+
+      if (isExtensionImport) {
+        setSaving(true);
+        setIsExtensionImport(false);
+
+        try {
+          const job = await saveJobRecord(extractedData, {
+            sourceType: "text",
+            sourceInput: input,
+          });
+
+          toast({
+            title: "Job imported",
+            description: "Saved to Jobs and opening the dealbreaker check.",
+          });
+
+          navigate(`/app/dealbreakers/${job.id}`);
+          return;
+        } catch (err: any) {
+          console.error("Auto-save error:", err);
+          toast({
+            title: "Job extracted but not saved",
+            description: err.message || "Please review the extraction and save it manually.",
+            variant: "destructive",
+          });
+        } finally {
+          setSaving(false);
+        }
+      }
     } catch (err) {
       console.error("Extraction error:", err);
       toast({ title: "Network error", description: "Could not reach the extraction service.", variant: "destructive" });
@@ -97,27 +170,10 @@ const NewJob = () => {
       const edited: Record<string, string> = {};
       formData.forEach((val, key) => { edited[key] = val as string; });
 
-      const { data: job, error } = await supabase.from("jobs").insert({
-        user_id: user.id,
-        title: edited.title || extracted.title || "",
-        company: edited.company || extracted.company || "",
-        location: edited.location || extracted.location || "",
-        salary_min: parseInt(edited.salaryMin || extracted.salaryMin) || 0,
-        salary_max: parseInt(edited.salaryMax || extracted.salaryMax) || 0,
-        salary_currency: edited.salaryCurrency || extracted.salaryCurrency || "USD",
-        work_model: edited.workModel || extracted.workModel || "",
-        employment_type: edited.employmentType || extracted.employmentType || "",
-        visa_policy: edited.visaPolicy || extracted.visaPolicy || "",
-        language_requirements: edited.languageRequirements || extracted.languageRequirements || "",
-        recruiter_name: edited.recruiterName || extracted.recruiterName || "",
-        description: edited.description || extracted.description || "",
-        requirements_summary: edited.requirementsSummary || extracted.requirementsSummary || "",
-        application_url: edited.applicationUrl || extracted.applicationUrl || "",
-        source_type: tab as any,
-        source_input: tab === "url" ? url : text,
-      }).select().single();
-
-      if (error) throw error;
+      const job = await saveJobRecord({
+        ...extracted,
+        ...edited,
+      });
 
       navigate(`/app/dealbreakers/${job.id}`);
     } catch (err: any) {
