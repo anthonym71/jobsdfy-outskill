@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import VoiceCVBuilderDialog from "./VoiceCVBuilder";
+import VoiceLabel from "./VoiceLabel";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,11 +66,11 @@ const ReferencesTab = () => {
             <Button size="icon" variant="ghost" onClick={() => setRefs(prev => prev.filter((_, idx) => idx !== i))}><Trash2 className="h-4 w-4 text-destructive" /></Button>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
-            <div><Label>Name</Label><Input value={r.name} onChange={e => setRefs(prev => prev.map((x, idx) => idx === i ? { ...x, name: e.target.value } : x))} className="mt-1" /></div>
-            <div><Label>Email</Label><Input value={r.email || ""} onChange={e => setRefs(prev => prev.map((x, idx) => idx === i ? { ...x, email: e.target.value } : x))} className="mt-1" /></div>
-            <div><Label>Phone</Label><Input value={r.phone || ""} onChange={e => setRefs(prev => prev.map((x, idx) => idx === i ? { ...x, phone: e.target.value } : x))} className="mt-1" /></div>
+            <div><VoiceLabel onVoiceResult={v => setRefs(prev => prev.map((x, idx) => idx === i ? { ...x, name: v } : x))}>Name</VoiceLabel><Input value={r.name} onChange={e => setRefs(prev => prev.map((x, idx) => idx === i ? { ...x, name: e.target.value } : x))} className="mt-1" /></div>
+            <div><VoiceLabel onVoiceResult={v => setRefs(prev => prev.map((x, idx) => idx === i ? { ...x, email: v } : x))}>Email</VoiceLabel><Input value={r.email || ""} onChange={e => setRefs(prev => prev.map((x, idx) => idx === i ? { ...x, email: e.target.value } : x))} className="mt-1" /></div>
+            <div><VoiceLabel onVoiceResult={v => setRefs(prev => prev.map((x, idx) => idx === i ? { ...x, phone: v } : x))}>Phone</VoiceLabel><Input value={r.phone || ""} onChange={e => setRefs(prev => prev.map((x, idx) => idx === i ? { ...x, phone: e.target.value } : x))} className="mt-1" /></div>
           </div>
-          <div><Label>Testimonial</Label><Textarea value={r.testimonial_text || ""} onChange={e => setRefs(prev => prev.map((x, idx) => idx === i ? { ...x, testimonial_text: e.target.value } : x))} className="mt-1" rows={2} /></div>
+          <div><VoiceLabel onVoiceResult={v => setRefs(prev => prev.map((x, idx) => idx === i ? { ...x, testimonial_text: (x.testimonial_text || "") + " " + v } : x))}>Testimonial</VoiceLabel><Textarea value={r.testimonial_text || ""} onChange={e => setRefs(prev => prev.map((x, idx) => idx === i ? { ...x, testimonial_text: e.target.value } : x))} className="mt-1" rows={2} /></div>
           <label className="flex items-center gap-2 text-sm">
             <Checkbox checked={r.consent_given} onCheckedChange={v => setRefs(prev => prev.map((x, idx) => idx === i ? { ...x, consent_given: !!v } : x))} />
             Consent to share their contact details
