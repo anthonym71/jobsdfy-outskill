@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
-const TWILIO_FROM_NUMBER = "+12066961541";
+const TWILIO_FROM_NUMBER = "+13857876364";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });

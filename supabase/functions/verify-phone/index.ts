@@ -8,7 +8,7 @@ const corsHeaders = {
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 // TODO: Replace with your actual Twilio phone number
-const TWILIO_FROM_NUMBER = "+12066961541";
+const TWILIO_FROM_NUMBER = "+13857876364";
 
 // Simple in-memory OTP store (in production, use a database)
 // For edge functions, we'll store OTPs in a temporary table or use Twilio Verify
