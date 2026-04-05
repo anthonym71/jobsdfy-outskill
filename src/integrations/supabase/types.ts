@@ -82,6 +82,51 @@ export type Database = {
           },
         ]
       }
+      books: {
+        Row: {
+          author: string | null
+          category: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          rating: number | null
+          started_at: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          author?: string | null
+          category?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          rating?: number | null
+          started_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          author?: string | null
+          category?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          rating?: number | null
+          started_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       certificates: {
         Row: {
           created_at: string
@@ -623,6 +668,42 @@ export type Database = {
         }
         Relationships: []
       }
+      memory_dump: {
+        Row: {
+          content: string | null
+          created_at: string
+          entry_type: string
+          id: string
+          image_url: string | null
+          source: string | null
+          tags: string[] | null
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          entry_type?: string
+          id?: string
+          image_url?: string | null
+          source?: string | null
+          tags?: string[] | null
+          title?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          entry_type?: string
+          id?: string
+          image_url?: string | null
+          source?: string | null
+          tags?: string[] | null
+          title?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       phone_change_requests: {
         Row: {
           created_at: string
@@ -652,6 +733,33 @@ export type Database = {
           reviewed_by?: string | null
           status?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profile_gallery: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          image_url: string
+          sort_order: number | null
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string
+          sort_order?: number | null
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string
+          sort_order?: number | null
           user_id?: string
         }
         Relationships: []
@@ -912,6 +1020,48 @@ export type Database = {
           id?: string
           platform?: string
           url?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      social_posts: {
+        Row: {
+          content: string | null
+          created_at: string
+          follow_up_done: boolean | null
+          follow_up_task: string | null
+          id: string
+          image_urls: string[] | null
+          platforms: Json | null
+          post_type: string
+          posted_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          follow_up_done?: boolean | null
+          follow_up_task?: string | null
+          id?: string
+          image_urls?: string[] | null
+          platforms?: Json | null
+          post_type?: string
+          posted_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          follow_up_done?: boolean | null
+          follow_up_task?: string | null
+          id?: string
+          image_urls?: string[] | null
+          platforms?: Json | null
+          post_type?: string
+          posted_at?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

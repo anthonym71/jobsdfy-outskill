@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, Plus, Trash2, Sparkles, Lightbulb, Camera } from "lucide-react";
 import VoiceLabel from "./VoiceLabel";
+import PhotoGallerySection from "./PhotoGallerySection";
 import VoiceCVBuilderDialog from "./VoiceCVBuilder";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -320,6 +321,9 @@ const AboutMeTab = () => {
           <div><VoiceLabel onVoiceResult={v => setProfile(p => ({ ...p, languages: p.languages ? `${p.languages}, ${v}` : v }))}>Languages</VoiceLabel><Input value={profile.languages} onChange={e => setProfile(p => ({ ...p, languages: e.target.value }))} className="mt-1" placeholder="English, German" /></div>
         </div>
       </section>
+
+      {/* Photo Gallery */}
+      <PhotoGallerySection />
 
       {/* Hobbies & Interests */}
       <section className="rounded-xl border border-border bg-card p-6 space-y-4">
