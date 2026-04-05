@@ -20,8 +20,9 @@ chrome.storage.local.get(['appUrl'], (result) => {
 });
 
 saveBtn.addEventListener('click', () => {
-  const url = appUrlInput.value.trim();
+  let url = appUrlInput.value.trim();
   if (!url) return setStatus('Please enter your app URL', 'error');
+  url = url.replace(/\/+$/, '');
   chrome.storage.local.set({ appUrl: url }, () => {
     showConnected(url);
     setStatus('Connected!', 'success');
@@ -74,7 +75,8 @@ sendBtn.addEventListener('click', async () => {
     
     // Navigate to the app with the text as a URL parameter
     const encoded = encodeURIComponent(result.text.slice(0, 15000));
-    const targetUrl = `${appUrl}/app/new-job?source=extension&text=${encoded}`;
+    const baseUrl = appUrl.replace(/\/+$/, '');
+    const targetUrl = `${baseUrl}/app/new-job?source=extension&text=${encoded}`;
     
     chrome.tabs.create({ url: targetUrl });
     setStatus('Sent! Opening AI Job OS…', 'success');
