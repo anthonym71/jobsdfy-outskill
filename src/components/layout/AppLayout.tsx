@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, PlusCircle, Briefcase, Settings, LogOut, Menu, X, CreditCard, HelpCircle, ShieldCheck, Users, UserCircle, CalendarDays, Coins, ListTodo } from "lucide-react";
+import { LayoutDashboard, PlusCircle, Briefcase, Settings, LogOut, Menu, X, CreditCard, HelpCircle, ShieldCheck, Users, UserCircle, CalendarDays, Coins, ListTodo, ClipboardList } from "lucide-react";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,6 +24,7 @@ const baseNavItems: { to: string; icon: any; label: string; end?: boolean }[] = 
 const adminNavItems: { to: string; icon: any; label: string; end?: boolean }[] = [
   { to: "/app/admin", icon: ShieldCheck, label: "Admin" },
   { to: "/app/admin/users", icon: Users, label: "Users" },
+  { to: "/app/admin/logs", icon: ClipboardList, label: "Events Log" },
 ];
 
 const AppLayout = () => {
