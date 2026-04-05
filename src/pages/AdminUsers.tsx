@@ -165,6 +165,13 @@ const AdminUsers = () => {
       await supabase.from("credit_transactions").insert({ user_id: creditDialog.userId, amount: creditAmount, action: "earned" as any, reason: "Admin credit allocation" });
       const target = users.find(u => u.user_id === creditDialog.userId);
       await supabase.from("user_credits").update({ balance: (target?.balance || 0) + creditAmount, lifetime_earned: (target?.lifetime_earned || 0) + creditAmount, updated_at: new Date().toISOString() }).eq("user_id", creditDialog.userId);
+      await supabase.from("audit_logs").insert({
+        user_id: user?.id,
+        user_email: user?.email || "",
+        user_name: "",
+        action: "allocate_credits",
+        description: `Allocated ${creditAmount} credits to ${creditDialog.name}`,
+      });
       toast({ title: `${creditAmount} credits allocated to ${creditDialog.name}` });
       setCreditDialog(null); setCreditAmount(0); setAdminPassword("");
       loadUsers();
