@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "AI Job OS",
-  "version": "1.0.0",
-  "description": "Send job listings to AI Job OS with one click",
+  "name": "JobsDFY",
+  "version": "1.1.0",
+  "description": "Send job listings to JobsDFY with one click",
   "permissions": ["activeTab", "scripting", "storage"],
   "action": {
     "default_popup": "popup.html",

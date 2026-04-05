@@ -1,11 +1,12 @@
-// Inject a floating "Send to AI Job OS" button on LinkedIn/Indeed job pages
 (function() {
   if (document.getElementById('aijos-fab')) return;
 
+  const DEFAULT_APP_URL = 'https://www.jobsdfy.com';
+
   const btn = document.createElement('button');
   btn.id = 'aijos-fab';
-  btn.innerHTML = '✦ Send to AI Job OS';
-  btn.title = 'Extract this job and send to AI Job OS';
+  btn.innerHTML = '✦ Send to JobsDFY';
+  btn.title = 'Extract this job and send to JobsDFY';
   document.body.appendChild(btn);
 
   btn.addEventListener('click', async () => {
@@ -34,21 +35,15 @@
     if (!text) text = document.body.innerText;
 
     chrome.storage.local.get(['appUrl'], (result) => {
-      if (!result.appUrl) {
-        btn.innerHTML = '✦ Set up extension first';
-        btn.disabled = false;
-        setTimeout(() => { btn.innerHTML = '✦ Send to AI Job OS'; }, 2000);
-        return;
-      }
-
+      const appUrl = result.appUrl || DEFAULT_APP_URL;
       const encoded = encodeURIComponent(text.slice(0, 15000));
-      const baseUrl = result.appUrl.replace(/\/+$/, '');
+      const baseUrl = appUrl.replace(/\/+$/, '');
       const targetUrl = `${baseUrl}/app/new-job?source=extension&text=${encoded}`;
       window.open(targetUrl, '_blank');
 
       btn.innerHTML = '✓ Sent!';
       setTimeout(() => {
-        btn.innerHTML = '✦ Send to AI Job OS';
+        btn.innerHTML = '✦ Send to JobsDFY';
         btn.disabled = false;
       }, 2000);
     });
