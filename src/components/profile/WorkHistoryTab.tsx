@@ -180,6 +180,7 @@ const WorkHistoryTab = () => {
           <p className="text-sm text-muted-foreground">Add your work experience or upload a CV to auto-populate.</p>
         </div>
         <div className="flex gap-2">
+          <VoiceCVBuilderDialog category="work" categoryLabel="Work History" />
           <Button size="sm" variant="outline" onClick={() => setShowUpload(!showUpload)}>
             {showUpload ? "Hide Upload" : "Upload CV"}
           </Button>

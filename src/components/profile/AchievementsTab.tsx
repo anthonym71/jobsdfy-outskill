@@ -30,7 +30,10 @@ const AchievementsTab = () => {
     <div className="space-y-6">
       {/* Achievements */}
       <section>
-        <h2 className="font-heading text-base font-semibold text-foreground mb-3">Achievements</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-heading text-base font-semibold text-foreground">Achievements</h2>
+          <VoiceCVBuilderDialog category="achievements" categoryLabel="Achievements" />
+        </div>
         {achievements.length === 0 ? (
           <p className="text-sm text-muted-foreground">No achievements unlocked yet. Keep using the platform!</p>
         ) : (
