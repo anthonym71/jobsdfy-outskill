@@ -9,6 +9,7 @@ import { Link2, FileText, Image, Mic, ArrowRight, Sparkles, AlertTriangle, Clipb
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { resolveSharedImport } from "@/lib/jobImport";
 
 const NewJob = () => {
   const [tab, setTab] = useState("url");
@@ -27,31 +28,24 @@ const NewJob = () => {
   // Auto-fill from Chrome extension or mobile share
   useEffect(() => {
     const source = searchParams.get("source");
-    const extText = searchParams.get("text");
+    const shareText = searchParams.get("text");
     const shareUrl = searchParams.get("url");
+    const shareTitle = searchParams.get("title");
 
-    if (source === "extension" && extText) {
-      setText(extText);
-      setTab("text");
-      setAutoExtractPending(true);
-      navigate("/app/new-job", { replace: true });
-    } else if (shareUrl || (extText && !source)) {
-      // PWA share target or bookmarklet
-      // Mobile share often puts the URL inside the "text" field
-      const urlInText = extText?.match(/https?:\/\/\S+/)?.[0];
-      if (shareUrl) {
-        setUrl(shareUrl);
-        setTab("url");
-      } else if (urlInText) {
-        setUrl(urlInText);
-        setTab("url");
-      } else if (extText) {
-        setText(extText);
-        setTab("text");
-      }
-      setAutoExtractPending(true);
-      navigate("/app/new-job", { replace: true });
-    }
+    if (!source && !shareText && !shareUrl && !shareTitle) return;
+
+    const resolvedImport = resolveSharedImport({
+      source,
+      shareText,
+      shareTitle,
+      shareUrl,
+    });
+
+    setUrl(resolvedImport.url);
+    setText(resolvedImport.text);
+    setTab(resolvedImport.preferredTab);
+    setAutoExtractPending(Boolean(resolvedImport.url || resolvedImport.text));
+    navigate("/app/new-job", { replace: true });
   }, [searchParams, navigate]);
 
   // Auto-trigger extraction after text/url is set from share/extension
@@ -293,6 +287,10 @@ const NewJob = () => {
             </div>
           </form>
 
+          <p className="text-sm text-muted-foreground">
+            Review the extracted job details here first. Only move forward once you approve them.
+          </p>
+
           <div className="flex gap-3 justify-end">
             <Button variant="outline" onClick={() => setExtracted(null)}>Start Over</Button>
             <Button variant="secondary" onClick={handleSaveToJobs} disabled={saving}>
@@ -300,7 +298,7 @@ const NewJob = () => {
               Save to Jobs
             </Button>
             <Button onClick={handleContinue} disabled={saving}>
-              {saving ? "Saving…" : "Continue to Dealbreaker Check"}
+              {saving ? "Saving…" : "Approve & Continue"}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>

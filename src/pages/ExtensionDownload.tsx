@@ -12,7 +12,7 @@ const browsers = [
   { name: "Opera", icon: Globe, supported: true },
 ];
 
-const BOOKMARKLET_CODE = `javascript:void(function(){var t=document.body.innerText.slice(0,15000);window.open('https://www.jobsdfy.com/app/new-job?source=extension&text='+encodeURIComponent(t),'_blank')})()`;
+const BOOKMARKLET_CODE = `javascript:void(function(){var t=document.body.innerText.slice(0,15000),u=new URL('https://www.jobsdfy.com/app/new-job');u.searchParams.set('source','bookmarklet');u.searchParams.set('text',t);u.searchParams.set('url',window.location.href);u.searchParams.set('title',document.title);window.open(u.toString(),'_blank')})()`;
 
 const handleDownload = () => {
   fetch("/jobsdfy-extension.zip")
