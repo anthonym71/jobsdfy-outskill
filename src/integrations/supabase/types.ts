@@ -14,6 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
+      affiliate_conversions: {
+        Row: {
+          affiliate_id: string | null
+          commission_amount: number | null
+          commission_rate: number | null
+          created_at: string | null
+          id: string
+          purchase_amount: number | null
+          referred_user_id: string
+          status: string | null
+        }
+        Insert: {
+          affiliate_id?: string | null
+          commission_amount?: number | null
+          commission_rate?: number | null
+          created_at?: string | null
+          id?: string
+          purchase_amount?: number | null
+          referred_user_id: string
+          status?: string | null
+        }
+        Update: {
+          affiliate_id?: string | null
+          commission_amount?: number | null
+          commission_rate?: number | null
+          created_at?: string | null
+          id?: string
+          purchase_amount?: number | null
+          referred_user_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_conversions_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_partners: {
+        Row: {
+          created_at: string | null
+          id: string
+          paying_signups: number | null
+          payout_details: string | null
+          payout_method: string | null
+          referral_code: string
+          total_earned: number | null
+          total_signups: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          paying_signups?: number | null
+          payout_details?: string | null
+          payout_method?: string | null
+          referral_code: string
+          total_earned?: number | null
+          total_signups?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          paying_signups?: number | null
+          payout_details?: string | null
+          payout_method?: string | null
+          referral_code?: string
+          total_earned?: number | null
+          total_signups?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           key: string
@@ -737,6 +817,33 @@ export type Database = {
         }
         Relationships: []
       }
+      page_views: {
+        Row: {
+          created_at: string | null
+          id: string
+          ip_hash: string | null
+          page: string
+          referrer: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          ip_hash?: string | null
+          page?: string
+          referrer?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          ip_hash?: string | null
+          page?: string
+          referrer?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       phone_change_requests: {
         Row: {
           created_at: string
@@ -1226,6 +1333,7 @@ export type Database = {
         Row: {
           balance: number
           created_at: string
+          first_job_used: boolean | null
           id: string
           last_active_date: string | null
           level: number
@@ -1238,6 +1346,7 @@ export type Database = {
         Insert: {
           balance?: number
           created_at?: string
+          first_job_used?: boolean | null
           id?: string
           last_active_date?: string | null
           level?: number
@@ -1250,6 +1359,7 @@ export type Database = {
         Update: {
           balance?: number
           created_at?: string
+          first_job_used?: boolean | null
           id?: string
           last_active_date?: string | null
           level?: number
@@ -1371,6 +1481,7 @@ export type Database = {
           phone_number: string | null
           phone_verified: boolean | null
           photo_url: string | null
+          referral_link: string | null
           sports: string[] | null
           status: string
           status_reason: string | null
@@ -1395,6 +1506,7 @@ export type Database = {
           phone_number?: string | null
           phone_verified?: boolean | null
           photo_url?: string | null
+          referral_link?: string | null
           sports?: string[] | null
           status?: string
           status_reason?: string | null
@@ -1419,6 +1531,7 @@ export type Database = {
           phone_number?: string | null
           phone_verified?: boolean | null
           photo_url?: string | null
+          referral_link?: string | null
           sports?: string[] | null
           status?: string
           status_reason?: string | null
