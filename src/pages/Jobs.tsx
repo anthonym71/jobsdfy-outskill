@@ -13,6 +13,15 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 
+/** Extract a short job identifier from a URL (e.g. LinkedIn /view/12345 → "12345") */
+const extractJobUrlId = (input: string): string | null => {
+  const viewMatch = input.match(/\/view\/(\d+)/);
+  if (viewMatch) return viewMatch[1];
+  const currentJobMatch = input.match(/currentJobId=(\d+)/);
+  if (currentJobMatch) return currentJobMatch[1];
+  return null;
+};
+
 const Jobs = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -115,19 +124,27 @@ const Jobs = () => {
             </div>
           ) : (
             <div className="space-y-2">
-              {filtered.map((job) => (
-                <Link key={job.id} to={`/app/jobs/${job.id}`} className="flex items-center justify-between rounded-lg border border-border bg-card p-4 hover:bg-accent/50 transition-colors">
-                  <div className="min-w-0">
-                    <p className="font-medium text-foreground text-sm truncate">{job.title || "Untitled"}</p>
-                    <p className="text-xs text-muted-foreground">{job.company} · {new Date(job.created_at).toLocaleDateString()}</p>
-                  </div>
-                  <div className="flex items-center gap-3 flex-shrink-0 ml-4">
-                    {job.fit_score && <span className="text-xs font-heading font-semibold text-muted-foreground">{job.fit_score}/10</span>}
-                    {job.verdict && <VerdictBadge verdict={job.verdict} />}
-                    <StatusPill status={job.status} />
-                  </div>
-                </Link>
-              ))}
+              {filtered.map((job) => {
+                const jobUrlId = extractJobUrlId(job.application_url || job.source_input || "");
+                return (
+                  <Link key={job.id} to={`/app/jobs/${job.id}`} className="flex items-center justify-between rounded-lg border border-border bg-card p-4 hover:bg-accent/50 transition-colors">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-foreground text-sm truncate">{job.title || "Untitled"}</p>
+                        {jobUrlId && (
+                          <Badge variant="secondary" className="text-[10px] shrink-0 font-mono">#{jobUrlId}</Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{job.company} · {new Date(job.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0 ml-4">
+                      {job.fit_score && <span className="text-xs font-heading font-semibold text-muted-foreground">{job.fit_score}/10</span>}
+                      {job.verdict && <VerdictBadge verdict={job.verdict} />}
+                      <StatusPill status={job.status} />
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           )}
         </TabsContent>

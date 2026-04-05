@@ -89,7 +89,7 @@ export function useCredits() {
     } else {
       // Initialize credits for new user via SECURITY DEFINER function
       await supabase.rpc("initialize_user_credits", { _user_id: user.id });
-      const initial: UserCredits = { balance: 3, lifetime_earned: 3, xp: 0, level: 1, streak_days: 0, last_active_date: null };
+      const initial: UserCredits = { balance: 12, lifetime_earned: 12, xp: 0, level: 1, streak_days: 0, last_active_date: null };
       setCredits(initial);
     }
 

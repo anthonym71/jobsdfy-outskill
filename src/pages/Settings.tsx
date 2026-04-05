@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
-import { Download, Chrome, Loader2, Phone, Mail, User } from "lucide-react";
+import { Download, Chrome, Loader2, Phone, Mail, User, Copy, Gift } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +21,7 @@ const Settings = () => {
   const [originalPhone, setOriginalPhone] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [referralLink, setReferralLink] = useState("");
 
   // Email change
   const [newEmail, setNewEmail] = useState("");
@@ -35,13 +36,23 @@ const Settings = () => {
   useEffect(() => {
     if (!user) return;
     setEmail(user.email || "");
-    supabase.from("user_profiles").select("full_name, phone_number").eq("user_id", user.id).maybeSingle()
+    supabase.from("user_profiles").select("full_name, phone_number, referral_link").eq("user_id", user.id).maybeSingle()
       .then(({ data }) => {
         if (data) {
           setFullName(data.full_name || "");
           setOriginalName(data.full_name || "");
           setPhone(data.phone_number || "");
           setOriginalPhone(data.phone_number || "");
+          // Generate referral link if not set
+          const baseUrl = window.location.origin;
+          if (data.referral_link) {
+            setReferralLink(data.referral_link);
+          } else {
+            const code = user.id.slice(0, 8);
+            const link = `${baseUrl}/auth?mode=signup&ref=${code}`;
+            setReferralLink(link);
+            supabase.from("user_profiles").update({ referral_link: link }).eq("user_id", user.id);
+          }
         }
         setLoading(false);
       });
@@ -222,6 +233,26 @@ const Settings = () => {
         <h2 className="font-heading text-base font-semibold text-foreground">Billing</h2>
         <p className="text-sm text-muted-foreground">Manage your subscription and buy credit packs.</p>
         <Button size="sm" asChild><Link to="/app/pricing">View Plans & Pricing</Link></Button>
+      </section>
+
+      <Separator />
+
+      {/* Referral / Invite a Friend */}
+      <section className="rounded-xl border border-primary/20 bg-primary/5 p-6 space-y-3">
+        <div className="flex items-center gap-2">
+          <Gift className="h-5 w-5 text-primary" />
+          <h2 className="font-heading text-base font-semibold text-foreground">Invite a Friend — Both Get 5 Credits</h2>
+        </div>
+        <p className="text-sm text-muted-foreground">Share your unique link. When a friend signs up, you both get 5 bonus credits!</p>
+        <div className="flex gap-2">
+          <Input value={referralLink} readOnly className="bg-muted text-xs" />
+          <Button size="sm" variant="outline" onClick={() => {
+            navigator.clipboard.writeText(referralLink);
+            toast({ title: "Copied!", description: "Referral link copied to clipboard." });
+          }}>
+            <Copy className="h-4 w-4" />
+          </Button>
+        </div>
       </section>
 
       <Separator />

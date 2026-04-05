@@ -25,10 +25,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
+
+        // Log sign-in events for audit trail
+        if (event === "SIGNED_IN" && session?.user) {
+          setTimeout(() => {
+            supabase.functions.invoke("log-event", {
+              body: { action: "login", description: "User signed in" },
+            }).catch(() => {});
+          }, 0);
+        }
       }
     );
 

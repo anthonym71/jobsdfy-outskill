@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 const tierFeatures: Record<SubscriptionTier, string[]> = {
-  free: ["3 free credits", "Basic job analysis", "Dealbreaker check", "Community support"],
+  free: ["12 free credits", "First job check always free", "Basic job analysis", "Dealbreaker check", "Community support"],
   pro: ["30 credits/month", "Full AI fit scoring", "Quick Apply drafts", "Priority analysis", "Email support"],
   premium: ["100 credits/month", "Unlimited AI analysis", "Priority support", "Advanced insights", "Early access features"],
 };
