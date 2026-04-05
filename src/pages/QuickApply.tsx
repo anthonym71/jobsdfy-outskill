@@ -269,11 +269,10 @@ const QuickApply = () => {
   const handleApprove = async () => {
     await handleSave();
     // Mark this version as submitted
-    await supabase
+    await (supabase
       .from("application_assets")
       .update({ approved: true, is_draft: false, submitted_at: new Date().toISOString() } as any)
-      .eq("job_id", id!)
-      .eq("version" as any, activeVersion);
+      .eq("job_id", id!) as any);
     await supabase.from("jobs").update({ status: "applied" }).eq("id", id!);
 
     setVersions(prev => prev.map(v =>
