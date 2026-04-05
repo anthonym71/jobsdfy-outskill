@@ -22,8 +22,8 @@ const Footer = () => (
         <div className="space-y-3">
           <span className="text-sm font-semibold text-foreground">Contact</span>
           <div className="space-y-2 text-xs text-muted-foreground">
-            <a href="tel:+12066961541" className="flex items-center gap-2 hover:text-foreground transition-colors">
-              <Phone className="h-3.5 w-3.5 shrink-0" /> +1 (206) 696-1541
+            <a href="tel:+13857876364" className="flex items-center gap-2 hover:text-foreground transition-colors">
+              <Phone className="h-3.5 w-3.5 shrink-0" /> +1 (385) 787-6364
             </a>
             <a href="mailto:support@jobsdfy.com" className="flex items-center gap-2 hover:text-foreground transition-colors">
               <Mail className="h-3.5 w-3.5 shrink-0" /> support@jobsdfy.com
