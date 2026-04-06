@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   Shield, Zap, Link2, ChevronDown, Check, ArrowRight, Sparkles, Eye, FileText,
   BookOpen, Brain, Mic, Camera, Users, Award, Calendar, MessageSquare,
-  GraduationCap, Target, Clock, TrendingUp, Briefcase, Crown, Star
+  GraduationCap, Target, Clock, TrendingUp, Briefcase, Crown, Star, Handshake
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
