@@ -4,11 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
-import { Download, Chrome, Loader2, Phone, Mail, User, Copy, Gift } from "lucide-react";
+import { Download, Chrome, Loader2, Phone, Mail, User, Copy, Gift, Handshake } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const Settings = () => {
   const { signOut, user } = useAuth();
@@ -32,6 +33,14 @@ const Settings = () => {
   const [newPhone, setNewPhone] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [phoneSending, setPhoneSending] = useState(false);
+
+  // Affiliate
+  const [affiliate, setAffiliate] = useState<any>(null);
+  const [affiliateLoading, setAffiliateLoading] = useState(true);
+  const [affiliateApplying, setAffiliateApplying] = useState(false);
+  const [payoutMethod, setPayoutMethod] = useState("");
+  const [payoutDetails, setPayoutDetails] = useState("");
+  const [payoutSaving, setPayoutSaving] = useState(false);
 
   useEffect(() => {
     if (!user) return;
