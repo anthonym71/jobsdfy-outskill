@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   Shield, Zap, Link2, ChevronDown, Check, ArrowRight, Sparkles, Eye, FileText,
   BookOpen, Brain, Mic, Camera, Users, Award, Calendar, MessageSquare,
-  GraduationCap, Target, Clock, TrendingUp, Briefcase, Crown, Star
+  GraduationCap, Target, Clock, TrendingUp, Briefcase, Crown, Star, Handshake
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -413,6 +413,26 @@ const Landing = () => {
               </Button>
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* Affiliate CTA */}
+      <section className="py-12 md:py-16 bg-primary/5">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 text-center">
+          <Handshake className="h-10 w-10 text-primary mx-auto mb-4" />
+          <h2 className="font-heading text-2xl sm:text-3xl font-bold text-foreground">Earn 25–50% Commission</h2>
+          <p className="mt-3 text-sm text-muted-foreground max-w-xl mx-auto">Know someone who'd love JobsDFY? Earn recurring commission on every paying referral. Tiered rates reward your success — the more you refer, the more you earn.</p>
+          <div className="mt-4 flex flex-wrap justify-center gap-3 text-xs text-muted-foreground">
+            <span className="rounded-full border border-border px-3 py-1">1–5 referrals: 25%</span>
+            <span className="rounded-full border border-border px-3 py-1">6–10: 30%</span>
+            <span className="rounded-full border border-border px-3 py-1">11–25: 40%</span>
+            <span className="rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-primary font-medium">25+: 50%</span>
+          </div>
+          <Link to="/auth?mode=signup">
+            <Button size="lg" variant="outline" className="mt-6 text-sm px-8 py-5">
+              Become an Affiliate <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
         </div>
       </section>
 

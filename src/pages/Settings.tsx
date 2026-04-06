@@ -4,11 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
-import { Download, Chrome, Loader2, Phone, Mail, User, Copy, Gift } from "lucide-react";
+import { Download, Chrome, Loader2, Phone, Mail, User, Copy, Gift, Handshake } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const Settings = () => {
   const { signOut, user } = useAuth();
@@ -33,6 +34,14 @@ const Settings = () => {
   const [otpCode, setOtpCode] = useState("");
   const [phoneSending, setPhoneSending] = useState(false);
 
+  // Affiliate
+  const [affiliate, setAffiliate] = useState<any>(null);
+  const [affiliateLoading, setAffiliateLoading] = useState(true);
+  const [affiliateApplying, setAffiliateApplying] = useState(false);
+  const [payoutMethod, setPayoutMethod] = useState("");
+  const [payoutDetails, setPayoutDetails] = useState("");
+  const [payoutSaving, setPayoutSaving] = useState(false);
+
   useEffect(() => {
     if (!user) return;
     setEmail(user.email || "");
@@ -55,6 +64,16 @@ const Settings = () => {
           }
         }
         setLoading(false);
+      });
+    // Load affiliate data
+    supabase.from("affiliate_partners").select("*").eq("user_id", user.id).maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setAffiliate(data);
+          setPayoutMethod(data.payout_method || "");
+          setPayoutDetails(data.payout_details || "");
+        }
+        setAffiliateLoading(false);
       });
   }, [user]);
 
@@ -253,6 +272,117 @@ const Settings = () => {
             <Copy className="h-4 w-4" />
           </Button>
         </div>
+      </section>
+
+      <Separator />
+
+      {/* Affiliate Program */}
+      <section id="affiliate" className="rounded-xl border border-primary/20 bg-primary/5 p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <Handshake className="h-5 w-5 text-primary" />
+          <h2 className="font-heading text-base font-semibold text-foreground">Affiliate Program — Earn 25-50% Commission</h2>
+        </div>
+
+        {affiliateLoading ? (
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        ) : !affiliate ? (
+          <>
+            <p className="text-sm text-muted-foreground">Earn commission on every paying customer you refer. Tiered rates reward your success — up to 50% on a 30-day rolling basis.</p>
+            <Button size="sm" disabled={affiliateApplying} onClick={async () => {
+              if (!user) return;
+              setAffiliateApplying(true);
+              const code = `AFF-${user.id.slice(0, 8).toUpperCase()}`;
+              const { data, error } = await supabase.from("affiliate_partners").insert({ user_id: user.id, referral_code: code }).select().single();
+              setAffiliateApplying(false);
+              if (error) {
+                toast({ title: "Error", description: error.message, variant: "destructive" });
+              } else {
+                setAffiliate(data);
+                toast({ title: "Welcome to the Affiliate Program!" });
+              }
+            }}>
+              {affiliateApplying ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+              Become an Affiliate
+            </Button>
+          </>
+        ) : (
+          <div className="space-y-4">
+            {/* Stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="rounded-lg border border-border bg-card p-3 text-center">
+                <p className="text-xs text-muted-foreground">Referral Code</p>
+                <p className="font-semibold text-foreground text-sm mt-1">{affiliate.referral_code}</p>
+              </div>
+              <div className="rounded-lg border border-border bg-card p-3 text-center">
+                <p className="text-xs text-muted-foreground">Total Signups</p>
+                <p className="font-semibold text-foreground text-lg mt-1">{affiliate.total_signups || 0}</p>
+              </div>
+              <div className="rounded-lg border border-border bg-card p-3 text-center">
+                <p className="text-xs text-muted-foreground">Paying Signups</p>
+                <p className="font-semibold text-foreground text-lg mt-1">{affiliate.paying_signups || 0}</p>
+              </div>
+              <div className="rounded-lg border border-border bg-card p-3 text-center">
+                <p className="text-xs text-muted-foreground">Total Earned</p>
+                <p className="font-semibold text-foreground text-lg mt-1">${Number(affiliate.total_earned || 0).toFixed(2)}</p>
+              </div>
+            </div>
+
+            {/* Commission tier */}
+            <div className="rounded-lg border border-border bg-card p-3">
+              <p className="text-xs text-muted-foreground mb-2">Commission Tiers (30-day rolling)</p>
+              <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                {[
+                  { range: "1-5", rate: "25%" },
+                  { range: "6-10", rate: "30%" },
+                  { range: "11-25", rate: "40%" },
+                  { range: "25+", rate: "50%" },
+                ].map(t => (
+                  <div key={t.range} className={`rounded p-2 ${(affiliate.paying_signups || 0) >= parseInt(t.range) ? "bg-primary/10 text-primary font-semibold" : "bg-muted text-muted-foreground"}`}>
+                    <p>{t.range}</p>
+                    <p className="text-sm font-bold mt-0.5">{t.rate}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Affiliate link */}
+            <div>
+              <Label className="text-xs">Your Affiliate Link</Label>
+              <div className="flex gap-2 mt-1">
+                <Input value={`${window.location.origin}/auth?mode=signup&aff=${affiliate.referral_code}`} readOnly className="bg-muted text-xs" />
+                <Button size="sm" variant="outline" onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/auth?mode=signup&aff=${affiliate.referral_code}`);
+                  toast({ title: "Copied!" });
+                }}>
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Payout method */}
+            <div className="space-y-2">
+              <Label className="text-xs">Payout Method</Label>
+              <Select value={payoutMethod} onValueChange={setPayoutMethod}>
+                <SelectTrigger className="h-9"><SelectValue placeholder="Select method" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="paypal">PayPal</SelectItem>
+                  <SelectItem value="bank">Bank Transfer</SelectItem>
+                  <SelectItem value="crypto">Crypto (USDT)</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input value={payoutDetails} onChange={e => setPayoutDetails(e.target.value)} placeholder={payoutMethod === "paypal" ? "PayPal email" : payoutMethod === "crypto" ? "Wallet address" : "Bank details"} className="text-sm" />
+              <Button size="sm" variant="outline" disabled={payoutSaving} onClick={async () => {
+                setPayoutSaving(true);
+                await supabase.from("affiliate_partners").update({ payout_method: payoutMethod, payout_details: payoutDetails, updated_at: new Date().toISOString() }).eq("id", affiliate.id);
+                setPayoutSaving(false);
+                toast({ title: "Payout details saved" });
+              }}>
+                {payoutSaving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                Save Payout Info
+              </Button>
+            </div>
+          </div>
+        )}
       </section>
 
       <Separator />

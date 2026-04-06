@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ShieldCheck, Download, Tag, Coins, Search, X, Eye, EyeOff, Mail, MessageSquare, Users, Plus, ArrowUpDown, Trash2, Pencil, Ban, CheckCircle } from "lucide-react";
+import { Loader2, ShieldCheck, Download, Tag, Coins, Search, X, Mail, MessageSquare, Users, Plus, ArrowUpDown, Trash2, Pencil, Ban, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,11 +50,11 @@ const AdminUsers = () => {
   const [sortBy, setSortBy] = useState<"first" | "last" | "tags">("first");
   const [activeTab, setActiveTab] = useState<"users" | "groups">("users");
 
-  // Credit allocation dialog
-  const [creditDialog, setCreditDialog] = useState<{ userId: string; name: string } | null>(null);
+  // Credit adjustment dialog
+  const [creditDialog, setCreditDialog] = useState<{ userId: string; name: string; balance: number } | null>(null);
   const [creditAmount, setCreditAmount] = useState(0);
-  const [adminPassword, setAdminPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [creditMode, setCreditMode] = useState<"add" | "deduct">("add");
+  const [creditReason, setCreditReason] = useState("");
   const [allocating, setAllocating] = useState(false);
 
   // Tag dialog
@@ -156,24 +156,18 @@ const AdminUsers = () => {
     }
   };
 
-  const handleAllocateCredits = async () => {
-    if (!creditDialog || creditAmount <= 0) return;
+  const handleAdjustCredits = async () => {
+    if (!creditDialog || creditAmount <= 0 || !creditReason.trim()) return;
     setAllocating(true);
     try {
-      const { error: authError } = await supabase.auth.signInWithPassword({ email: user!.email!, password: adminPassword });
-      if (authError) throw new Error("Invalid admin password");
-      await supabase.from("credit_transactions").insert({ user_id: creditDialog.userId, amount: creditAmount, action: "earned" as any, reason: "Admin credit allocation" });
-      const target = users.find(u => u.user_id === creditDialog.userId);
-      await supabase.from("user_credits").update({ balance: (target?.balance || 0) + creditAmount, lifetime_earned: (target?.lifetime_earned || 0) + creditAmount, updated_at: new Date().toISOString() }).eq("user_id", creditDialog.userId);
-      await supabase.from("audit_logs").insert({
-        user_id: user?.id,
-        user_email: user?.email || "",
-        user_name: "",
-        action: "allocate_credits",
-        description: `Allocated ${creditAmount} credits to ${creditDialog.name}`,
+      const finalAmount = creditMode === "deduct" ? -creditAmount : creditAmount;
+      const { data, error } = await supabase.functions.invoke("admin-adjust-credits", {
+        body: { user_id: creditDialog.userId, amount: finalAmount, reason: creditReason.trim() },
       });
-      toast({ title: `${creditAmount} credits allocated to ${creditDialog.name}` });
-      setCreditDialog(null); setCreditAmount(0); setAdminPassword("");
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      toast({ title: `${creditMode === "add" ? "Added" : "Deducted"} ${creditAmount} credits ${creditMode === "add" ? "to" : "from"} ${creditDialog.name}. New balance: ${data.new_balance}` });
+      setCreditDialog(null); setCreditAmount(0); setCreditReason(""); setCreditMode("add");
       loadUsers();
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
     finally { setAllocating(false); }
@@ -458,7 +452,7 @@ const AdminUsers = () => {
                           <Button size="icon" variant="ghost" className="h-7 w-7" title="Add Tag" onClick={() => setTagDialog({ userId: u.user_id, name: u.full_name })}>
                             <Tag className="h-3.5 w-3.5" />
                           </Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" title="Allocate Credits" onClick={() => setCreditDialog({ userId: u.user_id, name: u.full_name })}>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" title="Adjust Credits" onClick={() => setCreditDialog({ userId: u.user_id, name: u.full_name, balance: u.balance || 0 })}>
                             <Coins className="h-3.5 w-3.5" />
                           </Button>
                         </div>
@@ -613,26 +607,29 @@ const AdminUsers = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Credit Allocation Dialog */}
+      {/* Credit Adjustment Dialog */}
       <Dialog open={!!creditDialog} onOpenChange={open => !open && setCreditDialog(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Allocate Credits to {creditDialog?.name}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Adjust Credits — {creditDialog?.name}</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div><Label>Credits to add</Label><Input type="number" value={creditAmount || ""} onChange={e => setCreditAmount(parseInt(e.target.value) || 0)} min={1} /></div>
+            <p className="text-sm text-muted-foreground">Current balance: <span className="font-semibold text-foreground">{creditDialog?.balance ?? 0}</span></p>
             <div>
-              <Label>Admin Password (verification)</Label>
-              <div className="relative">
-                <Input type={showPassword ? "text" : "password"} value={adminPassword} onChange={e => setAdminPassword(e.target.value)} placeholder="Enter your password" />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
+              <Label>Action</Label>
+              <Select value={creditMode} onValueChange={(v: "add" | "deduct") => setCreditMode(v)}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="add">Add Credits</SelectItem>
+                  <SelectItem value="deduct">Deduct Credits</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+            <div><Label>Amount</Label><Input type="number" value={creditAmount || ""} onChange={e => setCreditAmount(parseInt(e.target.value) || 0)} min={1} className="mt-1" /></div>
+            <div><Label>Reason</Label><Input value={creditReason} onChange={e => setCreditReason(e.target.value)} placeholder="e.g. Compensation for bug, abuse correction" className="mt-1" /></div>
           </div>
           <DialogFooter>
-            <Button onClick={handleAllocateCredits} disabled={allocating || creditAmount <= 0 || !adminPassword}>
+            <Button onClick={handleAdjustCredits} disabled={allocating || creditAmount <= 0 || !creditReason.trim()} variant={creditMode === "deduct" ? "destructive" : "default"}>
               {allocating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-              Allocate {creditAmount} Credits
+              {creditMode === "add" ? `Add ${creditAmount} Credits` : `Deduct ${creditAmount} Credits`}
             </Button>
           </DialogFooter>
         </DialogContent>
