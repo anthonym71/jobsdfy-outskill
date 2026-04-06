@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ShieldCheck, Download, Tag, Coins, Search, X, Eye, EyeOff, Mail, MessageSquare, Users, Plus, ArrowUpDown, Trash2, Pencil, Ban, CheckCircle } from "lucide-react";
+import { Loader2, ShieldCheck, Download, Tag, Coins, Search, X, Mail, MessageSquare, Users, Plus, ArrowUpDown, Trash2, Pencil, Ban, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
