@@ -156,24 +156,18 @@ const AdminUsers = () => {
     }
   };
 
-  const handleAllocateCredits = async () => {
-    if (!creditDialog || creditAmount <= 0) return;
+  const handleAdjustCredits = async () => {
+    if (!creditDialog || creditAmount <= 0 || !creditReason.trim()) return;
     setAllocating(true);
     try {
-      const { error: authError } = await supabase.auth.signInWithPassword({ email: user!.email!, password: adminPassword });
-      if (authError) throw new Error("Invalid admin password");
-      await supabase.from("credit_transactions").insert({ user_id: creditDialog.userId, amount: creditAmount, action: "earned" as any, reason: "Admin credit allocation" });
-      const target = users.find(u => u.user_id === creditDialog.userId);
-      await supabase.from("user_credits").update({ balance: (target?.balance || 0) + creditAmount, lifetime_earned: (target?.lifetime_earned || 0) + creditAmount, updated_at: new Date().toISOString() }).eq("user_id", creditDialog.userId);
-      await supabase.from("audit_logs").insert({
-        user_id: user?.id,
-        user_email: user?.email || "",
-        user_name: "",
-        action: "allocate_credits",
-        description: `Allocated ${creditAmount} credits to ${creditDialog.name}`,
+      const finalAmount = creditMode === "deduct" ? -creditAmount : creditAmount;
+      const { data, error } = await supabase.functions.invoke("admin-adjust-credits", {
+        body: { user_id: creditDialog.userId, amount: finalAmount, reason: creditReason.trim() },
       });
-      toast({ title: `${creditAmount} credits allocated to ${creditDialog.name}` });
-      setCreditDialog(null); setCreditAmount(0); setAdminPassword("");
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      toast({ title: `${creditMode === "add" ? "Added" : "Deducted"} ${creditAmount} credits ${creditMode === "add" ? "to" : "from"} ${creditDialog.name}. New balance: ${data.new_balance}` });
+      setCreditDialog(null); setCreditAmount(0); setCreditReason(""); setCreditMode("add");
       loadUsers();
     } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
     finally { setAllocating(false); }
