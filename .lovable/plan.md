@@ -1,198 +1,130 @@
 
 
-# JobsDFY Launch Plan — Full Implementation
+# Build Plan — Admin Credit Adjustment, Affiliate UI, GHL Widget, Stripe Verification
 
-## Overview
-This plan covers all requested changes in a single implementation pass: credit economy update, affiliate program, referral system, job URL identifier, analytics/heatmap, Twilio OTP fix, Stripe verification, onboarding enforcement, landing page overhaul, events log, and a full function health check.
+## Memory Saves (3 files)
+
+### 1. `mem://features/v3-v4-business-model.md`
+Save Voice/Video AI clone vision, anonymous headhunting marketplace, 1000-point scoring system, revenue targets ($1M+/mo), competitive moat, and risk factors.
+
+### 2. `mem://preferences/business-advisor.md`
+Save: "Challenge non-viable/unprofitable decisions with 3 alternatives. Assess business/marketing sense before implementing. If Claude/ChatGPT can do something cheaper than Lovable, recommend routing to them."
+
+### 3. `mem://features/ghl.md`
+Save: "User has paid GHL SaaS ($97/mo unlimited AI). Also has CloserX paid account. Use for conversations, AI bot, voice, and marketing automation."
+
+### 4. Update `mem://index.md`
+Add references to all three new memory files.
 
 ---
 
-## Phase 1: Database Migrations
+## Feature 1: Admin Credit Adjustment (Add AND Deduct)
 
-### Migration 1: Update initial credits from 3 to 12
-- Update `initialize_user_credits` function to set `balance = 12, lifetime_earned = 12`
-- Update landing page and pricing page text from "3 free credits" to "12 free credits"
+**Current state:** `AdminUsers.tsx` has a credit allocation dialog (line 616-639) that only adds credits. `handleAllocateCredits` (line 159) directly updates `user_credits` and inserts into `credit_transactions` with action `earned`.
 
-### Migration 2: Affiliate program table
-```sql
-CREATE TABLE affiliate_partners (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  referral_code text UNIQUE NOT NULL,
-  total_signups integer DEFAULT 0,
-  paying_signups integer DEFAULT 0,
-  total_earned numeric DEFAULT 0,
-  payout_method text DEFAULT '',
-  payout_details text DEFAULT '',
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
+**Changes:**
 
-CREATE TABLE affiliate_conversions (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  affiliate_id uuid REFERENCES affiliate_partners(id),
-  referred_user_id uuid NOT NULL,
-  purchase_amount numeric DEFAULT 0,
-  commission_rate numeric DEFAULT 0,
-  commission_amount numeric DEFAULT 0,
-  status text DEFAULT 'pending',
-  created_at timestamptz DEFAULT now()
-);
+### Edge Function: `admin-adjust-credits/index.ts` (NEW)
+- Accepts: `user_id`, `amount` (positive or negative), `reason`
+- Validates caller is admin via `has_role` RPC
+- Uses service role to update `user_credits.balance` (clamped to min 0)
+- Inserts `credit_transactions` with action `earned` (positive) or `spent` (negative)
+- Inserts `audit_logs` entry
+- Returns new balance
+
+### `src/pages/AdminUsers.tsx`
+- Replace "Allocate Credits" dialog with "Adjust Credits" dialog
+- Add toggle/select: "Add" or "Deduct" mode
+- Amount field accepts positive numbers; mode determines sign
+- Show user's current balance in the dialog
+- Replace `handleAllocateCredits` to call `admin-adjust-credits` edge function instead of direct DB writes (more secure — admin password verification replaced by edge function admin role check)
+- Update button text: "Add X Credits" or "Deduct X Credits"
+
+---
+
+## Feature 2: Affiliate Program UI
+
+**Current state:** DB tables `affiliate_partners` and `affiliate_conversions` exist. Edge function `calculate-affiliate-commission` exists. No UI anywhere.
+
+### `src/pages/Settings.tsx` — Add Affiliate Section
+- Add new section between "Invite a Friend" and "Danger Zone"
+- "Become an Affiliate Partner" — for users who want to earn commission (different from referral credits)
+- If not yet an affiliate: "Apply" button → inserts into `affiliate_partners` with auto-generated referral code
+- If already an affiliate: show dashboard card with:
+  - Unique affiliate referral code and link
+  - Total signups / paying signups
+  - Current commission tier (25%/30%/40%/50% based on 30-day rolling)
+  - Total earned
+  - Payout method form (PayPal email or bank details)
+
+### `src/pages/Landing.tsx` — Add Affiliate CTA Section
+- New section before the final CTA: "Earn 25-50% Commission"
+- Brief copy: "Know someone who'd love JobsDFY? Earn recurring commission on every paying referral. Tiered rates reward your success."
+- CTA button: "Become an Affiliate" → links to `/auth?mode=signup` (or `/app/settings#affiliate` if logged in)
+
+### `src/pages/AdminUsers.tsx` or new `src/pages/AdminAffiliates.tsx`
+- New tab or page showing all affiliate partners
+- Table: name, referral code, total signups, paying signups, commission earned, payout method
+- Ability to view conversions per affiliate
+- Mark payouts as processed
+
+---
+
+## Feature 3: GHL Chat Widget Integration
+
+**What you need to do (your action required):**
+
+1. Log into your GoHighLevel dashboard
+2. Go to **Sites > Chat Widget** (or **Conversations > Chat Widget**)
+3. Configure your chat widget appearance, bot greeting, and AI agent settings
+4. Copy the embed snippet — it will look something like:
+```html
+<script src="https://widgets.leadconnectorhq.com/loader.js"
+  data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js"
+  data-widget-id="YOUR_WIDGET_ID">
+</script>
 ```
-- RLS: affiliates can view own rows; admins can view all
-- Commission tiers: 25% (1-5 paying signups/30d), 30% (6-10), 40% (11-25), 50% (25+)
+5. Paste it here and I'll embed it in `index.html` (for landing page) and the app layout
 
-### Migration 3: Add `referral_link` column to `user_profiles`
-```sql
-ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS referral_link text DEFAULT '';
-```
-
-### Migration 4: First job free tracking
-```sql
-ALTER TABLE user_credits ADD COLUMN IF NOT EXISTS first_job_used boolean DEFAULT false;
-```
+**What I'll build:**
+- Add the GHL script tag to `index.html` `<body>` (alongside Clarity)
+- No custom chat widget code needed — GHL handles everything
+- If you want the widget hidden on certain pages, I can add conditional logic
 
 ---
 
-## Phase 2: Core Feature Changes
+## Feature 4: Stripe Verification
 
-### 2a. Free credits = 12 + First Job Free
-- `useCredits.ts` / `initialize_user_credits` RPC: change default from 3 to 12
-- In `NewJob.tsx` or dealbreaker/fit analysis edge functions: skip credit deduction if `first_job_used = false`, then set it to `true`
-- Update all UI references (Landing, Pricing, CreditWidgets)
+**What exists:** `create-checkout`, `check-subscription`, `customer-portal` edge functions. `useSubscription` hook. `Pricing.tsx` page with checkout buttons.
 
-### 2b. Job URL Identifier in Jobs list
-- In `Jobs.tsx`: extract LinkedIn job ID from `application_url` or `source_input` (e.g., `/view/12345` → show `#12345`)
-- Display as a small badge/tag next to job title for easy identification
-- Also show in `NewJob.tsx` extraction preview
-
-### 2c. Referral "Invite a Friend" system
-- Already have `referral_codes` and `referrals` tables
-- Generate referral link on profile creation, store in `user_profiles.referral_link`
-- When referred user signs up: award 5 credits to both referrer and referred
-- Add "Invite Friends" section to Settings or Dashboard with copy-to-clipboard link
-
-### 2d. Affiliate Program
-- New admin page `AffiliateAdmin.tsx` to manage affiliates
-- New user-facing page or Settings tab for affiliate signup
-- Edge function `calculate-affiliate-commission` to compute tier-based rates on purchases
-- 30-day rolling window for tier calculation
+**Verification approach:**
+- I'll use the Stripe tools to check account info, list products, list prices, and verify they match the IDs in code
+- Confirm `STRIPE_SECRET_KEY` is set as a secret
+- Test edge functions via `curl_edge_functions` tool
+- Report back on what works and what needs fixing
 
 ---
 
-## Phase 3: Onboarding Enforcement (Security Fix)
+## Build Order
 
-- `OnboardingGuard.tsx`: already blocks access and redirects — currently working
-- Verify the guard is truly impenetrable (no `<Outlet />` rendered without profile)
-- Current code looks correct — the guard returns the blocking UI when `!hasProfile`
-
----
-
-## Phase 4: Analytics & Visitor Tracking
-
-### 4a. Visitor analytics
-- Add a lightweight analytics snippet to the Landing page (e.g., Plausible or a simple Supabase-based page view tracker)
-- Create `page_views` table: `id, page, referrer, user_agent, ip_hash, created_at`
-- Edge function to record anonymous page views
-- Admin dashboard widget showing unique visitors, page views, referrer sources
-
-### 4b. Heatmap & Session Recording
-- Integrate Microsoft Clarity (free, no API key needed) — just a `<script>` tag in `index.html`
-- Provides heatmaps, session recordings, scroll depth, rage clicks
-- Zero cost, unlimited traffic
+1. Save all memory files (4 writes)
+2. Create `admin-adjust-credits` edge function
+3. Update `AdminUsers.tsx` — adjust credits dialog (add/deduct)
+4. Add affiliate dashboard to `Settings.tsx`
+5. Add affiliate section to `Landing.tsx`
+6. Add affiliate admin management (new tab or page)
+7. Verify Stripe setup via tools
+8. GHL widget — pending your snippet
 
 ---
 
-## Phase 5: Landing Page Overhaul
+## What You Need To Do
 
-- Update CTA from "Get Started Free" → "Check Your First Job Free"
-- Update free tier: "12 free credits" everywhere
-- Add "First job check is always free" callout
-- Improve social proof section (placeholder testimonials, job counter)
-- Separate recruiter pricing to its own section more clearly
-- Add Clarity script for heatmap tracking
+| Task | Where | Priority |
+|------|-------|----------|
+| Get GHL chat widget snippet | GHL Dashboard > Sites > Chat Widget | Before I can embed it |
+| Set up `support@jobsdfy.com` | Your domain hosting provider | For future email notifications |
+| Test Stripe checkout | Published app > Pricing page | After I verify the backend |
 
----
-
-## Phase 6: Twilio OTP Fix
-
-- The `verify-phone` edge function exists and looks correct
-- Check if Twilio connector is properly configured and the phone number is active
-- Test the edge function directly via `curl_edge_functions`
-- Verify the Onboarding page's `sendOtp` / `verifyOtp` functions are calling correctly
-- Fix any issues found during testing
-
----
-
-## Phase 7: Stripe Payment Verification
-
-- Test `create-checkout` and `check-subscription` edge functions
-- Verify Stripe secret key is configured
-- Test checkout flow for Pro ($9/mo) and Premium ($19/mo)
-- Test credit pack purchases
-- Verify subscription status is correctly reflected in UI
-
----
-
-## Phase 8: Events/Audit Log Enhancement
-
-- `audit_logs` table already exists with admin-only RLS
-- `AdminAuditLog.tsx` already exists with search and CSV download
-- Add automatic audit logging via database triggers or edge function middleware for:
-  - User login events (via auth state change listener)
-  - Profile updates
-  - Job creates/updates
-  - Subscription changes
-- Ensure CSV export includes: date/time, first name, last name, email, description
-
----
-
-## Phase 9: Full Function Health Check
-
-Test all edge functions:
-1. `extract-job` — test with a sample URL
-2. `analyze-dealbreakers` — test with a job ID
-3. `analyze-fit` — test with a job ID
-4. `generate-application` — test with a job ID
-5. `generate-cv` / `generate-cover-letter`
-6. `verify-phone` — test send + verify
-7. `create-checkout` — test session creation
-8. `check-subscription` — test status check
-9. `customer-portal` — test portal URL generation
-10. All other functions: `parse-cv`, `enhance-star-bullets`, `generate-timeline`, etc.
-
-Fix any broken functions discovered during testing.
-
----
-
-## Files to Create/Modify
-
-| File | Action |
-|------|--------|
-| `src/pages/Landing.tsx` | Update credits, CTA, add Clarity |
-| `src/pages/Pricing.tsx` | Update free tier credits |
-| `src/pages/Jobs.tsx` | Add job URL identifier badge |
-| `src/pages/NewJob.tsx` | Show URL identifier in preview |
-| `src/hooks/useCredits.ts` | Update initial balance references |
-| `src/pages/Settings.tsx` | Add referral link section |
-| `src/pages/Dashboard.tsx` | Add referral invite widget |
-| `src/components/OnboardingGuard.tsx` | Verify enforcement |
-| `src/pages/AdminAuditLog.tsx` | Enhance with login tracking |
-| `index.html` | Add Clarity script |
-| DB migration | Credits, affiliate tables, referral_link column |
-| `initialize_user_credits` function | Update to 12 credits |
-| Edge functions | Test all, fix broken ones |
-
----
-
-## Technical Details
-
-- **Affiliate commission tiers** (30-day rolling window):
-  - 1-5 paying signups: 25% of one-time purchase price
-  - 6-10: 30%
-  - 11-25: 40%
-  - 25+: 50%
-- **Microsoft Clarity** for heatmaps: add `<script>` to `index.html`, free tier, no key needed — just a project ID from clarity.microsoft.com
-- **First job free**: tracked via `first_job_used` boolean on `user_credits`; checked in edge functions before deducting credits
-- **Job URL identifier**: parse `/view/(\d+)` from LinkedIn URLs, show as `#12345` badge
+**Tip:** Setting up the GHL widget and email are configuration tasks — if you need step-by-step help, ask ChatGPT "How do I set up a chat widget in GoHighLevel" to save Lovable credits.
 
