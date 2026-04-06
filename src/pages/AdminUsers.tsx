@@ -50,11 +50,11 @@ const AdminUsers = () => {
   const [sortBy, setSortBy] = useState<"first" | "last" | "tags">("first");
   const [activeTab, setActiveTab] = useState<"users" | "groups">("users");
 
-  // Credit allocation dialog
-  const [creditDialog, setCreditDialog] = useState<{ userId: string; name: string } | null>(null);
+  // Credit adjustment dialog
+  const [creditDialog, setCreditDialog] = useState<{ userId: string; name: string; balance: number } | null>(null);
   const [creditAmount, setCreditAmount] = useState(0);
-  const [adminPassword, setAdminPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [creditMode, setCreditMode] = useState<"add" | "deduct">("add");
+  const [creditReason, setCreditReason] = useState("");
   const [allocating, setAllocating] = useState(false);
 
   // Tag dialog
