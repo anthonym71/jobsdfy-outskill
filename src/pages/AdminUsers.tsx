@@ -452,7 +452,7 @@ const AdminUsers = () => {
                           <Button size="icon" variant="ghost" className="h-7 w-7" title="Add Tag" onClick={() => setTagDialog({ userId: u.user_id, name: u.full_name })}>
                             <Tag className="h-3.5 w-3.5" />
                           </Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" title="Allocate Credits" onClick={() => setCreditDialog({ userId: u.user_id, name: u.full_name })}>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" title="Adjust Credits" onClick={() => setCreditDialog({ userId: u.user_id, name: u.full_name, balance: u.balance || 0 })}>
                             <Coins className="h-3.5 w-3.5" />
                           </Button>
                         </div>
@@ -607,26 +607,29 @@ const AdminUsers = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Credit Allocation Dialog */}
+      {/* Credit Adjustment Dialog */}
       <Dialog open={!!creditDialog} onOpenChange={open => !open && setCreditDialog(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Allocate Credits to {creditDialog?.name}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Adjust Credits — {creditDialog?.name}</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div><Label>Credits to add</Label><Input type="number" value={creditAmount || ""} onChange={e => setCreditAmount(parseInt(e.target.value) || 0)} min={1} /></div>
+            <p className="text-sm text-muted-foreground">Current balance: <span className="font-semibold text-foreground">{creditDialog?.balance ?? 0}</span></p>
             <div>
-              <Label>Admin Password (verification)</Label>
-              <div className="relative">
-                <Input type={showPassword ? "text" : "password"} value={adminPassword} onChange={e => setAdminPassword(e.target.value)} placeholder="Enter your password" />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
+              <Label>Action</Label>
+              <Select value={creditMode} onValueChange={(v: "add" | "deduct") => setCreditMode(v)}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="add">Add Credits</SelectItem>
+                  <SelectItem value="deduct">Deduct Credits</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+            <div><Label>Amount</Label><Input type="number" value={creditAmount || ""} onChange={e => setCreditAmount(parseInt(e.target.value) || 0)} min={1} className="mt-1" /></div>
+            <div><Label>Reason</Label><Input value={creditReason} onChange={e => setCreditReason(e.target.value)} placeholder="e.g. Compensation for bug, abuse correction" className="mt-1" /></div>
           </div>
           <DialogFooter>
-            <Button onClick={handleAllocateCredits} disabled={allocating || creditAmount <= 0 || !adminPassword}>
+            <Button onClick={handleAdjustCredits} disabled={allocating || creditAmount <= 0 || !creditReason.trim()} variant={creditMode === "deduct" ? "destructive" : "default"}>
               {allocating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-              Allocate {creditAmount} Credits
+              {creditMode === "add" ? `Add ${creditAmount} Credits` : `Deduct ${creditAmount} Credits`}
             </Button>
           </DialogFooter>
         </DialogContent>
