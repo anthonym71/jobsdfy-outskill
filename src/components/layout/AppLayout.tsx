@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, PlusCircle, Briefcase, Settings, LogOut, Menu, X, CreditCard, HelpCircle, ShieldCheck, Users, UserCircle, CalendarDays, Coins, ListTodo, ClipboardList, Bookmark, Film, Lightbulb, Share2, Brain, Crown, MessageSquare, GraduationCap } from "lucide-react";
+import { LayoutDashboard, PlusCircle, Briefcase, Settings, LogOut, Menu, X, CreditCard, HelpCircle, ShieldCheck, Users, UserCircle, CalendarDays, Coins, ListTodo, ClipboardList, Bookmark, Film, Lightbulb, Share2, Brain, Crown, MessageSquare, GraduationCap, Camera } from "lucide-react";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,9 +19,10 @@ const baseNavItems: { to: string; icon: any; label: string; end?: boolean }[] = 
   { to: "/app/books", icon: Bookmark, label: "Books" },
   { to: "/app/movies", icon: Film, label: "Movies" },
   { to: "/app/memory-dump", icon: Lightbulb, label: "Memory Dump" },
-  { to: "/app/social-media", icon: Share2, label: "Social Media" },
+  { to: "/app/social-media", icon: Share2, label: "Social Media Posts" },
   { to: "/app/assessments", icon: Brain, label: "Assessments" },
-  { to: "/app/autobiography", icon: Crown, label: "Autobiography" },
+  { to: "/app/photo-gallery", icon: Camera, label: "Photo Gallery" },
+  { to: "/app/autobiography", icon: Crown, label: "Autobiography / Bio" },
   { to: "/app/interview", icon: MessageSquare, label: "Interview Practice" },
   { to: "/app/training", icon: GraduationCap, label: "Training" },
   { to: "/app/pricing", icon: CreditCard, label: "Pricing" },
@@ -130,8 +131,14 @@ const AppLayout = () => {
         </div>
       </div>
 
-      <div className="hidden md:flex fixed top-0 left-60 right-0 z-40 items-center justify-end border-b border-border bg-card px-6 py-2">
-        {userInfoBlock}
+      <div className="hidden md:flex fixed top-0 left-60 right-0 z-40 items-center justify-between border-b border-border bg-card px-6 py-2">
+        <div />
+        <div className="flex items-center gap-3">
+          {userInfoBlock}
+          <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-muted-foreground hover:text-foreground">
+            <LogOut className="h-4 w-4 mr-1" />Logout
+          </Button>
+        </div>
       </div>
 
       {mobileOpen && (

@@ -60,8 +60,8 @@ const Settings = () => {
           if (data.referral_link) {
             setReferralLink(data.referral_link);
           } else {
-            const code = user.id.slice(0, 8);
-            const link = `${baseUrl}/auth?mode=signup&ref=${code}`;
+          const code = user.id.slice(0, 8);
+            const link = `https://jobsdfy.com/r/${code}`;
             setReferralLink(link);
             supabase.from("user_profiles").update({ referral_link: link }).eq("user_id", user.id);
           }
@@ -379,9 +379,9 @@ const Settings = () => {
             <div>
               <Label className="text-xs">Your Affiliate Link</Label>
               <div className="flex gap-2 mt-1">
-                <Input value={`${window.location.origin}/auth?mode=signup&aff=${affiliate.referral_code}`} readOnly className="bg-muted text-xs" />
+                <Input value={`https://jobsdfy.com/a/${affiliate.slug || affiliate.referral_code}`} readOnly className="bg-muted text-xs" />
                 <Button size="sm" variant="outline" onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/auth?mode=signup&aff=${affiliate.referral_code}`);
+                  navigator.clipboard.writeText(`https://jobsdfy.com/a/${affiliate.slug || affiliate.referral_code}`);
                   toast({ title: "Copied!" });
                 }}>
                   <Copy className="h-4 w-4" />

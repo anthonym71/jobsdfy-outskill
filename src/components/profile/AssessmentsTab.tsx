@@ -8,7 +8,7 @@ const ASSESSMENTS = [
   {
     key: "drive",
     name: "DRIVE Assessment",
-    description: "Emotional buying and building behaviour profiling — measures Drive, Resourcefulness, Initiative, Vision, Execution.",
+    description: "Emotional buying and building behaviour profiling — measures Director, Relator, Influencer, Validator, Executive.",
     icon: Flame,
     color: "text-orange-500",
   },

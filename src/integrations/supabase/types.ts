@@ -1249,6 +1249,7 @@ export type Database = {
         Row: {
           content: string | null
           created_at: string
+          due_date: string | null
           follow_up_done: boolean | null
           follow_up_task: string | null
           id: string
@@ -1256,12 +1257,14 @@ export type Database = {
           platforms: Json | null
           post_type: string
           posted_at: string | null
+          to_be_posted: boolean
           updated_at: string
           user_id: string
         }
         Insert: {
           content?: string | null
           created_at?: string
+          due_date?: string | null
           follow_up_done?: boolean | null
           follow_up_task?: string | null
           id?: string
@@ -1269,12 +1272,14 @@ export type Database = {
           platforms?: Json | null
           post_type?: string
           posted_at?: string | null
+          to_be_posted?: boolean
           updated_at?: string
           user_id: string
         }
         Update: {
           content?: string | null
           created_at?: string
+          due_date?: string | null
           follow_up_done?: boolean | null
           follow_up_task?: string | null
           id?: string
@@ -1282,6 +1287,7 @@ export type Database = {
           platforms?: Json | null
           post_type?: string
           posted_at?: string | null
+          to_be_posted?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -1330,6 +1336,8 @@ export type Database = {
           due_date: string | null
           id: string
           priority: string
+          source_id: string | null
+          source_type: string | null
           status: string
           title: string
           updated_at: string
@@ -1341,6 +1349,8 @@ export type Database = {
           due_date?: string | null
           id?: string
           priority?: string
+          source_id?: string | null
+          source_type?: string | null
           status?: string
           title?: string
           updated_at?: string
@@ -1352,6 +1362,8 @@ export type Database = {
           due_date?: string | null
           id?: string
           priority?: string
+          source_id?: string | null
+          source_type?: string | null
           status?: string
           title?: string
           updated_at?: string

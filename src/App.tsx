@@ -40,6 +40,7 @@ import InterviewPage from "./pages/InterviewPage";
 import TrainingPage from "./pages/TrainingPage";
 import AffiliateTerms from "./pages/AffiliateTerms";
 import SlugRedirect from "./pages/SlugRedirect";
+import PhotoGalleryPage from "./pages/PhotoGalleryPage";
 
 const queryClient = new QueryClient();
 
@@ -103,6 +104,7 @@ const App = () => (
                   <Route path="/app/social-media" element={<SocialMediaPage />} />
                   <Route path="/app/assessments" element={<AssessmentsPage />} />
                   <Route path="/app/autobiography" element={<AutobiographyPage />} />
+                  <Route path="/app/photo-gallery" element={<PhotoGalleryPage />} />
                   <Route path="/app/interview" element={<InterviewPage />} />
                   <Route path="/app/training" element={<TrainingPage />} />
                 </Route>

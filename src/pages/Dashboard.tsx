@@ -26,7 +26,7 @@ const Dashboard = () => {
         if (data?.referral_link) {
           setReferralLink(data.referral_link);
         } else {
-          const link = `${window.location.origin}/auth?mode=signup&ref=${user.id.slice(0, 8)}`;
+          const link = `https://jobsdfy.com/r/${user.id.slice(0, 8)}`;
           setReferralLink(link);
         }
       });
@@ -63,7 +63,7 @@ const Dashboard = () => {
     <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-heading text-xl sm:text-2xl font-bold text-foreground">Dashboard</h1>
+          <h1 className="font-heading text-xl sm:text-2xl font-bold text-foreground">Dashboard — Job Seeker</h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">Your job search at a glance.</p>
         </div>
         <Link to="/app/new-job">

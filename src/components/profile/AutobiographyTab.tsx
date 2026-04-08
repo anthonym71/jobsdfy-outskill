@@ -52,7 +52,7 @@ const AutobiographyTab = () => {
       <div className="flex items-center gap-2">
         <Crown className="h-5 w-5 text-primary" />
         <div>
-          <h2 className="font-heading text-base font-semibold text-foreground">Autobiography</h2>
+        <h2 className="font-heading text-base font-semibold text-foreground">Autobiography / Bio</h2>
           <p className="text-sm text-muted-foreground">Premium feature — AI-generated stories from your knowledgebase.</p>
         </div>
       </div>
@@ -94,10 +94,15 @@ const AutobiographyTab = () => {
           <div><Label className="text-xs">Additional Context</Label><Input value={context} onChange={e => setContext(e.target.value)} placeholder="Intended outcome..." className="mt-1" /></div>
         </div>
 
-        <Button onClick={handleGenerate} disabled={generating} className="gap-1.5">
-          {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-          Generate
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button onClick={handleGenerate} disabled={generating} className="gap-1.5">
+            {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            Generate
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            Estimated cost: <span className="font-semibold text-primary">{Math.max(1, Math.ceil((parseInt(wordCount) || 500) / 500))} credit{Math.max(1, Math.ceil((parseInt(wordCount) || 500) / 500)) > 1 ? "s" : ""}</span>
+          </span>
+        </div>
       </div>
 
       {result && (
