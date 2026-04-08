@@ -273,6 +273,63 @@ export type Database = {
         }
         Relationships: []
       }
+      companies: {
+        Row: {
+          admin_user_id: string
+          created_at: string
+          description: string | null
+          domain: string
+          id: string
+          industry: string | null
+          is_verified: boolean
+          location: string | null
+          logo_url: string | null
+          name: string
+          scraped_data: Json | null
+          size: string | null
+          updated_at: string
+          verification_token: string | null
+          verified_at: string | null
+          website_url: string | null
+        }
+        Insert: {
+          admin_user_id: string
+          created_at?: string
+          description?: string | null
+          domain: string
+          id?: string
+          industry?: string | null
+          is_verified?: boolean
+          location?: string | null
+          logo_url?: string | null
+          name?: string
+          scraped_data?: Json | null
+          size?: string | null
+          updated_at?: string
+          verification_token?: string | null
+          verified_at?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          admin_user_id?: string
+          created_at?: string
+          description?: string | null
+          domain?: string
+          id?: string
+          industry?: string | null
+          is_verified?: boolean
+          location?: string | null
+          logo_url?: string | null
+          name?: string
+          scraped_data?: Json | null
+          size?: string | null
+          updated_at?: string
+          verification_token?: string | null
+          verified_at?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       courses: {
         Row: {
           achievement_level: string | null
@@ -434,6 +491,71 @@ export type Database = {
         }
         Relationships: []
       }
+      event_registrations: {
+        Row: {
+          amount_paid: number | null
+          consent_host_email: boolean
+          consent_host_sms: boolean
+          consent_platform_email: boolean
+          consent_platform_sms: boolean
+          created_at: string
+          email: string
+          event_id: string
+          full_name: string
+          id: string
+          payment_status: string | null
+          phone: string | null
+          platform_fee: number | null
+          stripe_payment_id: string | null
+          ticket_code: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_paid?: number | null
+          consent_host_email?: boolean
+          consent_host_sms?: boolean
+          consent_platform_email?: boolean
+          consent_platform_sms?: boolean
+          created_at?: string
+          email?: string
+          event_id: string
+          full_name?: string
+          id?: string
+          payment_status?: string | null
+          phone?: string | null
+          platform_fee?: number | null
+          stripe_payment_id?: string | null
+          ticket_code?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_paid?: number | null
+          consent_host_email?: boolean
+          consent_host_sms?: boolean
+          consent_platform_email?: boolean
+          consent_platform_sms?: boolean
+          created_at?: string
+          email?: string
+          event_id?: string
+          full_name?: string
+          id?: string
+          payment_status?: string | null
+          phone?: string | null
+          platform_fee?: number | null
+          stripe_payment_id?: string | null
+          ticket_code?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_rsvps: {
         Row: {
           created_at: string
@@ -468,31 +590,61 @@ export type Database = {
       }
       events: {
         Row: {
+          area: string | null
           created_at: string
           created_by: string
+          currency: string | null
           description: string | null
           event_date: string
+          event_end_date: string | null
           id: string
+          image_urls: string[] | null
+          is_active: boolean
+          is_free: boolean
           location: string | null
+          max_attendees: number | null
+          organizer_name: string | null
+          ticket_price: number | null
           title: string
+          updated_at: string
         }
         Insert: {
+          area?: string | null
           created_at?: string
           created_by: string
+          currency?: string | null
           description?: string | null
           event_date: string
+          event_end_date?: string | null
           id?: string
+          image_urls?: string[] | null
+          is_active?: boolean
+          is_free?: boolean
           location?: string | null
+          max_attendees?: number | null
+          organizer_name?: string | null
+          ticket_price?: number | null
           title?: string
+          updated_at?: string
         }
         Update: {
+          area?: string | null
           created_at?: string
           created_by?: string
+          currency?: string | null
           description?: string | null
           event_date?: string
+          event_end_date?: string | null
           id?: string
+          image_urls?: string[] | null
+          is_active?: boolean
+          is_free?: boolean
           location?: string | null
+          max_attendees?: number | null
+          organizer_name?: string | null
+          ticket_price?: number | null
           title?: string
+          updated_at?: string
         }
         Relationships: []
       }

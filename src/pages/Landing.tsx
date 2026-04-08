@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button";
 import {
   Shield, Zap, Link2, ChevronDown, Check, ArrowRight, Sparkles, Eye, FileText,
   BookOpen, Brain, Mic, Camera, Users, Award, Calendar, MessageSquare,
-  GraduationCap, Target, Clock, TrendingUp, Briefcase, Crown, Star, Handshake
+  GraduationCap, Target, Clock, TrendingUp, Briefcase, Crown, Star, Handshake,
+  CalendarDays, MapPin, Search, Building2, Globe
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
 import jobyMascot from "@/assets/joby-mascot.png";
 
 const fadeUp = {
@@ -96,6 +98,11 @@ const faqs = [
 
 const Landing = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [landingTab, setLandingTab] = useState<"home" | "events" | "jobs">("home");
+  const [publicEvents, setPublicEvents] = useState<any[]>([]);
+  const [publicJobs, setPublicJobs] = useState<any[]>([]);
+  const [eventSearch, setEventSearch] = useState("");
+  const [jobSearch, setJobSearch] = useState("");
 
   // Track page view
   useEffect(() => {
@@ -104,13 +111,42 @@ const Landing = () => {
     }).catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (landingTab === "events" && publicEvents.length === 0) {
+      supabase.from("events").select("*").eq("is_active", true).order("event_date").then(({ data }) => {
+        if (data) setPublicEvents(data);
+      });
+    }
+    if (landingTab === "jobs" && publicJobs.length === 0) {
+      supabase.from("recruiter_job_posts_public").select("*").eq("is_active", true).order("created_at", { ascending: false }).limit(50).then(({ data }) => {
+        if (data) setPublicJobs(data);
+      });
+    }
+  }, [landingTab]);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Nav */}
       <nav className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
-          <span className="font-heading text-lg sm:text-xl font-bold text-foreground tracking-tight">JobsDFY</span>
+          <div className="flex items-center gap-4 sm:gap-6">
+            <span className="font-heading text-lg sm:text-xl font-bold text-foreground tracking-tight cursor-pointer" onClick={() => setLandingTab("home")}>JobsDFY</span>
+            <div className="hidden sm:flex items-center gap-1">
+              {(["home", "events", "jobs"] as const).map(tab => (
+                <button key={tab} onClick={() => setLandingTab(tab)} className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${landingTab === tab ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                  {tab === "home" ? "Home" : tab === "events" ? "Events" : "Jobs"}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex sm:hidden items-center gap-1 mr-1">
+              {(["home", "events", "jobs"] as const).map(tab => (
+                <button key={tab} onClick={() => setLandingTab(tab)} className={`px-2 py-1 text-xs font-medium rounded transition-colors ${landingTab === tab ? "bg-accent text-foreground" : "text-muted-foreground"}`}>
+                  {tab === "home" ? "Home" : tab === "events" ? "Events" : "Jobs"}
+                </button>
+              ))}
+            </div>
             <Link to="/auth">
               <Button variant="ghost" size="sm">Sign In</Button>
             </Link>
@@ -121,6 +157,83 @@ const Landing = () => {
         </div>
       </nav>
 
+      {/* Events Tab */}
+      {landingTab === "events" && (
+        <section className="py-12 md:py-20">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 space-y-6">
+            <div className="text-center">
+              <h2 className="font-heading text-2xl sm:text-3xl font-bold text-foreground">Upcoming Events</h2>
+              <p className="mt-2 text-sm text-muted-foreground">Find networking events, career fairs, and workshops near you.</p>
+            </div>
+            <div className="relative max-w-md mx-auto">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input value={eventSearch} onChange={e => setEventSearch(e.target.value)} placeholder="Search by name or area..." className="pl-9" />
+            </div>
+            {publicEvents.filter(e => !eventSearch || e.title?.toLowerCase().includes(eventSearch.toLowerCase()) || e.area?.toLowerCase().includes(eventSearch.toLowerCase()) || e.location?.toLowerCase().includes(eventSearch.toLowerCase())).length === 0 ? (
+              <div className="text-center py-16 text-muted-foreground">
+                <CalendarDays className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                <p className="text-sm">No upcoming events. Check back soon!</p>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {publicEvents.filter(e => !eventSearch || e.title?.toLowerCase().includes(eventSearch.toLowerCase()) || e.area?.toLowerCase().includes(eventSearch.toLowerCase()) || e.location?.toLowerCase().includes(eventSearch.toLowerCase())).map(event => (
+                  <div key={event.id} className="rounded-xl border border-border bg-card p-5 space-y-2">
+                    <h3 className="font-heading text-base font-semibold text-foreground">{event.title}</h3>
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1"><CalendarDays className="h-3 w-3" />{new Date(event.event_date).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}</span>
+                      {event.location && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{event.location}</span>}
+                      {event.area && <span className="text-primary">{event.area}</span>}
+                    </div>
+                    {event.description && <p className="text-xs text-muted-foreground line-clamp-2">{event.description}</p>}
+                    <div className="flex items-center justify-between pt-1">
+                      <span className={`text-xs font-medium ${event.is_free ? "text-verdict-go" : "text-primary"}`}>{event.is_free ? "Free" : `${event.currency} ${event.ticket_price}`}</span>
+                      <Link to="/auth?mode=signup"><Button size="sm">Register</Button></Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Jobs Tab */}
+      {landingTab === "jobs" && (
+        <section className="py-12 md:py-20">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 space-y-6">
+            <div className="text-center">
+              <h2 className="font-heading text-2xl sm:text-3xl font-bold text-foreground">Job Board</h2>
+              <p className="mt-2 text-sm text-muted-foreground">Browse jobs posted by recruiters on JobsDFY.</p>
+            </div>
+            <div className="relative max-w-md mx-auto">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input value={jobSearch} onChange={e => setJobSearch(e.target.value)} placeholder="Search jobs..." className="pl-9" />
+            </div>
+            {publicJobs.filter(j => !jobSearch || j.title?.toLowerCase().includes(jobSearch.toLowerCase()) || j.company?.toLowerCase().includes(jobSearch.toLowerCase())).length === 0 ? (
+              <div className="text-center py-16 text-muted-foreground">
+                <Briefcase className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                <p className="text-sm">No jobs posted yet.</p>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {publicJobs.filter(j => !jobSearch || j.title?.toLowerCase().includes(jobSearch.toLowerCase()) || j.company?.toLowerCase().includes(jobSearch.toLowerCase())).map(job => (
+                  <div key={job.id} className="rounded-xl border border-border bg-card p-5 space-y-2">
+                    <h3 className="font-heading text-base font-semibold text-foreground">{job.title}</h3>
+                    <p className="text-xs text-muted-foreground">{job.company} · {job.city}, {job.country} · {job.work_model} · {job.employment_type}</p>
+                    {job.salary_basic > 0 && <p className="text-xs text-primary font-medium">{job.salary_currency} {job.salary_basic?.toLocaleString()}{job.salary_ote ? ` – ${job.salary_ote.toLocaleString()} OTE` : ""}</p>}
+                    <p className="text-xs text-muted-foreground line-clamp-2">{job.description}</p>
+                    <div className="pt-1">
+                      <Link to="/auth?mode=signup"><Button size="sm">Apply</Button></Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {landingTab === "home" && (<>
       {/* Hero */}
       <section className="relative overflow-hidden pt-16 pb-20 md:pt-28 md:pb-32">
         <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-accent/30" />
@@ -451,6 +564,7 @@ const Landing = () => {
           </p>
         </div>
       </section>
+      </>)}
 
       <Footer />
     </div>
