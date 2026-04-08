@@ -4,9 +4,9 @@ description: Stripe product/price IDs for Free/Pro/Premium subscriptions, recrui
 type: feature
 ---
 ## Job Seeker Subscription Tiers
-- **Free**: 3 credits, $0/mo (no Stripe product)
+- **Free**: 12 credits, $0/mo (no Stripe product)
 - **Pro**: 30 credits/mo, $9/mo — prod_UGohHAEChdqTA8 / price_1TIH3z2E142c9AbtNq7hfT82
-- **Premium**: 100 credits/mo, $19/mo — prod_UGohJceyyZQff3 / price_1TIH4T2E142c9Abt028kStMG
+- **Premium**: 100 credits/mo, $49.99/mo — prod_UILyrR0VTjfQtV / price_1TJlGx2E142c9AbtSMd8aFKc
 
 ## Recruiter Tiers
 - **Free**: 3 job posts, $0/mo
@@ -15,7 +15,10 @@ type: feature
 
 ## Credit Packs (one-time)
 - 10 credits $4.99 — price_1TIH512E142c9AbtUaWjCMWu
-- 50 credits $14.99 — price_1TIH5S2E142c9AbtB9RhOqeH
+- 50 credits $19.99 — price_1TJlHJ2E142c9AbtgLNOgCgR
+- 100 credits $24.99 — price_1TJlHi2E142c9Abt7ag2R7Yo
+- 200 credits $59.99 — price_1TJlI22E142c9AbtbI8ShYd8
+- 500 credits $149.00 — price_1TJlIK2E142c9AbtCxpOOG2O
 
 ## Edge Functions
 - `create-checkout` — creates Stripe checkout session (subscription or payment)
