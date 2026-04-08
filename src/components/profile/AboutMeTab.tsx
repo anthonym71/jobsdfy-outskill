@@ -425,7 +425,7 @@ const AboutMeTab = () => {
           <h2 className="font-heading text-base font-semibold text-foreground">Upload & Parse CV</h2>
         </div>
         <p className="text-sm text-muted-foreground">Upload your CV to auto-fill profile fields with AI parsing.</p>
-        <CVUploadParser />
+        <CVUploadParser onImportComplete={() => loadData()} />
       </section>
 
       <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
