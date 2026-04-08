@@ -60,6 +60,12 @@ serve(async (req) => {
         },
       });
 
+      // Save phone to user_profiles immediately (unverified)
+      await supabase.from("user_profiles").update({
+        phone_number: phoneNumber,
+        phone_verified: false,
+      }).eq("user_id", user.id);
+
       // Send SMS via Twilio gateway
       const response = await fetch(`${GATEWAY_URL}/Messages.json`, {
         method: "POST",

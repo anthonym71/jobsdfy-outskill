@@ -105,10 +105,6 @@ const Onboarding = () => {
   };
 
   const next = async () => {
-    if (step === 5 && !phoneVerified) {
-      toast({ title: "Please verify your phone number first", variant: "destructive" });
-      return;
-    }
     await awardStepCredits(step);
     if (step < totalSteps) setStep(step + 1);
   };
@@ -117,10 +113,6 @@ const Onboarding = () => {
 
   const finish = async () => {
     if (!user) return;
-    if (!phoneVerified) {
-      toast({ title: "Please verify your phone number first", variant: "destructive" });
-      return;
-    }
     setSaving(true);
 
     try {
@@ -304,10 +296,10 @@ const Onboarding = () => {
           {step === 5 && (
             <>
               <h2 className="font-heading text-lg font-semibold text-foreground flex items-center gap-2">
-                <Phone className="h-5 w-5" /> Verify Your Phone
+                <Phone className="h-5 w-5" /> Add Your Phone
               </h2>
               <p className="text-sm text-muted-foreground">
-                We need your mobile number to secure your account. This number cannot be changed without admin approval.
+                Add your mobile number to secure your account. You can verify it now or later from Settings. Unverified numbers have limited access.
               </p>
               <div className="space-y-4">
                 {!phoneVerified ? (
@@ -373,7 +365,7 @@ const Onboarding = () => {
                 )}
               </Button>
             ) : (
-              <Button onClick={finish} disabled={saving || !phoneVerified}>
+              <Button onClick={finish} disabled={saving}>
                 {saving ? "Saving…" : "Finish Setup 🏆"}
               </Button>
             )}
