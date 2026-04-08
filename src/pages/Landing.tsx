@@ -564,6 +564,7 @@ const Landing = () => {
           </p>
         </div>
       </section>
+      </>)}
 
       <Footer />
     </div>
