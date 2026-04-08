@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
-import { Download, Chrome, Loader2, Phone, Mail, User, Copy, Gift, Handshake } from "lucide-react";
+import { Download, Chrome, Loader2, Phone, Mail, User, Copy, Gift, Handshake, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +21,7 @@ const Settings = () => {
   const [phone, setPhone] = useState("");
   const [originalName, setOriginalName] = useState("");
   const [originalPhone, setOriginalPhone] = useState("");
+  const [phoneVerified, setPhoneVerified] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [referralLink, setReferralLink] = useState("");
@@ -45,13 +47,14 @@ const Settings = () => {
   useEffect(() => {
     if (!user) return;
     setEmail(user.email || "");
-    supabase.from("user_profiles").select("full_name, phone_number, referral_link").eq("user_id", user.id).maybeSingle()
+    supabase.from("user_profiles").select("full_name, phone_number, phone_verified, referral_link").eq("user_id", user.id).maybeSingle()
       .then(({ data }) => {
         if (data) {
           setFullName(data.full_name || "");
           setOriginalName(data.full_name || "");
           setPhone(data.phone_number || "");
           setOriginalPhone(data.phone_number || "");
+          setPhoneVerified(data.phone_verified ?? false);
           // Generate referral link if not set
           const baseUrl = window.location.origin;
           if (data.referral_link) {
@@ -103,17 +106,23 @@ const Settings = () => {
     }
   };
 
-  const handleSendOtp = async () => {
-    if (!newPhone.trim() || !user) return;
+  const handleSendOtp = async (overridePhone?: string) => {
+    const phoneToSend = overridePhone || newPhone.trim();
+    if (!phoneToSend || !user) return;
+    setNewPhone(phoneToSend);
     setPhoneSending(true);
     const { data, error } = await supabase.functions.invoke("verify-phone", {
-      body: { action: "send", phoneNumber: newPhone.trim() },
+      body: { action: "send", phoneNumber: phoneToSend },
     });
     setPhoneSending(false);
     if (error || data?.error) {
       toast({ title: "Error", description: data?.error || error?.message, variant: "destructive" });
     } else {
-      toast({ title: "OTP sent", description: `Code sent to ${newPhone}` });
+      // Phone is now saved (unverified) by the edge function
+      setPhone(newPhone.trim());
+      setOriginalPhone(newPhone.trim());
+      setPhoneVerified(false);
+      toast({ title: "OTP sent", description: `Code sent to ${newPhone}. Number saved — verify to unlock full access.` });
       setPhoneStep("verify");
     }
   };
@@ -131,6 +140,7 @@ const Settings = () => {
       toast({ title: "Phone verified!" });
       setPhone(newPhone.trim());
       setOriginalPhone(newPhone.trim());
+      setPhoneVerified(true);
       setPhoneStep("view");
       setNewPhone("");
       setOtpCode("");
@@ -180,19 +190,39 @@ const Settings = () => {
 
         {/* Phone */}
         <div className="space-y-1.5">
-          <Label>Mobile Number</Label>
+          <div className="flex items-center gap-2">
+            <Label>Mobile Number</Label>
+            {phone && (
+              phoneVerified ? (
+                <Badge variant="default" className="bg-green-600 hover:bg-green-600 text-xs gap-1">
+                  <ShieldCheck className="h-3 w-3" /> Verified
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="bg-amber-500/15 text-amber-600 hover:bg-amber-500/15 text-xs gap-1">
+                  <ShieldAlert className="h-3 w-3" /> Not Verified
+                </Badge>
+              )
+            )}
+          </div>
           <Input value={phone || "Not set"} disabled className="bg-muted" />
 
           {phoneStep === "view" && (
-            <Button size="sm" variant="outline" className="mt-2" onClick={() => setPhoneStep("send")}>
-              <Phone className="h-4 w-4 mr-1" />{phone ? "Change Number" : "Add Number"}
-            </Button>
+            <div className="flex gap-2 mt-2">
+              <Button size="sm" variant="outline" onClick={() => setPhoneStep("send")}>
+                <Phone className="h-4 w-4 mr-1" />{phone ? "Change Number" : "Add Number"}
+              </Button>
+              {phone && !phoneVerified && (
+                <Button size="sm" variant="default" onClick={() => { setNewPhone(phone); handleSendOtp(); }}>
+                  Verify Now
+                </Button>
+              )}
+            </div>
           )}
 
           {phoneStep === "send" && (
             <div className="flex gap-2 mt-2">
               <Input placeholder="+1234567890" value={newPhone} onChange={e => setNewPhone(e.target.value)} />
-              <Button size="sm" disabled={phoneSending || !newPhone.trim()} onClick={handleSendOtp}>
+              <Button size="sm" disabled={phoneSending || !newPhone.trim()} onClick={() => handleSendOtp()}>
                 {phoneSending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send OTP"}
               </Button>
               <Button size="sm" variant="ghost" onClick={() => { setPhoneStep("view"); setNewPhone(""); }}>Cancel</Button>
