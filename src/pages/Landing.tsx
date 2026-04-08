@@ -129,8 +129,24 @@ const Landing = () => {
       {/* Nav */}
       <nav className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
-          <span className="font-heading text-lg sm:text-xl font-bold text-foreground tracking-tight">JobsDFY</span>
+          <div className="flex items-center gap-4 sm:gap-6">
+            <span className="font-heading text-lg sm:text-xl font-bold text-foreground tracking-tight cursor-pointer" onClick={() => setLandingTab("home")}>JobsDFY</span>
+            <div className="hidden sm:flex items-center gap-1">
+              {(["home", "events", "jobs"] as const).map(tab => (
+                <button key={tab} onClick={() => setLandingTab(tab)} className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${landingTab === tab ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                  {tab === "home" ? "Home" : tab === "events" ? "Events" : "Jobs"}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex sm:hidden items-center gap-1 mr-1">
+              {(["home", "events", "jobs"] as const).map(tab => (
+                <button key={tab} onClick={() => setLandingTab(tab)} className={`px-2 py-1 text-xs font-medium rounded transition-colors ${landingTab === tab ? "bg-accent text-foreground" : "text-muted-foreground"}`}>
+                  {tab === "home" ? "Home" : tab === "events" ? "Events" : "Jobs"}
+                </button>
+              ))}
+            </div>
             <Link to="/auth">
               <Button variant="ghost" size="sm">Sign In</Button>
             </Link>
