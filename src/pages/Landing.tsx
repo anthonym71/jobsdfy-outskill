@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button";
 import {
   Shield, Zap, Link2, ChevronDown, Check, ArrowRight, Sparkles, Eye, FileText,
   BookOpen, Brain, Mic, Camera, Users, Award, Calendar, MessageSquare,
-  GraduationCap, Target, Clock, TrendingUp, Briefcase, Crown, Star, Handshake
+  GraduationCap, Target, Clock, TrendingUp, Briefcase, Crown, Star, Handshake,
+  CalendarDays, MapPin, Search, Building2, Globe
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
 import jobyMascot from "@/assets/joby-mascot.png";
 
 const fadeUp = {
