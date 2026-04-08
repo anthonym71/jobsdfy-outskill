@@ -83,14 +83,14 @@ serve(async (req) => {
       .eq("user_id", user_id)
       .single();
 
-    // Insert audit log
-    await supabaseAdmin.from("audit_logs").insert({
-      user_id: callerId,
-      user_email: callerEmail,
-      user_name: "",
-      action: amount > 0 ? "admin_add_credits" : "admin_deduct_credits",
-      description: `${amount > 0 ? "Added" : "Deducted"} ${Math.abs(amount)} credits ${amount > 0 ? "to" : "from"} ${targetProfile?.full_name || user_id}. Reason: ${reason}`,
-      metadata: { target_user_id: user_id, amount, new_balance: newBalance },
+    // Insert audit log via secure function
+    await supabaseAdmin.rpc("log_audit_event", {
+      p_user_id: callerId,
+      p_user_email: callerEmail,
+      p_user_name: "",
+      p_action: amount > 0 ? "admin_add_credits" : "admin_deduct_credits",
+      p_description: `${amount > 0 ? "Added" : "Deducted"} ${Math.abs(amount)} credits ${amount > 0 ? "to" : "from"} ${targetProfile?.full_name || user_id}. Reason: ${reason}`,
+      p_metadata: { target_user_id: user_id, amount, new_balance: newBalance },
     });
 
     return new Response(JSON.stringify({ success: true, new_balance: newBalance }), {

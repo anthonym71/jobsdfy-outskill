@@ -48,13 +48,13 @@ serve(async (req) => {
       }
     }
 
-    await supabase.from("audit_logs").insert({
-      user_id: userId,
-      user_email: userEmail,
-      user_name: userName,
-      action,
-      description: description || "",
-      metadata: metadata || {},
+    await supabase.rpc("log_audit_event", {
+      p_user_id: userId,
+      p_user_email: userEmail,
+      p_user_name: userName,
+      p_action: action,
+      p_description: description || "",
+      p_metadata: metadata || {},
     });
 
     return new Response(JSON.stringify({ ok: true }), {
