@@ -41,6 +41,9 @@ import TrainingPage from "./pages/TrainingPage";
 import AffiliateTerms from "./pages/AffiliateTerms";
 import SlugRedirect from "./pages/SlugRedirect";
 import PhotoGalleryPage from "./pages/PhotoGalleryPage";
+import EventsPage from "./pages/EventsPage";
+import CompanyPage from "./pages/CompanyPage";
+import EventRegistrationsPage from "./pages/EventRegistrationsPage";
 
 const queryClient = new QueryClient();
 
@@ -107,6 +110,9 @@ const App = () => (
                   <Route path="/app/photo-gallery" element={<PhotoGalleryPage />} />
                   <Route path="/app/interview" element={<InterviewPage />} />
                   <Route path="/app/training" element={<TrainingPage />} />
+                  <Route path="/app/events" element={<EventsPage />} />
+                  <Route path="/app/companies" element={<CompanyPage />} />
+                  <Route path="/app/event-registrations" element={<EventRegistrationsPage />} />
                 </Route>
               </Route>
             </Route>

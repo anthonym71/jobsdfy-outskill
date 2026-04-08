@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, PlusCircle, Briefcase, Settings, LogOut, Menu, X, CreditCard, HelpCircle, ShieldCheck, Users, UserCircle, CalendarDays, Coins, ListTodo, ClipboardList, Bookmark, Film, Lightbulb, Share2, Brain, Crown, MessageSquare, GraduationCap, Camera } from "lucide-react";
+import { LayoutDashboard, PlusCircle, Briefcase, Settings, LogOut, Menu, X, CreditCard, HelpCircle, ShieldCheck, Users, UserCircle, CalendarDays, Coins, ListTodo, ClipboardList, Bookmark, Film, Lightbulb, Share2, Brain, Crown, MessageSquare, GraduationCap, Camera, Building2, Ticket } from "lucide-react";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,7 +14,7 @@ const baseNavItems: { to: string; icon: any; label: string; end?: boolean }[] = 
   { to: "/app/new-job", icon: PlusCircle, label: "Check a Job" },
   { to: "/app/jobs", icon: Briefcase, label: "Jobs" },
   { to: "/app/profile", icon: UserCircle, label: "Profile" },
-  { to: "/app/calendar", icon: CalendarDays, label: "Calendar" },
+  { to: "/app/events", icon: CalendarDays, label: "Calendar / Events" },
   { to: "/app/tasks", icon: ListTodo, label: "Tasks" },
   { to: "/app/books", icon: Bookmark, label: "Books" },
   { to: "/app/movies", icon: Film, label: "Movies" },
@@ -25,6 +25,8 @@ const baseNavItems: { to: string; icon: any; label: string; end?: boolean }[] = 
   { to: "/app/autobiography", icon: Crown, label: "Autobiography / Bio" },
   { to: "/app/interview", icon: MessageSquare, label: "Interview Practice" },
   { to: "/app/training", icon: GraduationCap, label: "Training" },
+  { to: "/app/companies", icon: Building2, label: "Companies" },
+  { to: "/app/event-registrations", icon: Ticket, label: "Event Registrations" },
   { to: "/app/pricing", icon: CreditCard, label: "Pricing" },
   { to: "/app/support", icon: HelpCircle, label: "Support" },
   { to: "/app/settings", icon: Settings, label: "Settings" },
