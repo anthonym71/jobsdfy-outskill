@@ -1943,6 +1943,51 @@ export type Database = {
       }
     }
     Views: {
+      companies_public: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          domain: string | null
+          id: string | null
+          industry: string | null
+          is_verified: boolean | null
+          location: string | null
+          logo_url: string | null
+          name: string | null
+          size: string | null
+          updated_at: string | null
+          website_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          domain?: string | null
+          id?: string | null
+          industry?: string | null
+          is_verified?: boolean | null
+          location?: string | null
+          logo_url?: string | null
+          name?: string | null
+          size?: string | null
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          domain?: string | null
+          id?: string | null
+          industry?: string | null
+          is_verified?: boolean | null
+          location?: string | null
+          logo_url?: string | null
+          name?: string | null
+          size?: string | null
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       recruiter_job_posts_public: {
         Row: {
           application_email: string | null
