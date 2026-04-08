@@ -98,6 +98,11 @@ const faqs = [
 
 const Landing = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [landingTab, setLandingTab] = useState<"home" | "events" | "jobs">("home");
+  const [publicEvents, setPublicEvents] = useState<any[]>([]);
+  const [publicJobs, setPublicJobs] = useState<any[]>([]);
+  const [eventSearch, setEventSearch] = useState("");
+  const [jobSearch, setJobSearch] = useState("");
 
   // Track page view
   useEffect(() => {
@@ -105,6 +110,19 @@ const Landing = () => {
       body: { page: "/", referrer: document.referrer },
     }).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (landingTab === "events" && publicEvents.length === 0) {
+      supabase.from("events").select("*").eq("is_active", true).order("event_date").then(({ data }) => {
+        if (data) setPublicEvents(data);
+      });
+    }
+    if (landingTab === "jobs" && publicJobs.length === 0) {
+      supabase.from("recruiter_job_posts_public").select("*").eq("is_active", true).order("created_at", { ascending: false }).limit(50).then(({ data }) => {
+        if (data) setPublicJobs(data);
+      });
+    }
+  }, [landingTab]);
 
   return (
     <div className="min-h-screen bg-background">
