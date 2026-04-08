@@ -39,11 +39,11 @@ const Support = () => {
 
   const loadTickets = async () => {
     const { data } = await supabase
-      .from("support_tickets")
+      .from("support_tickets_user_view" as any)
       .select("*")
       .eq("user_id", user!.id)
       .order("created_at", { ascending: false });
-    setTickets((data as Ticket[]) || []);
+    setTickets((data as unknown as Ticket[]) || []);
     setLoading(false);
   };
 

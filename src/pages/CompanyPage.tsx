@@ -27,7 +27,7 @@ const CompanyPage = () => {
   useEffect(() => { load(); }, [user]);
 
   const load = async () => {
-    const { data } = await supabase.from("companies").select("*").eq("is_verified", true).order("name");
+    const { data } = await supabase.from("companies_public" as any).select("*").order("name");
     if (data) setCompanies(data);
     if (user) {
       const { data: mine } = await supabase.from("companies").select("*").eq("admin_user_id", user.id).maybeSingle();
