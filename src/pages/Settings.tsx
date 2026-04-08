@@ -388,10 +388,24 @@ const Settings = () => {
       <Separator />
 
       {/* Danger Zone */}
-      <section className="rounded-xl border border-destructive/20 bg-card p-6 space-y-3">
+      <section className="rounded-xl border border-destructive/20 bg-card p-6 space-y-4">
         <h2 className="font-heading text-base font-semibold text-destructive">Danger Zone</h2>
-        <p className="text-sm text-muted-foreground">Sign out of your account.</p>
-        <Button variant="destructive" size="sm" onClick={signOut}>Sign Out</Button>
+        <div className="space-y-3">
+          <div>
+            <p className="text-sm font-medium text-foreground">Delete Account</p>
+            <p className="text-xs text-muted-foreground">Permanently delete your account and all data. This cannot be undone.</p>
+            <p className="text-xs text-destructive mt-1">⚠️ If you have an active subscription, cancel it first via the Pricing page before deleting your account.</p>
+          </div>
+          <Button variant="destructive" size="sm" onClick={async () => {
+            const confirm1 = window.confirm("Are you sure you want to delete your account? This action is permanent and cannot be undone.");
+            if (!confirm1) return;
+            const confirm2 = window.confirm("FINAL WARNING: All your data, credits, and history will be permanently deleted. Continue?");
+            if (!confirm2) return;
+            toast({ title: "Account deletion requested", description: "Please contact support@jobsdfy.com to complete account deletion." });
+          }}>
+            Delete My Account
+          </Button>
+        </div>
       </section>
     </div>
   );
