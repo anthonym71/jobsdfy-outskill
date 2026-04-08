@@ -7,7 +7,7 @@ import VerdictBadge from "@/components/VerdictBadge";
 import StatusPill, { type JobStatus } from "@/components/StatusPill";
 import BlockerCard from "@/components/BlockerCard";
 import FitScoreCard from "@/components/FitScoreCard";
-import { Loader2, ArrowRight, ExternalLink, Trash2, MoreVertical, Archive, Bookmark, RotateCcw, FileText, Search, FileDown } from "lucide-react";
+import { Loader2, ArrowRight, ExternalLink, Trash2, MoreVertical, Archive, Bookmark, RotateCcw, FileText, Search, FileDown, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -243,7 +243,7 @@ const JobDetail = () => {
               </div>
             )}
             {job.application_url && (
-              <a href={job.application_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
+              <a href={job.application_url.startsWith("http") ? job.application_url : `https://${job.application_url}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
                 <ExternalLink className="h-3.5 w-3.5" />View Original Posting
               </a>
             )}
@@ -383,8 +383,11 @@ const JobDetail = () => {
 
         <TabsContent value="pack" className="mt-5">
           {assets.length === 0 ? (
-            <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
-              Generate a Quick Apply pack to see your tailored documents here.
+            <div className="rounded-xl border border-border bg-card p-8 text-center space-y-3">
+              <p className="text-sm text-muted-foreground">Generate a Quick Apply pack to see your tailored documents here.</p>
+              <Button size="sm" onClick={() => navigate(`/app/apply/${id}`)}>
+                <Sparkles className="h-4 w-4 mr-1" />Generate Quick Apply Pack
+              </Button>
             </div>
           ) : (
             <div className="space-y-4">

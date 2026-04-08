@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Loader2, Plus, Trash2, Sparkles, Lightbulb, Camera, FileUp } from "lucide-react";
 import CVUploadParser from "./CVUploadParser";
 import VoiceLabel from "./VoiceLabel";
-import PhotoGallerySection from "./PhotoGallerySection";
+
 import VoiceCVBuilderDialog from "./VoiceCVBuilder";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -243,9 +243,14 @@ const AboutMeTab = () => {
     <div className="space-y-6">
       {/* Photo + Basic Info */}
       <section className="rounded-xl border border-border bg-card p-6 space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <h2 className="font-heading text-base font-semibold text-foreground">Basic Information</h2>
-          <VoiceCVBuilderDialog category="about" categoryLabel="About Me" />
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => document.getElementById("cv-upload-section")?.scrollIntoView({ behavior: "smooth" })}>
+              <FileUp className="h-4 w-4 mr-1" />Upload CV
+            </Button>
+            <VoiceCVBuilderDialog category="about" categoryLabel="About Me" />
+          </div>
         </div>
 
         {/* Photo upload */}
@@ -323,8 +328,6 @@ const AboutMeTab = () => {
         </div>
       </section>
 
-      {/* Photo Gallery */}
-      <PhotoGallerySection />
 
       {/* Hobbies & Interests */}
       <section className="rounded-xl border border-border bg-card p-6 space-y-4">
@@ -419,7 +422,7 @@ const AboutMeTab = () => {
       </section>
 
       {/* Upload CV */}
-      <section className="rounded-xl border border-border bg-card p-6 space-y-4">
+      <section id="cv-upload-section" className="rounded-xl border border-border bg-card p-6 space-y-4">
         <div className="flex items-center gap-2">
           <FileUp className="h-5 w-5 text-primary" />
           <h2 className="font-heading text-base font-semibold text-foreground">Upload & Parse CV</h2>

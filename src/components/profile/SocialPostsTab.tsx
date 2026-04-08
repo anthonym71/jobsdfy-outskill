@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Plus, Trash2, Share2, ExternalLink, CheckCircle, Circle } from "lucide-react";
+import { Loader2, Plus, Trash2, Share2, ExternalLink, CheckCircle, Circle, CalendarDays } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +22,9 @@ const SocialPostsTab = () => {
   const [content, setContent] = useState("");
   const [platforms, setPlatforms] = useState<PlatformEntry[]>([{ platform: "LinkedIn", url: "" }]);
   const [followUpTask, setFollowUpTask] = useState("");
+  const [followUpDate, setFollowUpDate] = useState("");
+  const [toBePosted, setToBePosted] = useState(false);
+  const [dueDate, setDueDate] = useState("");
   const [adding, setAdding] = useState(false);
 
   useEffect(() => {
@@ -36,15 +40,27 @@ const SocialPostsTab = () => {
   const handleAdd = async () => {
     if (!content.trim() || !user) return;
     setAdding(true);
-    const { error } = await supabase.from("social_posts").insert({
+    const { error, data: newPost } = await supabase.from("social_posts").insert({
       user_id: user.id, post_type: postType, content,
       platforms: JSON.parse(JSON.stringify(platforms.filter(p => p.url.trim()))),
       follow_up_task: followUpTask, follow_up_done: false,
-    } as any);
+      to_be_posted: toBePosted, due_date: dueDate || null,
+    } as any).select().single();
     if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
     else {
+      // Create follow-up task if specified
+      if (followUpTask.trim() && newPost) {
+        await supabase.from("tasks").insert({
+          user_id: user.id,
+          title: followUpTask,
+          description: `Follow-up for social post: ${content.slice(0, 80)}...`,
+          due_date: followUpDate || dueDate || null,
+          source_type: "social_post",
+          source_id: newPost.id,
+        } as any);
+      }
       toast({ title: "Post added" });
-      setContent(""); setPlatforms([{ platform: "LinkedIn", url: "" }]); setFollowUpTask("");
+      setContent(""); setPlatforms([{ platform: "LinkedIn", url: "" }]); setFollowUpTask(""); setFollowUpDate(""); setToBePosted(false); setDueDate("");
       const { data } = await supabase.from("social_posts").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
       setPosts(data || []);
     }
@@ -94,7 +110,25 @@ const SocialPostsTab = () => {
           <Button size="sm" variant="ghost" onClick={addPlatform} className="text-xs"><Plus className="h-3 w-3 mr-1" />Add Platform</Button>
         </div>
 
-        <div><Label className="text-xs">Follow-up Task</Label><Input value={followUpTask} onChange={e => setFollowUpTask(e.target.value)} placeholder="e.g. Check engagement in 24h" className="mt-1" /></div>
+        {/* To Be Posted + Due Date */}
+        <div className="flex flex-wrap items-center gap-4">
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox checked={toBePosted} onCheckedChange={(v) => setToBePosted(!!v)} />
+            <span>To be posted ✅</span>
+          </label>
+          <div className="flex items-center gap-2">
+            <Label className="text-xs whitespace-nowrap">Due Date</Label>
+            <Input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="w-40" />
+            <Button type="button" size="sm" variant="ghost" className="text-xs" onClick={() => setDueDate(new Date().toISOString().split("T")[0])}>Today</Button>
+          </div>
+        </div>
+
+        {/* Follow-up */}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div><Label className="text-xs">Follow-up Action</Label><Input value={followUpTask} onChange={e => setFollowUpTask(e.target.value)} placeholder="e.g. Check engagement in 24h" className="mt-1" /></div>
+          <div><Label className="text-xs">Follow-up Date</Label><Input type="date" value={followUpDate} onChange={e => setFollowUpDate(e.target.value)} className="mt-1" /></div>
+        </div>
+
         <Button size="sm" onClick={handleAdd} disabled={adding || !content.trim()}>
           {adding ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}Add Post
         </Button>
@@ -146,7 +180,11 @@ const PostCard = ({ post, onDelete, onToggleFollowUp }: { post: any; onDelete: (
           <span className={post.follow_up_done ? "line-through" : ""}>{post.follow_up_task}</span>
         </button>
       )}
-      <p className="text-[10px] text-muted-foreground">{new Date(post.created_at).toLocaleDateString()}</p>
+      <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+        <span>{new Date(post.created_at).toLocaleDateString()}</span>
+        {post.to_be_posted && <span className="text-primary font-medium">📌 To be posted</span>}
+        {post.due_date && <span className="flex items-center gap-0.5"><CalendarDays className="h-2.5 w-2.5" />Due: {new Date(post.due_date).toLocaleDateString()}</span>}
+      </div>
     </div>
   );
 };
