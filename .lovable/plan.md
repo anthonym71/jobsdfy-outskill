@@ -1,130 +1,133 @@
 
 
-# Build Plan — Admin Credit Adjustment, Affiliate UI, GHL Widget, Stripe Verification
+# Build Plan — Phase A: Profile Restructure, Affiliate, Settings, Pricing
 
-## Memory Saves (3 files)
+## Overview
 
-### 1. `mem://features/v3-v4-business-model.md`
-Save Voice/Video AI clone vision, anonymous headhunting marketplace, 1000-point scoring system, revenue targets ($1M+/mo), competitive moat, and risk factors.
-
-### 2. `mem://preferences/business-advisor.md`
-Save: "Challenge non-viable/unprofitable decisions with 3 alternatives. Assess business/marketing sense before implementing. If Claude/ChatGPT can do something cheaper than Lovable, recommend routing to them."
-
-### 3. `mem://features/ghl.md`
-Save: "User has paid GHL SaaS ($97/mo unlimited AI). Also has CloserX paid account. Use for conversations, AI bot, voice, and marketing automation."
-
-### 4. Update `mem://index.md`
-Add references to all three new memory files.
+Move 8 tabs out of Profile into their own sidebar navigation items with dedicated routes. Add Movies (new), update affiliate/referral links, rework Settings danger zone, and update Stripe pricing.
 
 ---
 
-## Feature 1: Admin Credit Adjustment (Add AND Deduct)
+## 1. Move Profile Sub-tabs to Main Sidebar Nav Items
 
-**Current state:** `AdminUsers.tsx` has a credit allocation dialog (line 616-639) that only adds credits. `handleAllocateCredits` (line 159) directly updates `user_credits` and inserts into `credit_transactions` with action `earned`.
+Currently these are sub-tabs inside `/app/profile`. Each becomes its own page/route in the left sidebar:
 
-**Changes:**
+| New Sidebar Item | Route | Icon | Component |
+|---|---|---|---|
+| Books | `/app/books` | Bookmark | BooksTab.tsx (existing) |
+| Movies | `/app/movies` | Film | MoviesTab.tsx (NEW) |
+| Memory Dump | `/app/memory-dump` | Lightbulb | MemoryDumpTab.tsx (existing) |
+| Social Media | `/app/social-media` | Share2 | SocialPostsTab.tsx (existing) |
+| Assessments | `/app/assessments` | Brain | AssessmentsTab.tsx (existing) |
+| Autobiography | `/app/autobiography` | Crown | AutobiographyTab.tsx (existing) |
+| Interview Practice | `/app/interview` | MessageSquare | InterviewPracticeTab.tsx (existing) |
+| Recommended Training | `/app/training` | GraduationCap | RecommendedTrainingTab.tsx (NEW) |
 
-### Edge Function: `admin-adjust-credits/index.ts` (NEW)
-- Accepts: `user_id`, `amount` (positive or negative), `reason`
-- Validates caller is admin via `has_role` RPC
-- Uses service role to update `user_credits.balance` (clamped to min 0)
-- Inserts `credit_transactions` with action `earned` (positive) or `spent` (negative)
-- Inserts `audit_logs` entry
-- Returns new balance
+**Profile page** keeps: About Me (+ Upload CV), Work History, Education, Timeline, CV Versions, Courses, References, Achievements, Knowledgebase.
 
-### `src/pages/AdminUsers.tsx`
-- Replace "Allocate Credits" dialog with "Adjust Credits" dialog
-- Add toggle/select: "Add" or "Deduct" mode
-- Amount field accepts positive numbers; mode determines sign
-- Show user's current balance in the dialog
-- Replace `handleAllocateCredits` to call `admin-adjust-credits` edge function instead of direct DB writes (more secure — admin password verification replaced by edge function admin role check)
-- Update button text: "Add X Credits" or "Deduct X Credits"
-
----
-
-## Feature 2: Affiliate Program UI
-
-**Current state:** DB tables `affiliate_partners` and `affiliate_conversions` exist. Edge function `calculate-affiliate-commission` exists. No UI anywhere.
-
-### `src/pages/Settings.tsx` — Add Affiliate Section
-- Add new section between "Invite a Friend" and "Danger Zone"
-- "Become an Affiliate Partner" — for users who want to earn commission (different from referral credits)
-- If not yet an affiliate: "Apply" button → inserts into `affiliate_partners` with auto-generated referral code
-- If already an affiliate: show dashboard card with:
-  - Unique affiliate referral code and link
-  - Total signups / paying signups
-  - Current commission tier (25%/30%/40%/50% based on 30-day rolling)
-  - Total earned
-  - Payout method form (PayPal email or bank details)
-
-### `src/pages/Landing.tsx` — Add Affiliate CTA Section
-- New section before the final CTA: "Earn 25-50% Commission"
-- Brief copy: "Know someone who'd love JobsDFY? Earn recurring commission on every paying referral. Tiered rates reward your success."
-- CTA button: "Become an Affiliate" → links to `/auth?mode=signup` (or `/app/settings#affiliate` if logged in)
-
-### `src/pages/AdminUsers.tsx` or new `src/pages/AdminAffiliates.tsx`
-- New tab or page showing all affiliate partners
-- Table: name, referral code, total signups, paying signups, commission earned, payout method
-- Ability to view conversions per affiliate
-- Mark payouts as processed
+**Files changed:**
+- `AppLayout.tsx` — add 8 new nav items to `baseNavItems`
+- `App.tsx` — add 8 new routes wrapping existing tab components in page wrappers
+- `Profile.tsx` — remove moved tabs
+- Create 8 small page wrapper files (e.g. `src/pages/BooksPage.tsx`) that import the existing tab component and wrap it with heading/padding
 
 ---
 
-## Feature 3: GHL Chat Widget Integration
+## 2. New DB Tables & Columns
 
-**What you need to do (your action required):**
+**Migration:**
+- `movies` table (id, user_id, title, genre, rating 1-10, comments, takeaway, watched_at, created_at, updated_at) with RLS
+- `recommended_training` table (id, user_id, title, provider, category, reason, recommended_by, url, created_at) with RLS
+- Add `slug text UNIQUE` to `affiliate_partners` and `referral_codes`
 
-1. Log into your GoHighLevel dashboard
-2. Go to **Sites > Chat Widget** (or **Conversations > Chat Widget**)
-3. Configure your chat widget appearance, bot greeting, and AI agent settings
-4. Copy the embed snippet — it will look something like:
-```html
-<script src="https://widgets.leadconnectorhq.com/loader.js"
-  data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js"
-  data-widget-id="YOUR_WIDGET_ID">
-</script>
-```
-5. Paste it here and I'll embed it in `index.html` (for landing page) and the app layout
-
-**What I'll build:**
-- Add the GHL script tag to `index.html` `<body>` (alongside Clarity)
-- No custom chat widget code needed — GHL handles everything
-- If you want the widget hidden on certain pages, I can add conditional logic
+**New components:**
+- `MoviesTab.tsx` — CRUD: title, genre, star rating (1-10), comments, "what I got from it", date watched
+- `RecommendedTrainingTab.tsx` — AI-recommended courses with reason/why displayed
 
 ---
 
-## Feature 4: Stripe Verification
+## 3. Affiliate & Referral Link Improvements
 
-**What exists:** `create-checkout`, `check-subscription`, `customer-portal` edge functions. `useSubscription` hook. `Pricing.tsx` page with checkout buttons.
+- Add routes `/r/:slug` and `/a/:slug` in App.tsx — redirect to Landing page, store slug in localStorage
+- Landing page reads slug from localStorage, passes to signup link as query param
+- Auth page picks up `ref`/`aff` param and credits the referrer on signup
+- Settings: slug chooser with warning about losing previous referral attribution
+- Highlight current commission tier in affiliate dashboard
+- Create `AffiliateTerms.tsx` — generated FAQ, T&Cs, contract; user must agree when signing up as affiliate
+- Footer: "Become an Affiliate" link on every page
 
-**Verification approach:**
-- I'll use the Stripe tools to check account info, list products, list prices, and verify they match the IDs in code
-- Confirm `STRIPE_SECRET_KEY` is set as a secret
-- Test edge functions via `curl_edge_functions` tool
-- Report back on what works and what needs fixing
+---
+
+## 4. Settings — Danger Zone Rework
+
+- Move "Sign Out" out of Danger Zone (already in sidebar, just remove from danger zone)
+- Add "Delete Account" button with multi-step confirmation dialog
+- Warn to cancel subscription first before deleting
+- Pricing page: add "Cancel Subscription" section with messaging about remaining access/credits
+
+---
+
+## 5. Stripe Pricing Updates
+
+**Create 5 new Stripe prices** (via Stripe tools):
+1. Premium $49.99/mo (replacing $19/mo)
+2. 50-credit pack $19.99 (replacing $14.99)
+3. 100-credit pack $24.99
+4. 200-credit pack $59.99
+5. 500-credit pack $149.00
+
+**Update:** `useSubscription.ts`, `Pricing.tsx`, `Landing.tsx` with new price IDs.
+
+---
+
+## 6. AutobiographyTab Enhancements
+
+- Credit cost estimator next to Generate button (based on word count)
+- Save generated versions to `generated_artifacts` table
+- Download as Word (.docx) or PDF
+- In-app text editor for editing before download
+
+---
+
+## 7. InterviewPracticeTab Enhancements
+
+- Show credit cost per minute for Voice AI
+- Add voice-to-text microphone input for written answers (using existing VoiceFieldInput)
+- Save practice sessions (transcript, not audio) to `interview_sessions` table
+- Label written answers as FREE
+
+---
+
+## 8. Upload CV in About Me
+
+- Add `CVUploadParser` component inside AboutMeTab below the existing form fields
 
 ---
 
 ## Build Order
 
-1. Save all memory files (4 writes)
-2. Create `admin-adjust-credits` edge function
-3. Update `AdminUsers.tsx` — adjust credits dialog (add/deduct)
-4. Add affiliate dashboard to `Settings.tsx`
-5. Add affiliate section to `Landing.tsx`
-6. Add affiliate admin management (new tab or page)
-7. Verify Stripe setup via tools
-8. GHL widget — pending your snippet
+1. DB migration (movies, recommended_training, slug columns)
+2. Create Stripe prices (5 prices via tool)
+3. Create `MoviesTab.tsx` and `RecommendedTrainingTab.tsx`
+4. Create 8 page wrappers for promoted tabs
+5. Update `App.tsx` with new routes + `/r/:slug` `/a/:slug` redirects
+6. Update `AppLayout.tsx` sidebar with new nav items
+7. Update `Profile.tsx` — remove promoted tabs, add CV upload to About Me
+8. Update `useSubscription.ts` with new price IDs
+9. Update `Pricing.tsx` — new prices + cancel subscription flow
+10. Update `Landing.tsx` — pricing updates
+11. Update `Settings.tsx` — slug chooser, danger zone rework, delete account
+12. Create `AffiliateTerms.tsx` + route
+13. Update `Footer.tsx` — affiliate link
+14. Update `AutobiographyTab.tsx` — credit estimator, versions, download
+15. Update `InterviewPracticeTab.tsx` — credit display, voice input, save sessions
 
 ---
 
 ## What You Need To Do
 
-| Task | Where | Priority |
-|------|-------|----------|
-| Get GHL chat widget snippet | GHL Dashboard > Sites > Chat Widget | Before I can embed it |
-| Set up `support@jobsdfy.com` | Your domain hosting provider | For future email notifications |
-| Test Stripe checkout | Published app > Pricing page | After I verify the backend |
-
-**Tip:** Setting up the GHL widget and email are configuration tasks — if you need step-by-step help, ask ChatGPT "How do I set up a chat widget in GoHighLevel" to save Lovable credits.
+| Action | Where |
+|--------|-------|
+| Approve this plan | Here — then I build it |
+| Stripe prices will be created via tool | I'll handle this during build |
 
