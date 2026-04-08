@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Plus, Trash2, Sparkles, Lightbulb, Camera } from "lucide-react";
+import { Loader2, Plus, Trash2, Sparkles, Lightbulb, Camera, FileUp } from "lucide-react";
+import CVUploadParser from "./CVUploadParser";
 import VoiceLabel from "./VoiceLabel";
 import PhotoGallerySection from "./PhotoGallerySection";
 import VoiceCVBuilderDialog from "./VoiceCVBuilder";
@@ -415,6 +416,16 @@ const AboutMeTab = () => {
           <div><Label>Max Travel (%)</Label><Input type="number" value={nonNegs.maxTravel} onChange={e => setNonNegs(n => ({ ...n, maxTravel: e.target.value }))} className="mt-1" /></div>
           <div><Label>Industry Exclusions</Label><Input value={nonNegs.industryExclusions} onChange={e => setNonNegs(n => ({ ...n, industryExclusions: e.target.value }))} className="mt-1" placeholder="Gambling, Tobacco" /></div>
         </div>
+      </section>
+
+      {/* Upload CV */}
+      <section className="rounded-xl border border-border bg-card p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <FileUp className="h-5 w-5 text-primary" />
+          <h2 className="font-heading text-base font-semibold text-foreground">Upload & Parse CV</h2>
+        </div>
+        <p className="text-sm text-muted-foreground">Upload your CV to auto-fill profile fields with AI parsing.</p>
+        <CVUploadParser />
       </section>
 
       <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
