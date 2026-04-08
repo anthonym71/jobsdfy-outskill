@@ -11,7 +11,7 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
-import jobyMascot from "@/assets/joby-mascot.png";
+import jobyMascot from "@/assets/joby-mascot.webp";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -291,7 +291,10 @@ const Landing = () => {
                 src={jobyMascot}
                 alt="Joby — your AI job search superhero"
                 className="w-full h-auto drop-shadow-xl"
+                width={640}
+                height={640}
                 loading="eager"
+                fetchPriority="high"
               />
             </motion.div>
           </div>
