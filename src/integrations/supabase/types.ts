@@ -2124,6 +2124,17 @@ export type Database = {
         Args: { _user_id: string }
         Returns: undefined
       }
+      log_audit_event: {
+        Args: {
+          p_action: string
+          p_description: string
+          p_metadata?: Json
+          p_user_email: string
+          p_user_id: string
+          p_user_name: string
+        }
+        Returns: undefined
+      }
       spend_credits: {
         Args: { _amount: number; _reason: string; _user_id: string }
         Returns: boolean
