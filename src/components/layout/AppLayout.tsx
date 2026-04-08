@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, PlusCircle, Briefcase, Settings, LogOut, Menu, X, CreditCard, HelpCircle, ShieldCheck, Users, UserCircle, CalendarDays, Coins, ListTodo, ClipboardList } from "lucide-react";
+import { LayoutDashboard, PlusCircle, Briefcase, Settings, LogOut, Menu, X, CreditCard, HelpCircle, ShieldCheck, Users, UserCircle, CalendarDays, Coins, ListTodo, ClipboardList, Bookmark, Film, Lightbulb, Share2, Brain, Crown, MessageSquare, GraduationCap } from "lucide-react";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,6 +16,14 @@ const baseNavItems: { to: string; icon: any; label: string; end?: boolean }[] = 
   { to: "/app/profile", icon: UserCircle, label: "Profile" },
   { to: "/app/calendar", icon: CalendarDays, label: "Calendar" },
   { to: "/app/tasks", icon: ListTodo, label: "Tasks" },
+  { to: "/app/books", icon: Bookmark, label: "Books" },
+  { to: "/app/movies", icon: Film, label: "Movies" },
+  { to: "/app/memory-dump", icon: Lightbulb, label: "Memory Dump" },
+  { to: "/app/social-media", icon: Share2, label: "Social Media" },
+  { to: "/app/assessments", icon: Brain, label: "Assessments" },
+  { to: "/app/autobiography", icon: Crown, label: "Autobiography" },
+  { to: "/app/interview", icon: MessageSquare, label: "Interview Practice" },
+  { to: "/app/training", icon: GraduationCap, label: "Training" },
   { to: "/app/pricing", icon: CreditCard, label: "Pricing" },
   { to: "/app/support", icon: HelpCircle, label: "Support" },
   { to: "/app/settings", icon: Settings, label: "Settings" },
@@ -72,7 +80,7 @@ const AppLayout = () => {
       <div className="px-4 py-3">
         <CreditBalance />
       </div>
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
@@ -105,12 +113,10 @@ const AppLayout = () => {
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Desktop sidebar */}
       <aside className="hidden md:flex md:w-60 md:flex-col md:border-r border-border bg-card">
         {sidebar}
       </aside>
 
-      {/* Mobile header */}
       <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between border-b border-border bg-card px-4 py-3 md:hidden">
         <div className="flex items-center gap-3">
           <span className="font-heading text-lg font-bold text-foreground">JobsDFY</span>
@@ -124,12 +130,10 @@ const AppLayout = () => {
         </div>
       </div>
 
-      {/* Desktop top bar with user info */}
       <div className="hidden md:flex fixed top-0 left-60 right-0 z-40 items-center justify-end border-b border-border bg-card px-6 py-2">
         {userInfoBlock}
       </div>
 
-      {/* Mobile sidebar overlay */}
       {mobileOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
           <div className="absolute inset-0 bg-foreground/20" onClick={() => setMobileOpen(false)} />
@@ -139,7 +143,6 @@ const AppLayout = () => {
         </div>
       )}
 
-      {/* Main content */}
       <main className="flex-1 pt-14 md:pt-12 overflow-auto flex flex-col">
         <div className="flex-1">
           <Outlet />

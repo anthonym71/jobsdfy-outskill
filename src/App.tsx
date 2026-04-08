@@ -30,6 +30,16 @@ import RecruiterCandidates from "./pages/RecruiterCandidates";
 import Tasks from "./pages/Tasks";
 import AdminAuditLog from "./pages/AdminAuditLog";
 import OnboardingGuard from "./components/OnboardingGuard";
+import BooksPage from "./pages/BooksPage";
+import MoviesPage from "./pages/MoviesPage";
+import MemoryDumpPage from "./pages/MemoryDumpPage";
+import SocialMediaPage from "./pages/SocialMediaPage";
+import AssessmentsPage from "./pages/AssessmentsPage";
+import AutobiographyPage from "./pages/AutobiographyPage";
+import InterviewPage from "./pages/InterviewPage";
+import TrainingPage from "./pages/TrainingPage";
+import AffiliateTerms from "./pages/AffiliateTerms";
+import SlugRedirect from "./pages/SlugRedirect";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +71,9 @@ const App = () => (
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/r/:slug" element={<SlugRedirect type="ref" />} />
+            <Route path="/a/:slug" element={<SlugRedirect type="aff" />} />
+            <Route path="/affiliate-terms" element={<AffiliateTerms />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/onboarding" element={<Onboarding />} />
               <Route element={<OnboardingGuard />}>
@@ -84,6 +97,14 @@ const App = () => (
                   <Route path="/app/admin/logs" element={<AdminAuditLog />} />
                   <Route path="/app/tasks" element={<Tasks />} />
                   <Route path="/app/extension" element={<ExtensionDownload />} />
+                  <Route path="/app/books" element={<BooksPage />} />
+                  <Route path="/app/movies" element={<MoviesPage />} />
+                  <Route path="/app/memory-dump" element={<MemoryDumpPage />} />
+                  <Route path="/app/social-media" element={<SocialMediaPage />} />
+                  <Route path="/app/assessments" element={<AssessmentsPage />} />
+                  <Route path="/app/autobiography" element={<AutobiographyPage />} />
+                  <Route path="/app/interview" element={<InterviewPage />} />
+                  <Route path="/app/training" element={<TrainingPage />} />
                 </Route>
               </Route>
             </Route>

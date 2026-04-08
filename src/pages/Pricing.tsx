@@ -88,7 +88,7 @@ const Pricing = () => {
             {currentTier === "premium" && <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">Current Plan</span>}
             <div>
               <h3 className="font-heading text-lg font-semibold text-foreground flex items-center gap-2"><Crown className="h-5 w-5 text-amber-500" /> Premium</h3>
-              <p className="text-3xl font-bold text-foreground mt-2">$19<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+              <p className="text-3xl font-bold text-foreground mt-2">$49.99<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
             </div>
             <ul className="space-y-2">
               {tierFeatures.premium.map(f => (
@@ -112,7 +112,6 @@ const Pricing = () => {
         <h2 className="font-heading text-xl font-semibold text-foreground text-center mb-2">Recruiter Plans</h2>
         <p className="text-sm text-muted-foreground text-center mb-4">Post jobs and reach candidates. 3 free posts, then subscribe for more.</p>
         <div className="grid gap-6 md:grid-cols-3 max-w-3xl mx-auto">
-          {/* Free Recruiter */}
           <div className={`rounded-xl border p-6 space-y-4 ${recruiterTier === "free" ? "border-primary ring-2 ring-primary/20" : "border-border"} bg-card`}>
             {recruiterTier === "free" && <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">Current</span>}
             <div>
@@ -126,7 +125,6 @@ const Pricing = () => {
             <Button variant="outline" className="w-full" disabled>Free Tier</Button>
           </div>
 
-          {/* Recruiter Standard */}
           <div className={`rounded-xl border p-6 space-y-4 ${recruiterTier === "standard" ? "border-primary ring-2 ring-primary/20" : "border-border"} bg-card`}>
             {recruiterTier === "standard" && <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">Current</span>}
             <div>
@@ -147,7 +145,6 @@ const Pricing = () => {
             )}
           </div>
 
-          {/* Recruiter Unlimited */}
           <div className={`rounded-xl border p-6 space-y-4 ${recruiterTier === "unlimited" ? "border-primary ring-2 ring-primary/20" : "border-border"} bg-card`}>
             {recruiterTier === "unlimited" && <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">Current</span>}
             <div>
@@ -177,7 +174,7 @@ const Pricing = () => {
           <h2 className="font-heading text-xl font-semibold text-foreground">Need more credits?</h2>
           <p className="text-sm text-muted-foreground">Buy credit packs anytime — no subscription needed.</p>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 max-w-lg mx-auto">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 max-w-3xl mx-auto">
           {CREDIT_PACKS.map(pack => (
             <div key={pack.price_id} className="rounded-xl border border-border bg-card p-5 flex items-center justify-between">
               <div>
@@ -191,6 +188,15 @@ const Pricing = () => {
           ))}
         </div>
       </div>
+
+      {/* Cancel / Manage Subscription */}
+      {subscribed && (
+        <div className="rounded-xl border border-border bg-card p-6 text-center space-y-3 max-w-lg mx-auto">
+          <h3 className="font-heading text-base font-semibold text-foreground">Manage Your Subscription</h3>
+          <p className="text-sm text-muted-foreground">Cancel, upgrade, or change your payment method via the billing portal.</p>
+          <Button variant="outline" onClick={manageSubscription}>Open Billing Portal</Button>
+        </div>
+      )}
     </div>
   );
 };

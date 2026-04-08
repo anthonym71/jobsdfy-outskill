@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin, Handshake } from "lucide-react";
 
 const Footer = () => (
   <footer className="border-t border-border bg-card py-8 sm:py-10">
     <div className="mx-auto max-w-6xl px-4 sm:px-6">
-      <div className="grid gap-8 sm:grid-cols-3">
+      <div className="grid gap-8 sm:grid-cols-4">
         {/* Brand & Address */}
         <div className="space-y-3">
           <span className="font-heading text-sm font-bold text-foreground">JobsDFY</span>
@@ -44,6 +44,16 @@ const Footer = () => (
             <a href="http://fflipi.com/terms-of-service-fflipi" target="_blank" rel="noopener noreferrer" className="block hover:text-foreground transition-colors">
               Terms of Service
             </a>
+          </div>
+        </div>
+
+        {/* Affiliate */}
+        <div className="space-y-3">
+          <span className="text-sm font-semibold text-foreground">Partner</span>
+          <div className="space-y-2 text-xs text-muted-foreground">
+            <Link to="/affiliate-terms" className="flex items-center gap-2 hover:text-foreground transition-colors">
+              <Handshake className="h-3.5 w-3.5 shrink-0" /> Become an Affiliate
+            </Link>
           </div>
         </div>
       </div>

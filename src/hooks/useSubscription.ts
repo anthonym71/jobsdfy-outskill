@@ -12,9 +12,9 @@ export const STRIPE_TIERS = {
   },
   premium: {
     name: "Premium",
-    price_id: "price_1TIH4T2E142c9Abt028kStMG",
-    product_id: "prod_UGohJceyyZQff3",
-    price: 19,
+    price_id: "price_1TJlGx2E142c9AbtSMd8aFKc",
+    product_id: "prod_UILyrR0VTjfQtV",
+    price: 49.99,
     credits: 100,
   },
 } as const;
@@ -38,7 +38,10 @@ export const RECRUITER_TIERS = {
 
 export const CREDIT_PACKS = [
   { name: "10 Credits", price_id: "price_1TIH512E142c9AbtUaWjCMWu", price: 4.99, credits: 10 },
-  { name: "50 Credits", price_id: "price_1TIH5S2E142c9AbtB9RhOqeH", price: 14.99, credits: 50 },
+  { name: "50 Credits", price_id: "price_1TJlHJ2E142c9AbtgLNOgCgR", price: 19.99, credits: 50 },
+  { name: "100 Credits", price_id: "price_1TJlHi2E142c9Abt7ag2R7Yo", price: 24.99, credits: 100 },
+  { name: "200 Credits", price_id: "price_1TJlI22E142c9AbtbI8ShYd8", price: 59.99, credits: 200 },
+  { name: "500 Credits", price_id: "price_1TJlIK2E142c9AbtCxpOOG2O", price: 149.00, credits: 500 },
 ] as const;
 
 export type SubscriptionTier = "free" | "pro" | "premium";
@@ -82,11 +85,12 @@ export function useSubscription() {
         else if (data.product_id === RECRUITER_TIERS.standard.product_id) recruiterTier = "standard";
       }
 
-      // Check all active subscriptions for recruiter tier too
       if (data?.all_product_ids) {
         for (const pid of data.all_product_ids) {
           if (pid === RECRUITER_TIERS.unlimited.product_id) recruiterTier = "unlimited";
           else if (pid === RECRUITER_TIERS.standard.product_id && recruiterTier === "free") recruiterTier = "standard";
+          if (pid === STRIPE_TIERS.premium.product_id) tier = "premium";
+          else if (pid === STRIPE_TIERS.pro.product_id && tier === "free") tier = "pro";
         }
       }
 
