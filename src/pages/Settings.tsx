@@ -222,7 +222,7 @@ const Settings = () => {
           {phoneStep === "send" && (
             <div className="flex gap-2 mt-2">
               <Input placeholder="+1234567890" value={newPhone} onChange={e => setNewPhone(e.target.value)} />
-              <Button size="sm" disabled={phoneSending || !newPhone.trim()} onClick={handleSendOtp}>
+              <Button size="sm" disabled={phoneSending || !newPhone.trim()} onClick={() => handleSendOtp()}>
                 {phoneSending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send OTP"}
               </Button>
               <Button size="sm" variant="ghost" onClick={() => { setPhoneStep("view"); setNewPhone(""); }}>Cancel</Button>
