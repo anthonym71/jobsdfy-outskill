@@ -63,6 +63,7 @@ export type Database = {
           payout_details: string | null
           payout_method: string | null
           referral_code: string
+          slug: string | null
           total_earned: number | null
           total_signups: number | null
           updated_at: string | null
@@ -75,6 +76,7 @@ export type Database = {
           payout_details?: string | null
           payout_method?: string | null
           referral_code: string
+          slug?: string | null
           total_earned?: number | null
           total_signups?: number | null
           updated_at?: string | null
@@ -87,6 +89,7 @@ export type Database = {
           payout_details?: string | null
           payout_method?: string | null
           referral_code?: string
+          slug?: string | null
           total_earned?: number | null
           total_signups?: number | null
           updated_at?: string | null
@@ -817,6 +820,45 @@ export type Database = {
         }
         Relationships: []
       }
+      movies: {
+        Row: {
+          comments: string | null
+          created_at: string
+          genre: string | null
+          id: string
+          rating: number | null
+          takeaway: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          watched_at: string | null
+        }
+        Insert: {
+          comments?: string | null
+          created_at?: string
+          genre?: string | null
+          id?: string
+          rating?: number | null
+          takeaway?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+          watched_at?: string | null
+        }
+        Update: {
+          comments?: string | null
+          created_at?: string
+          genre?: string | null
+          id?: string
+          rating?: number | null
+          takeaway?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          watched_at?: string | null
+        }
+        Relationships: []
+      }
       page_views: {
         Row: {
           created_at: string | null
@@ -900,6 +942,42 @@ export type Database = {
           id?: string
           image_url?: string
           sort_order?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      recommended_training: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          provider: string | null
+          reason: string | null
+          recommended_by: string | null
+          title: string
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          provider?: string | null
+          reason?: string | null
+          recommended_by?: string | null
+          title?: string
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          provider?: string | null
+          reason?: string | null
+          recommended_by?: string | null
+          title?: string
+          url?: string | null
           user_id?: string
         }
         Relationships: []
@@ -1086,6 +1164,7 @@ export type Database = {
           created_at: string
           credits_earned: number
           id: string
+          slug: string | null
           user_id: string
           uses: number
         }
@@ -1094,6 +1173,7 @@ export type Database = {
           created_at?: string
           credits_earned?: number
           id?: string
+          slug?: string | null
           user_id: string
           uses?: number
         }
@@ -1102,6 +1182,7 @@ export type Database = {
           created_at?: string
           credits_earned?: number
           id?: string
+          slug?: string | null
           user_id?: string
           uses?: number
         }
