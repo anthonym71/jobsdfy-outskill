@@ -1,5 +1,11 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, PlusCircle, Briefcase, Settings, LogOut, Menu, X, CreditCard, HelpCircle, ShieldCheck, Users, UserCircle, CalendarDays, Coins, ListTodo, ClipboardList, Bookmark, Film, Lightbulb, Share2, Brain, Crown, MessageSquare, GraduationCap, Camera, Building2, Ticket } from "lucide-react";
+import { 
+  LayoutDashboard, PlusCircle, Briefcase, Settings, LogOut, Menu, X, 
+  CreditCard, HelpCircle, ShieldCheck, Users, UserCircle, CalendarDays, 
+  Coins, ListTodo, ClipboardList, Bookmark, Film, Lightbulb, Share2, 
+  Brain, Crown, MessageSquare, GraduationCap, Camera, Building2, Ticket,
+  BookOpen
+} from "lucide-react";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,10 +22,10 @@ const baseNavItems: { to: string; icon: any; label: string; end?: boolean }[] = 
   { to: "/app/profile", icon: UserCircle, label: "Profile" },
   { to: "/app/events", icon: CalendarDays, label: "Calendar / Events" },
   { to: "/app/tasks", icon: ListTodo, label: "Tasks" },
-  { to: "/app/books", icon: Bookmark, label: "Books" },
-  { to: "/app/movies", icon: Film, label: "Movies" },
-  { to: "/app/memory-dump", icon: Lightbulb, label: "Memory Dump" },
-  { to: "/app/social-media", icon: Share2, label: "Social Media Posts" },
+{ to: "/app/books", icon: BookOpen, label: "Intellectual Foundation" },
+  { to: "/app/movies", icon: Film, label: "Character & Media Insights" },
+  { to: "/app/memory-dump", icon: Lightbulb, label: "Brain Dump & Context" },
+  { to: "/app/social-media", icon: Share2, label: "Thought Leadership" },
   { to: "/app/assessments", icon: Brain, label: "Assessments" },
   { to: "/app/photo-gallery", icon: Camera, label: "Photo Gallery" },
   { to: "/app/autobiography", icon: Crown, label: "Autobiography / Bio" },

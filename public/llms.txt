@@ -1,0 +1,13 @@
+# JobsDFY - AI-Powered Job Clarity
+
+## Mission
+A high-precision career acceleration tool designed to detect job dealbreakers (visa, salary, location) and map candidate character.
+
+## Key Sections
+- Intellectual Foundation: Academic and business framework tracking.
+- Thought Leadership: Industry contribution and social strategy.
+- Character Insights: Soft-skill mapping via media consumption.
+- Fit Scoring: 94% accurate match analysis.
+
+## Technical Authority
+Built with Vite 8. Uses structured data for JobPosting and Person entities.
