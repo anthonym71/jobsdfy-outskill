@@ -106,11 +106,13 @@ const Settings = () => {
     }
   };
 
-  const handleSendOtp = async () => {
-    if (!newPhone.trim() || !user) return;
+  const handleSendOtp = async (overridePhone?: string) => {
+    const phoneToSend = overridePhone || newPhone.trim();
+    if (!phoneToSend || !user) return;
+    setNewPhone(phoneToSend);
     setPhoneSending(true);
     const { data, error } = await supabase.functions.invoke("verify-phone", {
-      body: { action: "send", phoneNumber: newPhone.trim() },
+      body: { action: "send", phoneNumber: phoneToSend },
     });
     setPhoneSending(false);
     if (error || data?.error) {
