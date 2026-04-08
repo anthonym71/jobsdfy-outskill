@@ -43,7 +43,7 @@ const Support = () => {
       .select("*")
       .eq("user_id", user!.id)
       .order("created_at", { ascending: false });
-    setTickets((data as Ticket[]) || []);
+    setTickets((data as unknown as Ticket[]) || []);
     setLoading(false);
   };
 
