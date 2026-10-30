@@ -5,15 +5,15 @@ import { useAuth } from "@/contexts/AuthContext";
 export const STRIPE_TIERS = {
   pro: {
     name: "Pro",
-    price_id: "price_1TIH3z2E142c9AbtNq7hfT82",
-    product_id: "prod_UGohHAEChdqTA8",
+    price_id: "price_1UW8P32E142c9Abt5wHxNqM2",
+    product_id: "prod_VXCoP7WBMF3Ktu",
     price: 9,
     credits: 30,
   },
   premium: {
     name: "Premium",
-    price_id: "price_1TJlGx2E142c9AbtSMd8aFKc",
-    product_id: "prod_UILyrR0VTjfQtV",
+    price_id: "price_1UW8Pz2E142c9AbtFaDwNnlE",
+    product_id: "prod_VXCpLNBQ3a2NC3",
     price: 49.99,
     credits: 100,
   },
@@ -22,26 +22,26 @@ export const STRIPE_TIERS = {
 export const RECRUITER_TIERS = {
   standard: {
     name: "Recruiter Standard",
-    price_id: "price_1TIJEi2E142c9AbtYY7H6JqG",
-    product_id: "prod_UGqwkBswf8Qd90",
+    price_id: "price_1UW8Pz2E142c9AbtJyDGp98y",
+    product_id: "prod_VXCpWKUfRyvNsx",
     price: 9,
     maxJobs: 10,
   },
   unlimited: {
     name: "Recruiter Unlimited",
-    price_id: "price_1TIJFB2E142c9Abt74jT8Dni",
-    product_id: "prod_UGqxnwGnSiBqLG",
+    price_id: "price_1UW8Pz2E142c9AbteEgOeQth",
+    product_id: "prod_VXCpHO6TpoNBDM",
     price: 49,
     maxJobs: Infinity,
   },
 } as const;
 
 export const CREDIT_PACKS = [
-  { name: "10 Credits", price_id: "price_1TIH512E142c9AbtUaWjCMWu", price: 4.99, credits: 10 },
-  { name: "50 Credits", price_id: "price_1TJlHJ2E142c9AbtgLNOgCgR", price: 19.99, credits: 50 },
-  { name: "100 Credits", price_id: "price_1TJlHi2E142c9Abt7ag2R7Yo", price: 24.99, credits: 100 },
-  { name: "200 Credits", price_id: "price_1TJlI22E142c9AbtbI8ShYd8", price: 59.99, credits: 200 },
-  { name: "500 Credits", price_id: "price_1TJlIK2E142c9AbtCxpOOG2O", price: 149.00, credits: 500 },
+  { name: "10 Credits", price_id: "price_1UW8Q02E142c9Abt7p0lvKkS", price: 4.99, credits: 10 },
+  { name: "50 Credits", price_id: "price_1UW8Q02E142c9AbtYjeoL34N", price: 19.99, credits: 50 },
+  { name: "100 Credits", price_id: "price_1UW8Q12E142c9AbtsiKkWAh6", price: 24.99, credits: 100 },
+  { name: "200 Credits", price_id: "price_1UW8Q12E142c9AbtyGTbIdEc", price: 59.99, credits: 200 },
+  { name: "500 Credits", price_id: "price_1UW8Q12E142c9AbtUhyuiNXP", price: 149.00, credits: 500 },
 ] as const;
 
 export type SubscriptionTier = "free" | "pro" | "premium";
