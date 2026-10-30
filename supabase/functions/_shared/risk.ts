@@ -30,9 +30,9 @@ export interface RiskOptions {
 }
 
 const SUMMARY: Record<RiskLevel, string> = {
-  low: "No warning signs found in the text. That is not proof the job is real.",
-  some: "Some warning signs. Check the employer yourself before you share details.",
-  several: "Several warning signs. Do not pay anything or share personal details until you have verified the employer.",
+  low: "The text shows nothing worrying. That is not proof the job is real.",
+  some: "Check the employer yourself before you share any details.",
+  several: "Do not pay anything or share personal details until you have verified the employer.",
 };
 
 const POINTS: Record<Strength, number> = { strong: 3, medium: 2, weak: 1 };

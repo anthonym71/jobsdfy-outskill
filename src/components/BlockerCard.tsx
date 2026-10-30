@@ -25,9 +25,9 @@ const statusStyles = {
   unclear: {
     border: "border-verdict-review/30",
     bg: "bg-verdict-review-bg",
-    icon: <HelpCircle className="h-4 w-4 text-verdict-review" />,
+    icon: <HelpCircle className="h-4 w-4 text-verdict-review-foreground" />,
     label: "Posting doesn't say",
-    labelClass: "text-verdict-review",
+    labelClass: "text-verdict-review-foreground",
   },
   ok: {
     border: "border-verdict-go/30",

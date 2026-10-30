@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { evaluate, type Extraction } from "../_shared/verdict.ts";
 import { toLimits } from "../_shared/limits.ts";
+import { toResponse } from "../_shared/present.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -45,23 +46,8 @@ serve(async (req) => {
     // Salary corrections made on the extraction form are merged into job.extraction when the job is saved (NewJob.tsx).
     const result = evaluate((job.extraction ?? {}) as Extraction, toLimits(nonNegRes.data));
 
-    // Same shape the screen already reads (status / severity), plus the new evidence fields.
-    const blockers = result.results.map((r) => ({
-      limit: r.limit,
-      category: r.label,
-      state: r.state,
-      soft: !!r.soft,
-      status: r.state === "fail" ? "confirmed" : r.state === "unknown" ? "unclear" : "ok",
-      severity: r.state === "fail" ? "confirmed" : "unclear",
-      userValue: r.userValue,
-      jobValue: r.jobValue,
-      note: r.reason,
-      quote: r.quote ?? null,
-    }));
-    const alignment = result.results.map((r) => ({ label: r.label, aligned: r.state === "pass" }));
-    const summary = hasEvidence
-      ? result.summary
-      : "This job was saved before evidence checking existed, so nothing could be verified. Add it again to get a full check.";
+    const response = toResponse(result, hasEvidence);
+    const { blockers } = response;
 
     // Save one row per checked limit, then the verdict.
     const admin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
@@ -90,7 +76,7 @@ serve(async (req) => {
       updated_at: new Date().toISOString(),
     }).eq("id", jobId);
 
-    return json({ success: true, data: { verdict: result.verdict, summary, blockers, alignment, hasEvidence } });
+    return json({ success: true, data: response });
   } catch (e) {
     console.error("analyze-dealbreakers error:", e);
     return json({ error: e instanceof Error ? e.message : "Unknown error" }, 500);

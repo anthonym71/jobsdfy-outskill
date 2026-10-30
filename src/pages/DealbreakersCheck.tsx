@@ -1,49 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import VerdictBadge, { type Verdict } from "@/components/VerdictBadge";
-import BlockerCard from "@/components/BlockerCard";
-import { ArrowLeft, ArrowRight, Bookmark, ShieldAlert, Loader2 } from "lucide-react";
-import RiskPanel from "@/components/RiskPanel";
+import { Loader2 } from "lucide-react";
+import VerdictView from "@/components/VerdictView";
 import { createJobTasks } from "@/lib/followups";
 import type { RiskResult } from "@/lib/risk";
+import type { VerdictResponse } from "../../supabase/functions/_shared/present";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
-const verdictStyles: Record<Verdict, { banner: string; text: string }> = {
-  go: { banner: "verdict-banner-go", text: "text-verdict-go" },
-  review: { banner: "verdict-banner-review", text: "text-verdict-review" },
-  stop: { banner: "verdict-banner-stop", text: "text-verdict-stop" },
-};
-
-const verdictMessages: Record<Verdict, string> = {
-  go: "This role looks like a strong match. No hard blockers detected.",
-  review: "Some details are unclear or partially mismatched. Worth investigating before applying.",
-  stop: "We found a likely dealbreaker before you waste time.",
-};
-
-interface AnalysisResult {
-  verdict: Verdict;
-  summary: string;
-  blockers: Array<{
-    category: string;
-    status: "confirmed" | "ok" | "unclear";
-    severity: "confirmed" | "likely" | "unclear";
-    userValue: string;
-    jobValue: string;
-    note?: string;
-    limit?: string;
-    state?: "pass" | "fail" | "unknown";
-    soft?: boolean;
-    quote?: string | null;
-  }>;
-  alignment: Array<{ label: string; aligned: boolean }>;
-  hasEvidence?: boolean;
-}
-
-// Show what breaks first, then what is unclear, then what fits.
-const rank = (status: string) => (status === "confirmed" ? 0 : status === "unclear" ? 1 : 2);
 
 const DealbreakersCheck = () => {
   const { id } = useParams();
@@ -51,7 +16,7 @@ const DealbreakersCheck = () => {
   const { session } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [result, setResult] = useState<VerdictResponse | null>(null);
   const [risk, setRisk] = useState<RiskResult | null>(null);
   const [jobRef, setJobRef] = useState<{ id: string; title?: string | null; company?: string | null } | null>(null);
 
@@ -63,20 +28,12 @@ const DealbreakersCheck = () => {
   const runAnalysis = async () => {
     setLoading(true);
     try {
-      const resp = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-dealbreakers`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session!.access_token}`,
-          },
-          body: JSON.stringify({ jobId: id }),
-        }
-      );
-
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-dealbreakers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session!.access_token}` },
+        body: JSON.stringify({ jobId: id }),
+      });
       const data = await resp.json();
-
       if (!resp.ok) {
         toast({ title: "Analysis failed", description: data.error || "Something went wrong.", variant: "destructive" });
         return;
@@ -89,7 +46,7 @@ const DealbreakersCheck = () => {
       setJobRef(ref);
       // A REVIEW verdict means the posting is silent or vague on something that matters: remind the user to ask.
       if (data.data.verdict === "review") {
-        const unclear = (data.data.blockers as AnalysisResult["blockers"]).filter((b) => b.state === "unknown").map((b) => b.category);
+        const unclear = (data.data as VerdictResponse).blockers.filter((b) => b.state === "unknown").map((b) => b.category);
         await createJobTasks(supabase, session!.user.id, "needs_checking", ref, { unclear });
       }
     } catch (err) {
@@ -118,79 +75,43 @@ const DealbreakersCheck = () => {
     toast({ title: "Job saved", description: made ? "We added a task to decide on it in two days." : undefined });
   };
 
+  const handleSkip = async () => {
+    await supabase.from("jobs").update({ status: "archived" }).eq("id", id!);
+    toast({ title: "Skipped", description: "Moved to your archive. You can find it under Jobs." });
+    navigate("/app");
+  };
+
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground">Analyzing dealbreakers…</p>
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4" role="status">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
+        <p className="text-sm text-muted-foreground">Checking the posting against your limits…</p>
       </div>
     );
   }
 
   if (!result) {
     return (
-      <div className="p-6 md:p-8 max-w-4xl mx-auto">
-        <p className="text-muted-foreground">Analysis could not be completed. Please try again.</p>
-        <Button variant="outline" className="mt-4" onClick={() => navigate("/app")}>Back to Dashboard</Button>
+      <div className="mx-auto max-w-4xl p-6 md:p-8">
+        <p className="text-muted-foreground">The check could not be completed. Please try again.</p>
+        <div className="mt-4 flex gap-2">
+          <Button onClick={runAnalysis}>Try again</Button>
+          <Button variant="outline" onClick={() => navigate("/app")}>Back to Dashboard</Button>
+        </div>
       </div>
     );
   }
 
-  const { verdict, blockers, alignment } = result;
-  const vs = verdictStyles[verdict];
-
   return (
-    <div className="p-6 md:p-8 max-w-4xl mx-auto space-y-8">
-      {/* Verdict Banner */}
-      <div className={`rounded-xl border p-6 md:p-8 ${vs.banner}`}>
-        <div className="flex flex-col items-center text-center gap-4">
-          <ShieldAlert className={`h-10 w-10 ${vs.text}`} />
-          <VerdictBadge verdict={verdict} size="lg" />
-          <p className={`text-sm font-medium ${vs.text} max-w-md`}>
-            {result.summary || verdictMessages[verdict]}
-          </p>
-        </div>
-      </div>
-
-      <RiskPanel risk={risk} />
-
-      {/* Alignment Summary */}
-      <div className="rounded-xl border border-border bg-card p-6">
-        <h2 className="font-heading text-base font-semibold text-foreground mb-4">Quick Alignment</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {alignment.map((a) => (
-            <div key={a.label} className={`rounded-lg p-3 text-center text-sm font-medium ${a.aligned ? "bg-verdict-go-bg text-verdict-go" : "bg-verdict-stop-bg text-verdict-stop"}`}>
-              {a.aligned ? "✓" : "✗"} {a.label}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Blocker Cards */}
-      <div>
-        <h2 className="font-heading text-base font-semibold text-foreground mb-4">Detailed Breakdown</h2>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {[...blockers]
-            .sort((a, b) => rank(a.status) - rank(b.status))
-            .map((b, i) => (
-              <BlockerCard key={i} {...b} onDisagree={() => reportWrong(b.limit ?? b.category)} />
-            ))}
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between rounded-xl border border-border bg-card p-5">
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={() => navigate(-1)}><ArrowLeft className="mr-1.5 h-4 w-4" />Back</Button>
-          <Button variant="outline" size="sm" onClick={handleSave}><Bookmark className="mr-1.5 h-4 w-4" />Save</Button>
-          <Button variant="ghost" size="sm" onClick={() => reportWrong()}>I disagree</Button>
-        </div>
-        <Button size="sm" onClick={() => navigate(`/app/decision/${id}`)}>
-          Approved & Continue
-          <ArrowRight className="ml-1.5 h-4 w-4" />
-        </Button>
-      </div>
-    </div>
+    <VerdictView
+      result={result}
+      risk={risk}
+      onBack={() => navigate(-1)}
+      onSave={handleSave}
+      onSkip={handleSkip}
+      onContinue={() => navigate(`/app/decision/${id}`)}
+      onReportWrong={reportWrong}
+    />
   );
 };
 

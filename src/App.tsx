@@ -1,4 +1,8 @@
+import { lazy, Suspense } from "react";
 import FeatureGate from "@/components/FeatureGate";
+
+// Dev-only screen preview. The condition is a build-time constant, so production builds drop the import entirely.
+const DevPreview = import.meta.env.DEV ? lazy(() => import("./pages/DevPreview")) : null;
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { BrowserRouter, Route, Routes, Navigate, Outlet, useLocation } from "react-router-dom";
@@ -7,6 +11,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Landing from "./pages/Landing";
+import LandingLegacy from "./pages/LandingLegacy";
+import { isEnabled } from "@/lib/features";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import AppLayout from "./components/layout/AppLayout";
@@ -77,13 +83,14 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Landing />} />
+            <Route path="/" element={isEnabled("events") || isEnabled("hiring") ? <LandingLegacy /> : <Landing />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/r/:slug" element={<SlugRedirect type="ref" />} />
             <Route path="/a/:slug" element={<SlugRedirect type="aff" />} />
             <Route path="/affiliate-terms" element={<AffiliateTerms />} />
             <Route path="/terms" element={<Terms />} />
+            {DevPreview && <Route path="/dev/preview" element={<Suspense fallback={null}><DevPreview /></Suspense>} />}
             <Route element={<ProtectedRoute />}>
               <Route element={<TermsGate />}>
               <Route path="/onboarding" element={<Onboarding />} />

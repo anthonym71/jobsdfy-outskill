@@ -3,8 +3,8 @@ import { cn } from "@/lib/utils";
 import type { RiskResult } from "@/lib/risk";
 
 const LEVEL = {
-  low: { title: "No warning signs in the text", icon: ShieldCheck, box: "border-verdict-go/30 bg-verdict-go-bg", text: "text-verdict-go" },
-  some: { title: "Some warning signs", icon: ShieldAlert, box: "border-verdict-review/30 bg-verdict-review-bg", text: "text-verdict-review" },
+  low: { title: "No warning signs in the text", icon: ShieldCheck, box: "border-border bg-card", text: "text-foreground" },
+  some: { title: "Some warning signs", icon: ShieldAlert, box: "border-verdict-review/30 bg-verdict-review-bg", text: "text-verdict-review-foreground" },
   several: { title: "Several warning signs", icon: ShieldAlert, box: "border-verdict-stop/30 bg-verdict-stop-bg", text: "text-verdict-stop" },
 } as const;
 
