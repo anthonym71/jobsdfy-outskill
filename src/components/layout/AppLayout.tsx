@@ -127,7 +127,7 @@ const AppLayout = () => {
             {hidden && <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground" aria-label="Hidden from users – hackathon" />}
           </NavLink>
           );
-          return hidden ? <Tooltip key={item.to}><TooltipTrigger asChild>{link}</TooltipTrigger><TooltipContent>Hidden from users – hackathon</TooltipContent></Tooltip> : link;
+          return hidden ? <Tooltip key={item.to}><TooltipTrigger asChild><div>{link}</div></TooltipTrigger><TooltipContent>Hidden from users – hackathon</TooltipContent></Tooltip> : link;
         })}
       </nav>
       <div className="px-3 py-4 border-t border-border">

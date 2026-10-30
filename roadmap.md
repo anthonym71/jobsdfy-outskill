@@ -1,6 +1,7 @@
 # Tasks
 - [x] Hide four hackathon features from all except owner using reversible flags, sidebar badges and route gates.
-- [ ] Verify owner/non-owner visibility and Quick Apply.
+- [x] Verify owner banners/badges and simulated non-owner redirects; feature policy tests pass.
+- [ ] Real normal/judge account and Quick Apply end-to-end checks — current owner has no jobs or saved packs.
 - [x] Add upfront CV upload, conversational onboarding microphone control, CV import destinations and saved interview history.
 - [ ] Verify real voice onboarding and assessment; requires agent question configuration and physical microphone session.
 - [ ] Admin cost-tier voice option — Option B capture/TTS implementation and secure server setting still outstanding.
