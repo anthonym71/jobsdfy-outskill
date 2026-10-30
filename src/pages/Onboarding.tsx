@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useCredits, CREDIT_REWARDS } from "@/hooks/useCredits";
+import CvImportCard from "@/components/onboarding/CvImportCard";
+import { cvToForm, cvToRows, type ParsedCv } from "@/lib/cvImport";
 import { CURRENCIES, OFFICE_DAY_OPTIONS, extraLimitColumns, salaryInputToAmount, salaryLabel, salaryPlaceholder } from "@/lib/limits";
 import { Coins, Zap, Trophy, Phone, Loader2, CheckCircle } from "lucide-react";
 
@@ -28,6 +30,7 @@ const Onboarding = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const [imported, setImported] = useState<ParsedCv | null>(null);
   const { credits, earnCredits, unlockAchievement } = useCredits();
 
   // Phone verification state
@@ -151,6 +154,15 @@ const Onboarding = () => {
 
       if (nonNegError) throw nonNegError;
 
+      // Work history and education read from the CV the user imported and checked. Skipped if they already have some.
+      if (imported) {
+        const { work, education } = cvToRows(imported, user.id);
+        const { count } = await supabase.from("work_history").select("id", { count: "exact", head: true }).eq("user_id", user.id);
+        if (!count && work.length) await supabase.from("work_history").insert(work);
+        const { count: eduCount } = await supabase.from("education").select("id", { count: "exact", head: true }).eq("user_id", user.id);
+        if (!eduCount && education.length) await supabase.from("education").insert(education);
+      }
+
       await awardStepCredits(4);
       await unlockAchievement("first_steps");
 
@@ -209,6 +221,7 @@ const Onboarding = () => {
           {step === 1 && (
             <>
               <h2 className="font-heading text-lg font-semibold text-foreground">Basic Info</h2>
+              <CvImportCard onParsed={(cv) => { setImported(cv); setForm((p) => ({ ...p, ...cvToForm(cv) })); }} />
               <div className="space-y-4">
                 <div><Label>Full Name</Label><Input value={form.fullName} onChange={(e) => update("fullName", e.target.value)} placeholder="Jane Doe" /></div>
                 <div><Label>Location</Label><Input value={form.location} onChange={(e) => update("location", e.target.value)} placeholder="Berlin, Germany" /></div>
