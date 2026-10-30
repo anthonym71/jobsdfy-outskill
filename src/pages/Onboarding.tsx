@@ -9,6 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useCredits, CREDIT_REWARDS } from "@/hooks/useCredits";
+import VoiceFieldInput from "@/components/profile/VoiceFieldInput";
+import GuidedVoiceFill, { type GuidedField } from "@/components/onboarding/GuidedVoiceFill";
+import { spokenNumber } from "@/lib/voiceCommands";
 import { Coins, Zap, Trophy, Phone, Loader2, CheckCircle } from "lucide-react";
 
 const totalSteps = 5;
@@ -18,6 +21,43 @@ const STEP_REWARDS: Record<number, string> = {
   2: "profile_preferences",
   3: "profile_skills",
   4: "profile_nonneg",
+};
+
+const NUMBER_KEYS = new Set(["salaryMin", "salaryTarget", "yearsExp", "nonNegSalaryMin", "nonNegMaxTravel"]);
+const yesNo = [{ value: "yes", words: ["yes", "yeah", "yep", "i do"] }, { value: "no", words: ["no", "nope", "don't", "do not"] }];
+
+const VOICE_STEPS: Record<number, GuidedField[]> = {
+  1: [
+    { key: "fullName", question: "What's your full name?" },
+    { key: "location", question: "Where are you based?" },
+    { key: "headline", question: "What's your job title or headline?" },
+    { key: "summary", question: "Give me a short summary of what you do." },
+  ],
+  2: [
+    { key: "salaryMin", question: "What's the minimum salary you'd accept?", type: "number" },
+    { key: "salaryTarget", question: "And your target salary?", type: "number" },
+    { key: "remotePreference", question: "Do you want remote, hybrid, onsite, or flexible?", options: [
+      { value: "remote", words: ["remote"] }, { value: "hybrid", words: ["hybrid"] },
+      { value: "onsite", words: ["onsite", "on site", "office"] }, { value: "flexible", words: ["flexible", "any", "either"] }] },
+    { key: "workAuth", question: "What's your work authorization, for example citizen or visa?" },
+    { key: "languages", question: "Which languages do you speak?" },
+  ],
+  3: [
+    { key: "yearsExp", question: "How many years of experience do you have?", type: "number" },
+    { key: "topSkills", question: "What are your top skills?" },
+    { key: "industries", question: "Which industries have you worked in?" },
+  ],
+  4: [
+    { key: "nonNegSalaryMin", question: "What's the absolute lowest salary you'd consider?", type: "number" },
+    { key: "nonNegCountries", question: "Which countries or regions are you willing to work in?" },
+    { key: "nonNegRemote", question: "Is your work model remote only, hybrid OK, or any?", options: [
+      { value: "remote", words: ["remote"] }, { value: "hybrid", words: ["hybrid"] }, { value: "any", words: ["any", "either", "don't mind"] }] },
+    { key: "nonNegVisa", question: "Do you need visa sponsorship? Yes or no.", options: yesNo },
+    { key: "nonNegLanguages", question: "Which working languages are required for you?" },
+    { key: "nonNegEmploymentType", question: "Full-time, part-time, or contract?" },
+    { key: "nonNegMaxTravel", question: "What's the most travel you'd accept, as a percentage?", type: "number" },
+    { key: "nonNegIndustryExclusions", question: "Any industries you refuse to work in?" },
+  ],
 };
 
 const Onboarding = () => {
@@ -49,6 +89,7 @@ const Onboarding = () => {
   });
 
   const update = (key: string, value: string) => setForm((p) => ({ ...p, [key]: value }));
+  const voiceSet = (key: string, value: string) => update(key, NUMBER_KEYS.has(key) ? spokenNumber(value) : value);
 
   const awardStepCredits = async (stepNum: number) => {
     if (completedSteps.has(stepNum)) return;
@@ -208,10 +249,10 @@ const Onboarding = () => {
             <>
               <h2 className="font-heading text-lg font-semibold text-foreground">Basic Info</h2>
               <div className="space-y-4">
-                <div><Label>Full Name</Label><Input value={form.fullName} onChange={(e) => update("fullName", e.target.value)} placeholder="Jane Doe" /></div>
-                <div><Label>Location</Label><Input value={form.location} onChange={(e) => update("location", e.target.value)} placeholder="Berlin, Germany" /></div>
-                <div><Label>Headline</Label><Input value={form.headline} onChange={(e) => update("headline", e.target.value)} placeholder="Senior Product Designer" /></div>
-                <div><Label>Summary</Label><Textarea value={form.summary} onChange={(e) => update("summary", e.target.value)} placeholder="Brief professional summary…" rows={3} /></div>
+                <div><div className="flex items-center justify-between"><Label>Full Name</Label><VoiceFieldInput label="Full Name" onResult={(t) => voiceSet("fullName", t)} /></div><Input value={form.fullName} onChange={(e) => update("fullName", e.target.value)} placeholder="Jane Doe" /></div>
+                <div><div className="flex items-center justify-between"><Label>Location</Label><VoiceFieldInput label="Location" onResult={(t) => voiceSet("location", t)} /></div><Input value={form.location} onChange={(e) => update("location", e.target.value)} placeholder="Berlin, Germany" /></div>
+                <div><div className="flex items-center justify-between"><Label>Headline</Label><VoiceFieldInput label="Headline" onResult={(t) => voiceSet("headline", t)} /></div><Input value={form.headline} onChange={(e) => update("headline", e.target.value)} placeholder="Senior Product Designer" /></div>
+                <div><div className="flex items-center justify-between"><Label>Summary</Label><VoiceFieldInput label="Summary" onResult={(t) => voiceSet("summary", t)} /></div><Textarea value={form.summary} onChange={(e) => update("summary", e.target.value)} placeholder="Brief professional summary…" rows={3} /></div>
               </div>
             </>
           )}
@@ -221,8 +262,8 @@ const Onboarding = () => {
               <h2 className="font-heading text-lg font-semibold text-foreground">Work Preferences</h2>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div><Label>Minimum Salary</Label><Input type="number" value={form.salaryMin} onChange={(e) => update("salaryMin", e.target.value)} placeholder="60000" /></div>
-                  <div><Label>Target Salary</Label><Input type="number" value={form.salaryTarget} onChange={(e) => update("salaryTarget", e.target.value)} placeholder="80000" /></div>
+                  <div><div className="flex items-center justify-between"><Label>Minimum Salary</Label><VoiceFieldInput label="Minimum Salary" onResult={(t) => voiceSet("salaryMin", t)} /></div><Input type="number" value={form.salaryMin} onChange={(e) => update("salaryMin", e.target.value)} placeholder="60000" /></div>
+                  <div><div className="flex items-center justify-between"><Label>Target Salary</Label><VoiceFieldInput label="Target Salary" onResult={(t) => voiceSet("salaryTarget", t)} /></div><Input type="number" value={form.salaryTarget} onChange={(e) => update("salaryTarget", e.target.value)} placeholder="80000" /></div>
                 </div>
                 <div>
                   <Label>Currency</Label>
@@ -244,7 +285,7 @@ const Onboarding = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div><Label>Work Authorization</Label><Input value={form.workAuth} onChange={(e) => update("workAuth", e.target.value)} placeholder="EU citizen, US H1-B…" /></div>
+                <div><div className="flex items-center justify-between"><Label>Work Authorization</Label><VoiceFieldInput label="Work Authorization" onResult={(t) => voiceSet("workAuth", t)} /></div><Input value={form.workAuth} onChange={(e) => update("workAuth", e.target.value)} placeholder="EU citizen, US H1-B…" /></div>
                 <div>
                   <Label>Visa Sponsorship Required?</Label>
                   <Select value={form.sponsorshipRequired} onValueChange={(v) => update("sponsorshipRequired", v)}>
@@ -252,7 +293,7 @@ const Onboarding = () => {
                     <SelectContent><SelectItem value="yes">Yes</SelectItem><SelectItem value="no">No</SelectItem></SelectContent>
                   </Select>
                 </div>
-                <div><Label>Languages Spoken</Label><Input value={form.languages} onChange={(e) => update("languages", e.target.value)} placeholder="English, German, Spanish" /></div>
+                <div><div className="flex items-center justify-between"><Label>Languages Spoken</Label><VoiceFieldInput label="Languages Spoken" onResult={(t) => voiceSet("languages", t)} /></div><Input value={form.languages} onChange={(e) => update("languages", e.target.value)} placeholder="English, German, Spanish" /></div>
               </div>
             </>
           )}
@@ -261,9 +302,9 @@ const Onboarding = () => {
             <>
               <h2 className="font-heading text-lg font-semibold text-foreground">Skills & Experience</h2>
               <div className="space-y-4">
-                <div><Label>Years of Experience</Label><Input type="number" value={form.yearsExp} onChange={(e) => update("yearsExp", e.target.value)} placeholder="5" /></div>
-                <div><Label>Top Skills (comma-separated)</Label><Input value={form.topSkills} onChange={(e) => update("topSkills", e.target.value)} placeholder="React, TypeScript, Figma" /></div>
-                <div><Label>Industries</Label><Input value={form.industries} onChange={(e) => update("industries", e.target.value)} placeholder="SaaS, Fintech, Health" /></div>
+                <div><div className="flex items-center justify-between"><Label>Years of Experience</Label><VoiceFieldInput label="Years of Experience" onResult={(t) => voiceSet("yearsExp", t)} /></div><Input type="number" value={form.yearsExp} onChange={(e) => update("yearsExp", e.target.value)} placeholder="5" /></div>
+                <div><div className="flex items-center justify-between"><Label>Top Skills (comma-separated)</Label><VoiceFieldInput label="Top Skills (comma-separated)" onResult={(t) => voiceSet("topSkills", t)} /></div><Input value={form.topSkills} onChange={(e) => update("topSkills", e.target.value)} placeholder="React, TypeScript, Figma" /></div>
+                <div><div className="flex items-center justify-between"><Label>Industries</Label><VoiceFieldInput label="Industries" onResult={(t) => voiceSet("industries", t)} /></div><Input value={form.industries} onChange={(e) => update("industries", e.target.value)} placeholder="SaaS, Fintech, Health" /></div>
               </div>
             </>
           )}
@@ -273,8 +314,8 @@ const Onboarding = () => {
               <h2 className="font-heading text-lg font-semibold text-foreground">Non-Negotiables</h2>
               <p className="text-sm text-muted-foreground">These are your hard limits. We'll flag any job that violates them.</p>
               <div className="space-y-4">
-                <div><Label>Minimum Acceptable Salary</Label><Input type="number" value={form.nonNegSalaryMin} onChange={(e) => update("nonNegSalaryMin", e.target.value)} placeholder="55000" /></div>
-                <div><Label>Allowed Countries / Regions</Label><Input value={form.nonNegCountries} onChange={(e) => update("nonNegCountries", e.target.value)} placeholder="Germany, Netherlands, Remote EU" /></div>
+                <div><div className="flex items-center justify-between"><Label>Minimum Acceptable Salary</Label><VoiceFieldInput label="Minimum Acceptable Salary" onResult={(t) => voiceSet("nonNegSalaryMin", t)} /></div><Input type="number" value={form.nonNegSalaryMin} onChange={(e) => update("nonNegSalaryMin", e.target.value)} placeholder="55000" /></div>
+                <div><div className="flex items-center justify-between"><Label>Allowed Countries / Regions</Label><VoiceFieldInput label="Allowed Countries / Regions" onResult={(t) => voiceSet("nonNegCountries", t)} /></div><Input value={form.nonNegCountries} onChange={(e) => update("nonNegCountries", e.target.value)} placeholder="Germany, Netherlands, Remote EU" /></div>
                 <div>
                   <Label>Work Model Requirement</Label>
                   <Select value={form.nonNegRemote} onValueChange={(v) => update("nonNegRemote", v)}>
@@ -285,10 +326,10 @@ const Onboarding = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div><Label>Required Languages</Label><Input value={form.nonNegLanguages} onChange={(e) => update("nonNegLanguages", e.target.value)} placeholder="English" /></div>
-                <div><Label>Employment Type</Label><Input value={form.nonNegEmploymentType} onChange={(e) => update("nonNegEmploymentType", e.target.value)} placeholder="Full-time, Contract" /></div>
-                <div><Label>Max Travel (%)</Label><Input value={form.nonNegMaxTravel} onChange={(e) => update("nonNegMaxTravel", e.target.value)} placeholder="10" /></div>
-                <div><Label>Industry Exclusions</Label><Input value={form.nonNegIndustryExclusions} onChange={(e) => update("nonNegIndustryExclusions", e.target.value)} placeholder="Gambling, Tobacco" /></div>
+                <div><div className="flex items-center justify-between"><Label>Required Languages</Label><VoiceFieldInput label="Required Languages" onResult={(t) => voiceSet("nonNegLanguages", t)} /></div><Input value={form.nonNegLanguages} onChange={(e) => update("nonNegLanguages", e.target.value)} placeholder="English" /></div>
+                <div><div className="flex items-center justify-between"><Label>Employment Type</Label><VoiceFieldInput label="Employment Type" onResult={(t) => voiceSet("nonNegEmploymentType", t)} /></div><Input value={form.nonNegEmploymentType} onChange={(e) => update("nonNegEmploymentType", e.target.value)} placeholder="Full-time, Contract" /></div>
+                <div><div className="flex items-center justify-between"><Label>Max Travel (%)</Label><VoiceFieldInput label="Max Travel (%)" onResult={(t) => voiceSet("nonNegMaxTravel", t)} /></div><Input value={form.nonNegMaxTravel} onChange={(e) => update("nonNegMaxTravel", e.target.value)} placeholder="10" /></div>
+                <div><div className="flex items-center justify-between"><Label>Industry Exclusions</Label><VoiceFieldInput label="Industry Exclusions" onResult={(t) => voiceSet("nonNegIndustryExclusions", t)} /></div><Input value={form.nonNegIndustryExclusions} onChange={(e) => update("nonNegIndustryExclusions", e.target.value)} placeholder="Gambling, Tobacco" /></div>
               </div>
             </>
           )}
@@ -355,6 +396,10 @@ const Onboarding = () => {
 
           <div className="flex justify-between pt-2">
             <Button variant="outline" onClick={back} disabled={step === 1}>Back</Button>
+            <div className="flex items-start gap-2">
+            {VOICE_STEPS[step] && (
+              <GuidedVoiceFill key={step} fields={VOICE_STEPS[step]} values={form} onFill={voiceSet} onContinue={next} />
+            )}
             {step < totalSteps ? (
               <Button onClick={next}>
                 Continue
@@ -369,6 +414,7 @@ const Onboarding = () => {
                 {saving ? "Saving…" : "Finish Setup 🏆"}
               </Button>
             )}
+            </div>
           </div>
         </div>
       </div>
