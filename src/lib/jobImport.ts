@@ -124,7 +124,7 @@ export const resolveSharedImport = ({ source, shareText, shareTitle, shareUrl }:
     bestUrl ? `Job link: ${bestUrl}` : "",
   ]).join("\n\n").trim();
 
-  const shouldPreferText = Boolean(combinedText) && (source === "extension" || isLinkedInUrl(bestUrl) || !bestUrl);
+  const shouldPreferText = Boolean(combinedText) && (source === "extension" || !bestUrl);
 
   return {
     preferredTab: shouldPreferText ? "text" : "url",

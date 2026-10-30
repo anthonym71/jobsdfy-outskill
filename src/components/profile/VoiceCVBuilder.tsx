@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMicrophone } from "@/hooks/useMicrophone";
 import MicrophoneControl from "./MicrophoneControl";
+import { isStopCommand } from "@/lib/voiceCommands";
 import { PROFILE_UPDATED_EVENT, VOICE_DICTIONARY_KEY, VOICE_TOPICS, saveVoiceData } from "@/lib/voiceSave";
 
 interface VoiceCVBuilderProps {
@@ -32,6 +33,7 @@ const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose
   const [isConnecting, setIsConnecting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [askUpdate, setAskUpdate] = useState(false);
   const [lines, setLines] = useState<Line[]>([]);
   const [dictionary, setDictionary] = useState<string[]>(loadDictionary);
   const [newWord, setNewWord] = useState("");
@@ -50,6 +52,7 @@ const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose
     onMessage: (message: any) => {
       if (message?.type === "user_transcript") {
         const t = message?.user_transcription_event?.user_transcript || "";
+        if (t && isStopCommand(t)) { setPaused(true); setAskUpdate(true); return; }
         if (t) setLines((prev) => [...prev, { who: "You", text: t }]);
       } else if (message?.type === "agent_response") {
         const t = message?.agent_response_event?.agent_response || "";
@@ -174,6 +177,16 @@ const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose
               <span className="text-[10px] text-muted-foreground w-12">{label}</span>
             </div>
           ))}
+        </div>
+      )}
+
+      {askUpdate && (
+        <div role="alertdialog" aria-label="Paused" className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+          <p className="text-sm font-medium text-foreground">Paused. Do you want me to update your profile with what you've told me so far, or carry on?</p>
+          <div className="flex gap-2">
+            <Button size="sm" onClick={() => { setAskUpdate(false); stopAndSave(); }} disabled={saving}>Update now</Button>
+            <Button size="sm" variant="outline" onClick={() => { setAskUpdate(false); setPaused(false); }}>Carry on</Button>
+          </div>
         </div>
       )}
 
