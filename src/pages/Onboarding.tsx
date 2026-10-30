@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCredits, CREDIT_REWARDS } from "@/hooks/useCredits";
 import VoiceFieldInput from "@/components/profile/VoiceFieldInput";
 import GuidedVoiceFill, { type GuidedField } from "@/components/onboarding/GuidedVoiceFill";
+import ConversationalVoiceFill from "@/components/onboarding/ConversationalVoiceFill";
+import OnboardingCVUpload from "@/components/onboarding/OnboardingCVUpload";
 import { spokenNumber } from "@/lib/voiceCommands";
 import { Coins, Zap, Trophy, Phone, Loader2, CheckCircle } from "lucide-react";
 
@@ -63,6 +65,7 @@ const VOICE_STEPS: Record<number, GuidedField[]> = {
 const Onboarding = () => {
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
+  const [cvData, setCvData] = useState<any>(null);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -189,6 +192,15 @@ const Onboarding = () => {
       }, { onConflict: "user_id" });
 
       if (nonNegError) throw nonNegError;
+      if (cvData) {
+        const { error: cvError } = await supabase.from("cv_versions").insert({ user_id: user.id, version_name: "Onboarding CV", content: cvData });
+        if (cvError) throw cvError;
+        const workRows = (cvData.workHistory || []).map((work: any) => ({ user_id: user.id, title: work.title || "", company: work.company || "", start_year: work.startYear || null, end_year: work.endYear || null, start_month: work.startMonth || null, end_month: work.endMonth || null, is_current: !!work.isCurrent, description: work.description || "", achievements: work.achievements || "", skills: work.skills || [] }));
+        if (workRows.length) { const { error } = await supabase.from("work_history").insert(workRows); if (error) throw error; }
+        const educationRows = (cvData.education || []).map((education: any) => ({ user_id: user.id, institution: education.institution || "", degree: education.degree || null, field: education.field || null, start_year: education.startYear || null, end_year: education.endYear || null }));
+        if (educationRows.length) { const { error } = await supabase.from("education").insert(educationRows); if (error) throw error; }
+        setCvData(null);
+      }
 
       await awardStepCredits(4);
       await unlockAchievement("first_steps");
@@ -234,6 +246,14 @@ const Onboarding = () => {
         </div>
 
         <div className="rounded-xl border border-border bg-card p-8 shadow-sm space-y-5">
+          {step === 1 && <div className="space-y-3 border-b border-border pb-5">
+            <h2 className="font-heading text-base font-semibold text-foreground">Do you have a CV that you'd like to upload?</h2>
+            <OnboardingCVUpload onParsed={data => {
+              setCvData(data);
+              setForm(current => ({ ...current, fullName: data.fullName || current.fullName, headline: data.headline || current.headline, summary: data.summary || current.summary, location: data.location || current.location, topSkills: data.topSkills?.join(", ") || current.topSkills, languages: data.languages?.join(", ") || current.languages }));
+              if (data.phone) setPhoneNumber(data.phone);
+            }} />
+          </div>}
           {/* Step reward indicator */}
           {currentReward && !completedSteps.has(step) && (
             <div className="flex items-center gap-2 rounded-lg bg-primary/5 px-3 py-2 text-xs text-primary">
@@ -396,12 +416,11 @@ const Onboarding = () => {
             </>
           )}
 
+          {VOICE_STEPS[step] && <ConversationalVoiceFill key={`voice-${step}`} fields={VOICE_STEPS[step]} values={form} onFill={voiceSet} onContinue={next} />}
           <div className="flex justify-between pt-2">
             <Button variant="outline" onClick={back} disabled={step === 1}>Back</Button>
             <div className="flex items-start gap-2">
-            {VOICE_STEPS[step] && (
-              <GuidedVoiceFill key={step} fields={VOICE_STEPS[step]} values={form} onFill={voiceSet} onContinue={next} />
-            )}
+            <OnboardingCVUpload onParsed={data => { setCvData(data); setForm(current => ({ ...current, fullName: data.fullName || current.fullName, headline: data.headline || current.headline, summary: data.summary || current.summary, location: data.location || current.location, topSkills: data.topSkills?.join(", ") || current.topSkills, languages: data.languages?.join(", ") || current.languages })); }} />
             {step < totalSteps ? (
               <Button onClick={next}>
                 Continue
