@@ -5,10 +5,12 @@ import {
   Shield, Zap, Link2, ChevronDown, Check, ArrowRight, Sparkles, Eye, FileText,
   BookOpen, Brain, Mic, Camera, Users, Award, Calendar, MessageSquare,
   GraduationCap, Target, Clock, TrendingUp, Briefcase, Crown, Star, Handshake,
-  CalendarDays, MapPin, Search, Building2, Globe
+  CalendarDays, MapPin, Search, Building2, Globe, Sun, Moon
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
+
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import jobyMascot from "@/assets/joby-mascot.webp";
@@ -98,7 +100,9 @@ const faqs = [
 
 const Landing = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const { resolvedTheme, setTheme } = useTheme();
   const [landingTab, setLandingTab] = useState<"home" | "events" | "jobs">("home");
+
   const [publicEvents, setPublicEvents] = useState<any[]>([]);
   const [publicJobs, setPublicJobs] = useState<any[]>([]);
   const [eventSearch, setEventSearch] = useState("");
@@ -147,6 +151,15 @@ const Landing = () => {
                 </button>
               ))}
             </div>
+            <button
+              type="button"
+              aria-label={resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              title={resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              {resolvedTheme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
             <Link to="/auth">
               <Button variant="ghost" size="sm">Sign In</Button>
             </Link>
