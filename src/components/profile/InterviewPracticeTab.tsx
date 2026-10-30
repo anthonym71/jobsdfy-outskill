@@ -7,6 +7,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import VoiceInterviewBot from "./VoiceInterviewBot";
+import InterviewHistory from "./InterviewHistory";
+import { interviewAnalytics } from "@/lib/interviewAnalytics";
 
 const InterviewPracticeTab = () => {
   const { user } = useAuth();
@@ -20,6 +22,8 @@ const InterviewPracticeTab = () => {
   const [feedback, setFeedback] = useState<Record<number, any>>({});
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [scoringIndex, setScoringIndex] = useState<number | null>(null);
+  const [historyKey, setHistoryKey] = useState(0);
+  const overview = interviewAnalytics(feedback);
 
   useEffect(() => {
     if (!user) return;
@@ -41,6 +45,7 @@ const InterviewPracticeTab = () => {
       setSessionId(data?.data?.sessionId || null);
       setAnswers({});
       setFeedback({});
+      setHistoryKey(key => key + 1);
     } catch (e: any) {
       toast({ title: "Error", description: e.message || "Failed to generate questions", variant: "destructive" });
     } finally { setGenerating(false); }
@@ -56,6 +61,7 @@ const InterviewPracticeTab = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setFeedback(prev => ({ ...prev, [index]: data?.data }));
+      setHistoryKey(key => key + 1);
     } catch (e: any) {
       toast({ title: "Error", description: e.message || "Failed to score answer", variant: "destructive" });
     } finally { setScoringIndex(null); }
@@ -87,6 +93,14 @@ const InterviewPracticeTab = () => {
         </Button>
       </div>
 
+      {overview.answered > 0 && <section className="space-y-3 border-y border-border py-5">
+        <h3 className="font-heading font-semibold text-foreground">Interview overview</h3>
+        <p className="text-sm text-foreground">Average score: {overview.average}/10 · {overview.answered} answers assessed</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div><h4 className="text-sm font-medium text-verdict-go">Strengths</h4><ul className="list-disc pl-5 text-sm text-muted-foreground">{overview.strengths.map(item => <li key={item}>{item}</li>)}</ul></div>
+          <div><h4 className="text-sm font-medium text-verdict-review">What to improve</h4><ul className="list-disc pl-5 text-sm text-muted-foreground">{overview.improvements.map(item => <li key={item}>{item}</li>)}</ul></div>
+        </div>
+      </section>}
       {questions.length > 0 && (
         <div className="space-y-4">
           {questions.map((q, i) => (
@@ -159,9 +173,15 @@ const InterviewPracticeTab = () => {
       )}
       {/* Voice AI Section */}
       <VoiceInterviewBot
+        jobId={selectedJobId === "general" ? undefined : selectedJobId || undefined}
+        onSaved={() => setHistoryKey(key => key + 1)}
         jobTitle={jobs.find(j => j.id === selectedJobId)?.title}
         company={jobs.find(j => j.id === selectedJobId)?.company}
       />
+      <InterviewHistory refreshKey={historyKey} onOpen={saved => {
+        setSessionId(saved.id); setSelectedJobId(saved.job_id || "general");
+        setQuestions(saved.questions || []); setAnswers(saved.answers || {}); setFeedback(saved.feedback || {});
+      }} />
     </div>
   );
 };

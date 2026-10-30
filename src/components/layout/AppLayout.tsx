@@ -16,6 +16,9 @@ import { cn } from "@/lib/utils";
 import { CreditBalance } from "@/components/gamification/CreditWidgets";
 import { supabase } from "@/integrations/supabase/client";
 import { useCredits } from "@/hooks/useCredits";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { canAccessFeatureRoute, featureRoutes, features } from "@/config/features";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const baseNavItems: { to: string; icon: any; label: string; end?: boolean }[] = [
   { to: "/app", icon: LayoutDashboard, label: "Dashboard", end: true },
@@ -57,6 +60,7 @@ const AppLayout = () => {
 
   useEffect(() => { loadGhlWidget(); }, []);
   const { credits } = useCredits();
+  const { access } = useAdminAccess();
 
   useEffect(() => {
     if (!user) return;
@@ -66,7 +70,8 @@ const AppLayout = () => {
       .then(({ data }) => { setProfileName(data?.full_name || ""); setOnboarded(!!data); });
   }, [user]);
 
-  const navItems = isAdmin ? [...baseNavItems, ...adminNavItems] : baseNavItems;
+  const navItems = (isAdmin ? [...baseNavItems, ...adminNavItems] : baseNavItems)
+    .filter(item => canAccessFeatureRoute(item.to, access));
 
   const handleSignOut = async () => {
     await signOut();
@@ -96,7 +101,10 @@ const AppLayout = () => {
         <CreditBalance />
       </div>
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => (
+        {navItems.map((item) => {
+          const feature = featureRoutes[item.to];
+          const hidden = !!feature && !features[feature];
+          const link = (
           <NavLink
             key={item.to}
             to={item.to}
@@ -104,6 +112,7 @@ const AppLayout = () => {
             onClick={(e) => { setMobileOpen(false); if (item.to === "/app/profile" && !onboarded) { e.preventDefault(); navigate("/onboarding"); } }}
             className={({ isActive }) => cn(
               "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+              hidden && "opacity-50",
               isActive
                 ? "bg-accent text-foreground"
                 : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
@@ -115,8 +124,11 @@ const AppLayout = () => {
                 {!onboarded && <span className="ml-1.5 inline-block h-2 w-2 rounded-full bg-verdict-review animate-ping" aria-label="Onboarding incomplete" />}
               </span>
             ) : item.label}
+            {hidden && <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground" aria-label="Hidden from users – hackathon" />}
           </NavLink>
-        ))}
+          );
+          return hidden ? <Tooltip key={item.to}><TooltipTrigger asChild>{link}</TooltipTrigger><TooltipContent>Hidden from users – hackathon</TooltipContent></Tooltip> : link;
+        })}
       </nav>
       <div className="px-3 py-4 border-t border-border">
         <button

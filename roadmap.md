@@ -1,4 +1,8 @@
 # Tasks
+- [x] Hide four hackathon features from all except owner using reversible flags, sidebar badges and route gates.
+- [ ] Verify owner/non-owner visibility and Quick Apply.
+- [ ] ElevenLabs onboarding with selected microphone and upfront CV upload; admin cost-tier option.
+- [ ] Persist interview analytics and improvement feedback.
 - [x] Add public terms and recorded signup/login acceptance.
 - [x] Enforce owner/team/read-only judge permissions in the app and on the server.
 - [x] Add changelog and standing instructions.

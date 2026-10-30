@@ -106,7 +106,8 @@ Evaluate using STAR logic. Provide:
       answers[questionIndex] = answer;
       feedback[questionIndex] = feedbackResult;
 
-      await adminClient.from("interview_sessions").update({ answers, feedback }).eq("id", sessionId);
+      const { error: saveError } = await adminClient.from("interview_sessions").update({ answers, feedback }).eq("id", sessionId).eq("user_id", user.id);
+      if (saveError) throw new Error("Could not save interview feedback. Please retry.");
 
       return new Response(JSON.stringify({ success: true, data: feedbackResult }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
@@ -193,13 +194,14 @@ Generate questions that:
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminClient = createClient(supabaseUrl, serviceKey);
 
-    const { data: sessionData } = await adminClient.from("interview_sessions").insert({
+    const { data: sessionData, error: sessionError } = await adminClient.from("interview_sessions").insert({
       user_id: user.id,
       job_id: (jobId && jobId !== "general") ? jobId : null,
       questions: result.questions,
       answers: [],
       feedback: [],
     }).select("id").single();
+    if (sessionError || !sessionData) throw new Error("Could not save interview session. Please retry.");
 
     return new Response(JSON.stringify({ success: true, data: { ...result, sessionId: sessionData?.id } }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
