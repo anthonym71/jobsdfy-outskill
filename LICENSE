@@ -1,0 +1,30 @@
+JobsDFY (Jobs Done For You) — Proprietary License
+Copyright (c) 2026 Anthony Mallett. All Rights Reserved.
+
+This repository, including all source code, designs, documentation, prompts,
+data structures, and the underlying product concept (together, the "Software"),
+is the intellectual property of Anthony Mallett.
+
+PERMITTED USE
+The Software is made viewable solely so that hackathon judges, organisers, and
+invited team members can review and evaluate it. Viewing the Software for that
+purpose is the only use permitted.
+
+RESTRICTIONS
+Without the prior, explicit, written consent of Anthony Mallett, you may NOT:
+  1. copy, reproduce, or duplicate the Software, in whole or in part;
+  2. fork, clone, mirror, or redistribute the Software;
+  3. modify, adapt, translate, or create derivative works from the Software;
+  4. reverse-engineer, rebuild, or replicate the Software or its features;
+  5. use the Software, or any part of it, for any commercial or
+     non-commercial purpose other than evaluation as described above;
+  6. sublicense, sell, or otherwise transfer any rights in the Software.
+
+Making this repository publicly visible, temporarily or otherwise, does NOT
+grant any licence or right beyond those stated above, and does NOT place the
+Software in the public domain.
+
+NO WARRANTY
+The Software is provided "as is", without warranty of any kind.
+
+Requests for permission: anthony@fflipi.com
