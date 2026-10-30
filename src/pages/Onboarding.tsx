@@ -194,7 +194,9 @@ const Onboarding = () => {
       await unlockAchievement("first_steps");
 
       toast({ title: "🏆 Profile saved!", description: "Achievement unlocked: First Steps. You're ready to go!" });
-      navigate("/app");
+      const pending = localStorage.getItem("jobsdfy-pending-import");
+      localStorage.removeItem("jobsdfy-pending-import");
+      navigate(pending?.startsWith("/app/new-job") ? pending : "/app");
     } catch (err: any) {
       console.error("Save error:", err);
       toast({ title: "Error saving profile", description: err.message || "Please try again.", variant: "destructive" });

@@ -46,6 +46,10 @@ const OnboardingGuard = () => {
 
   const goToOnboarding = () => {
     setShowDialog(false);
+    // Keep a job sent from the extension / phone share so it isn't lost during onboarding
+    if (location.pathname === "/app/new-job" && location.search) {
+      localStorage.setItem("jobsdfy-pending-import", location.pathname + location.search);
+    }
     navigate("/onboarding");
   };
 
