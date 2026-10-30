@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import VerdictBadge, { type Verdict } from "@/components/VerdictBadge";
 import BlockerCard from "@/components/BlockerCard";
 import { ArrowLeft, ArrowRight, Bookmark, ShieldAlert, Loader2 } from "lucide-react";
+import RiskPanel from "@/components/RiskPanel";
+import type { RiskResult } from "@/lib/risk";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -49,6 +51,7 @@ const DealbreakersCheck = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [risk, setRisk] = useState<RiskResult | null>(null);
 
   useEffect(() => {
     if (!id || !session) return;
@@ -78,6 +81,8 @@ const DealbreakersCheck = () => {
       }
 
       setResult(data.data);
+      const { data: jobRow } = await supabase.from("jobs").select("risk").eq("id", id!).single();
+      setRisk((jobRow?.risk as unknown as RiskResult | null) ?? null);
     } catch (err) {
       console.error("Analysis error:", err);
       toast({ title: "Error", description: "Could not run dealbreaker analysis.", variant: "destructive" });
@@ -136,6 +141,8 @@ const DealbreakersCheck = () => {
           </p>
         </div>
       </div>
+
+      <RiskPanel risk={risk} />
 
       {/* Alignment Summary */}
       <div className="rounded-xl border border-border bg-card p-6">

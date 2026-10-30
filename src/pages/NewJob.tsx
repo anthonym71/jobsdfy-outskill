@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link2, FileText, Image, Mic, ArrowRight, Sparkles, AlertTriangle, ClipboardPaste, Chrome, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { withHistory } from "@/lib/risk";
+import RiskPanel from "@/components/RiskPanel";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveSharedImport } from "@/lib/jobImport";
@@ -84,8 +86,21 @@ const NewJob = () => {
       else evidence.salary = { min, max, currency: values.salaryCurrency || evidence.salary?.currency || "USD", userEdited: true };
     }
 
+    // History signs need data from outside the pasted text: have you saved this posting before, and since when?
+    let risk = values.risk ?? null;
+    let firstSeenAt: string | undefined;
+    if (risk) {
+      const { data: prior } = await supabase.from("jobs").select("created_at, first_seen_at")
+        .eq("user_id", user.id).eq("title", values.title || "").eq("company", values.company || "");
+      const dates = (prior ?? []).map((p) => p.first_seen_at || p.created_at).sort();
+      firstSeenAt = dates[0];
+      risk = withHistory(risk, { firstSeenAt, seenBefore: prior?.length ?? 0 });
+    }
+
     const { data: job, error } = await supabase.from("jobs").insert({
       extraction: evidence,
+      risk,
+      ...(firstSeenAt ? { first_seen_at: firstSeenAt } : {}),
       user_id: user.id,
       title: values.title || "",
       company: values.company || "",
@@ -280,6 +295,7 @@ const NewJob = () => {
         </div>
       ) : (
         <div className="space-y-6">
+          <RiskPanel risk={extracted?.risk} />
           <form id="extraction-form" className="rounded-xl border border-border bg-card p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">

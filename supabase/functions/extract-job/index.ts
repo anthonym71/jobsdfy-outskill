@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { EVIDENCE_PROMPT, EVIDENCE_SCHEMA } from "../_shared/extraction-schema.ts";
 import { verifyQuotes } from "../_shared/verdict.ts";
+import { assessRisk } from "../_shared/risk.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -213,6 +214,13 @@ ${EVIDENCE_PROMPT}`;
     const checked = verifyQuotes(extracted.evidence ?? {}, jobContent);
     extracted.evidence = checked.extraction;
     extracted.evidenceRejected = checked.rejected;
+
+    // Warning signs are plain rules over the posting text; history signs are added when the job is saved.
+    const sal = checked.extraction.salary;
+    extracted.risk = assessRisk(jobContent, {
+      salaryStated: !!sal && (sal.min != null || sal.max != null),
+      company: typeof extracted.company === "string" ? extracted.company : undefined,
+    });
 
     if (url && !extracted.applicationUrl) {
       extracted.applicationUrl = url;

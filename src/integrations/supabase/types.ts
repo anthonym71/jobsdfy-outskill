@@ -845,6 +845,7 @@ export type Database = {
       }
       jobs: {
         Row: {
+          risk: Json | null
           extraction: Json | null
           first_seen_at: string
           application_url: string | null
@@ -873,6 +874,7 @@ export type Database = {
           work_model: string | null
         }
         Insert: {
+          risk?: Json | null
           extraction?: Json | null
           first_seen_at?: string
           application_url?: string | null
@@ -901,6 +903,7 @@ export type Database = {
           work_model?: string | null
         }
         Update: {
+          risk?: Json | null
           extraction?: Json | null
           first_seen_at?: string
           application_url?: string | null
