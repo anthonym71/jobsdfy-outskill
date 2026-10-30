@@ -192,10 +192,10 @@ const NewJob = () => {
             <p className="text-muted-foreground mt-0.5">
               Install our extension to send jobs from LinkedIn (or any site) with one click.{" "}
               <button onClick={() => {
-                fetch("/ai-job-os-extension.zip").then(r => r.blob()).then(b => {
+                fetch("/jobsdfy-extension.zip").then(r => r.blob()).then(b => {
                   const a = document.createElement("a");
                   a.href = URL.createObjectURL(b);
-                  a.download = "ai-job-os-extension.zip";
+                  a.download = "jobsdfy-extension.zip";
                   a.click();
                   URL.revokeObjectURL(a.href);
                 });
