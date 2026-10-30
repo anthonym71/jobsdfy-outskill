@@ -102,6 +102,7 @@ serve(async (req) => {
           { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+      }
     }
 
     const lovableKey = Deno.env.get("LOVABLE_API_KEY");
