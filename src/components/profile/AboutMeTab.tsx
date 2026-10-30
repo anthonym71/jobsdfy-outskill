@@ -52,6 +52,9 @@ const AboutMeTab = () => {
   useEffect(() => {
     if (!user) return;
     loadData();
+    const reload = () => loadData();
+    window.addEventListener("jobsdfy:profile-updated", reload);
+    return () => window.removeEventListener("jobsdfy:profile-updated", reload);
   }, [user]);
 
   const loadData = async () => {

@@ -25,7 +25,7 @@ serve(async (req) => {
     const { data: userData, error: userError } = await supabase.auth.getUser(token);
     if (userError || !userData.user) throw new Error("Unauthorized");
 
-    const { transcript, category } = await req.json();
+    const { transcript, category, dictionary } = await req.json();
     if (!transcript || !category) throw new Error("'transcript' and 'category' are required");
 
     const workSchema = {
@@ -64,10 +64,11 @@ serve(async (req) => {
     };
 
     const categoryPrompts: Record<string, string> = {
-      about: `Extract profile information: full name, location, headline/title, professional summary, years of experience, top skills, industries, languages spoken, hobbies, interests, sports. Format as JSON.`,
+      about: `Extract profile information as JSON with keys full_name, location, headline, summary, years_of_experience (number), top_skills, industries, languages_spoken, hobbies, interests, sports (arrays of strings): full name, location, headline/title, professional summary, years of experience, top skills, industries, languages spoken, hobbies, interests, sports. Format as JSON.`,
       work: `Extract ALL work history entries mentioned in this conversation. For each role, capture the job title, company, employment type, dates, location, description, achievements (STAR-formatted), awards, performance highlights, and skills used.`,
-      education: `Extract education entries: institution, degree, field of study, start/end years, description, certifications. Format as JSON array.`,
+      education: `Extract education as JSON {"education": [{institution, degree, field, start_year, end_year, description}]}. Entries: institution, degree, field of study, start/end years, description, certifications. Format as JSON array.`,
       references: `Extract professional references: name, email, phone, relationship/context, testimonial quotes. Format as JSON array.`,
+      skills: `Extract skills mentioned as JSON {"skills": [string]} using ATS-standard names.`,
       achievements: `Extract achievements, awards, certifications, and notable accomplishments. Use STAR method for structuring. Format as JSON array with achievement_key and description.`,
     };
 
@@ -80,7 +81,7 @@ Rules:
 - Optimize all text for ATS (Applicant Tracking Systems) — use industry-standard keywords
 - Be thorough — extract ALL relevant information mentioned
 - If information is ambiguous, include it with a note
-- Return valid JSON only`;
+- Return valid JSON only${Array.isArray(dictionary) && dictionary.length ? `\n- Use these exact spellings for names and terms: ${dictionary.slice(0, 200).join(", ")}` : ""}`;
 
     // Use tool calling for work category for structured extraction
     const isWork = category === "work";

@@ -1,0 +1,91 @@
+{
+  "title": "JobsDFY User Guide",
+  "version": "2026-10-30",
+  "sections": [
+    {
+      "id": "getting-started",
+      "title": "1. Getting started",
+      "body": [
+        "Sign up at jobsdfy.com with your email and name, tick the Terms & Conditions box and confirm your email.",
+        "Add your mobile number. It is saved straight away and marked Not Verified until you enter the text code. Some features stay locked until it is verified.",
+        "Finish Onboarding. In the left menu, 'Profile - Onboarding' flashes until your onboarding is complete. Checking jobs, fit scores and Quick Apply rely on it, so do this first."
+      ]
+    },
+    {
+      "id": "profile",
+      "title": "2. Building your profile",
+      "body": [
+        "Profile holds About Me, Work History, Education, Achievements, References and CV Versions.",
+        "Upload CV: use the Upload CV button at the top of About Me. Your CV is read and the fields are filled in for you to check before saving.",
+        "Talk to Me: every section has a voice button. Joby, the voice assistant, asks questions and you answer out loud.",
+        "Choose what you are adding at the start (About Me, a job, a skill, an achievement, education).",
+        "Your words appear on screen as you speak. Press Pause to stop the microphone and correct any spelling, then Resume.",
+        "Add names, company names and technical terms to My Dictionary so they are spelled correctly.",
+        "Press Stop & Save. Your answers are turned into profile entries and saved. The full conversation is also kept in your Knowledgebase so nothing is lost.",
+        "Microphone: pick your microphone (for example a Shure mic) from the list next to Start Talking and press Test mic."
+      ]
+    },
+    {
+      "id": "jobs",
+      "title": "3. Checking a job",
+      "body": [
+        "Go to Check a Job and paste a job link or the job text.",
+        "LinkedIn does not allow automatic reading of its pages. Copy the job text from LinkedIn and paste it, or use the JobsDFY Chrome extension.",
+        "JobsDFY checks your dealbreakers first (salary, location, visa, work model), then gives a fit score and a verdict: GO (green), REVIEW (amber) or STOP (red).",
+        "Nothing is ever sent to an employer automatically. You approve every application."
+      ]
+    },
+    {
+      "id": "apply",
+      "title": "4. Applying",
+      "body": [
+        "From a job, open Quick Apply to generate a tailored CV and cover letter (an application pack).",
+        "Review and edit everything before you submit it yourself.",
+        "Track progress in Jobs: saved, applied, interview, closed."
+      ]
+    },
+    {
+      "id": "growth",
+      "title": "5. Growth tools",
+      "body": [
+        "Interview Practice: rehearse with the AI interviewer and get feedback.",
+        "Intellectual Foundation (books), Character & Media Insights (movies), Brain Dump, Thought Leadership (social), Assessments, Photo Gallery and Autobiography help build a fuller picture of you for employers.",
+        "Tasks and Calendar / Events keep your search organised."
+      ]
+    },
+    {
+      "id": "credits",
+      "title": "6. Credits and plans",
+      "body": [
+        "New accounts start with 12 credits. AI actions such as fit checks, CV generation and voice sessions use credits.",
+        "Earn extra credits by completing profile steps and by inviting friends with your link (jobsdfy.com/r/your-code).",
+        "Buy credit packs or a Pro / Premium plan on the Pricing page. Cancel any time from Pricing."
+      ]
+    },
+    {
+      "id": "affiliate",
+      "title": "7. Referrals and affiliates",
+      "body": [
+        "Invite a friend link: jobsdfy.com/r/your-code. Affiliate link: jobsdfy.com/a/AFF-your-code.",
+        "Affiliate commission is based on rolling 30-day performance. See the Affiliate Terms page."
+      ]
+    },
+    {
+      "id": "settings",
+      "title": "8. Settings and help",
+      "body": [
+        "Settings: phone verification, Light / Dark / System appearance, referral link and account deletion.",
+        "Use the search bar at the top of the app to jump to any page or find a saved job.",
+        "Support: raise a ticket from the Support page. The chat bubble (when enabled) connects you to our assistant."
+      ]
+    },
+    {
+      "id": "privacy",
+      "title": "9. Privacy and ownership",
+      "body": [
+        "Your data is only visible to you and authorised JobsDFY administrators.",
+        "The JobsDFY platform, code, design and concept are the intellectual property of Anthony Mallett. See Terms & Conditions."
+      ]
+    }
+  ]
+}
