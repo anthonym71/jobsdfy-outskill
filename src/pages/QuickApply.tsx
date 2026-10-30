@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Check, Copy, RefreshCw, ShieldCheck, Loader2, Clock, FileText, Mail, MessageSquare, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
@@ -45,6 +45,9 @@ interface TimelineData {
 const QuickApply = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [cvOptions, setCvOptions] = useState<{ id: string; version_name: string }[]>([]);
+  const [selectedCv, setSelectedCv] = useState("profile");
   const { session } = useAuth();
   const { toast } = useToast();
   const { credits, spendCredits, loading: creditsLoading } = useCredits();
@@ -64,6 +67,12 @@ const QuickApply = () => {
     if (creditsLoading) return; // Wait for credits to load
     loadJobAndPacks();
   }, [id, session, creditsLoading]);
+
+  useEffect(() => {
+    if (!session) return;
+    supabase.from("cv_versions").select("id, version_name").eq("user_id", session.user.id).order("created_at", { ascending: false })
+      .then(({ data }) => setCvOptions(data || []));
+  }, [session?.user.id]);
 
   const loadJobAndPacks = async () => {
     setLoading(true);
@@ -133,7 +142,7 @@ const QuickApply = () => {
       {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${session!.access_token}` },
-        body: JSON.stringify({ jobId: id, version }),
+        body: JSON.stringify({ jobId: id, version, cvVersionId: selectedCv === "profile" ? null : selectedCv }),
       }
     );
 
@@ -353,6 +362,18 @@ const QuickApply = () => {
           </div>
 
           {/* Pack Versions */}
+          <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+            {searchParams.get("tailor") === "1" && <p className="text-sm text-verdict-review">This job was not a strong fit. Choose a CV and create a version tailored more closely to the role.</p>}
+            <label htmlFor="cv-choice" className="font-heading text-sm font-semibold text-foreground">CV to use</label>
+            <select id="cv-choice" value={selectedCv} onChange={e => setSelectedCv(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground">
+              <option value="profile">My main profile</option>
+              {cvOptions.map(cv => <option key={cv.id} value={cv.id}>{cv.version_name}</option>)}
+            </select>
+            <Button size="sm" variant="outline" className="w-full" onClick={regenerate} disabled={loading}>
+              <RefreshCw className="h-4 w-4 mr-1" />Create tailored version with this CV (3 credits)
+            </Button>
+          </div>
+
           {versions.length > 0 && (
             <div className="rounded-xl border border-border bg-card p-5 space-y-3">
               <h3 className="font-heading text-sm font-semibold text-foreground">Pack Versions</h3>
