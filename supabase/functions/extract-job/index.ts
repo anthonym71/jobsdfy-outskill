@@ -25,23 +25,36 @@ serve(async (req) => {
 
     // If URL provided, scrape it with Firecrawl
     if (url) {
-      const unsupportedDomains = ["linkedin.com", "www.linkedin.com"];
+      // LinkedIn: read the public job posting page (no login used)
+      let liHandled = false;
       try {
         let checkUrl = url.trim();
         if (!checkUrl.startsWith("http")) checkUrl = `https://${checkUrl}`;
-        const hostname = new URL(checkUrl).hostname;
-        if (unsupportedDomains.some((d: string) => hostname === d || hostname.endsWith(`.${d}`))) {
-          return new Response(
-            JSON.stringify({
-              success: false,
-              unsupported: true,
-              error: "LinkedIn blocks automated scraping. Please copy the job description text from LinkedIn and paste it in the Text tab instead.",
-            }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
+        const u = new URL(checkUrl);
+        if (u.hostname === "linkedin.com" || u.hostname.endsWith(".linkedin.com")) {
+          const jobId = u.searchParams.get("currentJobId") || checkUrl.match(/\/jobs\/view\/(?:[^/?]*-)?(\d{6,})/)?.[1] || checkUrl.match(/(\d{8,})/)?.[1];
+          if (!jobId) {
+            return new Response(JSON.stringify({ success: false, unsupported: true, error: "Open a single LinkedIn job, then share or copy its link." }),
+              { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          }
+          const liResp = await fetch(`https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/${jobId}`, {
+            headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36", "Accept-Language": "en-US,en;q=0.9" },
+          });
+          const html = await liResp.text();
+          console.log("LinkedIn guest fetch", jobId, liResp.status, html.length);
+          if (!liResp.ok || html.length < 500) {
+            return new Response(JSON.stringify({ success: false, unsupported: true, error: "LinkedIn didn't return this job right now. Please paste the job text in the Text tab instead." }),
+              { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          }
+          jobContent = html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, " ")
+            .replace(/<br\s*\/?>|<\/(p|li|h\d|div)>/gi, "\n").replace(/<[^>]+>/g, " ")
+            .replace(/&amp;/g, "&").replace(/&#39;|&apos;/g, "'").replace(/&quot;/g, '"').replace(/&nbsp;/g, " ")
+            .replace(/[ \t]+/g, " ").replace(/\n\s*\n+/g, "\n").trim().slice(0, 20000);
+          liHandled = true;
         }
       } catch (_) { /* URL parsing failed, let it proceed */ }
 
+      if (!liHandled) {
       const firecrawlKey = Deno.env.get("FIRECRAWL_API_KEY");
       if (!firecrawlKey) {
         return new Response(
