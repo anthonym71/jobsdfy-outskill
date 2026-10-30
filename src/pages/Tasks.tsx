@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { PlusCircle, Loader2, Trash2, CalendarDays, CheckCircle2 } from "lucide-react";
+import { PlusCircle, Loader2, Trash2, CalendarDays, CheckCircle2, Download } from "lucide-react";
+import { tasksToIcs } from "@/lib/ics";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -99,6 +100,21 @@ const Tasks = () => {
 
   const setToday = () => setDueDate(new Date());
 
+  // Open tasks with a due date, as a calendar file you can import into Google Calendar, Apple Calendar or Outlook.
+  const exportCalendar = () => {
+    const ics = tasksToIcs(tasks);
+    if (!ics.includes("BEGIN:VEVENT")) {
+      toast({ title: "Nothing to export", description: "Add a due date to a task first." });
+      return;
+    }
+    const url = URL.createObjectURL(new Blob([ics], { type: "text/calendar;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "jobsdfy-tasks.ics";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const filtered = tasks.filter(t => statusFilter === "all" || t.status === statusFilter);
 
   return (
@@ -116,6 +132,7 @@ const Tasks = () => {
               {TASK_STATUSES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Button size="sm" variant="outline" onClick={exportCalendar}><Download className="mr-2 h-4 w-4" />Export .ics</Button>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm"><PlusCircle className="mr-2 h-4 w-4" />New Task</Button>

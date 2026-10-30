@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, Briefcase, ShieldOff, Zap, Search, Loader2, Gift, Copy } from "lucide-react";
+import { PlusCircle, Briefcase, ShieldOff, Zap, Search, Loader2, Gift, Copy, CalendarCheck, Check } from "lucide-react";
+import { splitToday } from "@/lib/followups";
 import VerdictBadge from "@/components/VerdictBadge";
 import StatusPill from "@/components/StatusPill";
 import EmptyState from "@/components/EmptyState";
@@ -16,10 +17,13 @@ const Dashboard = () => {
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [referralLink, setReferralLink] = useState("");
+  const [tasks, setTasks] = useState<any[]>([]);
 
   useEffect(() => {
     if (!user) return;
     loadJobs();
+    supabase.from("tasks").select("id, title, due_date, status, priority").eq("user_id", user.id).in("status", ["todo", "in_progress", "blocked"]).not("due_date", "is", null)
+      .then(({ data }) => setTasks(data || []));
     // Load referral link
     supabase.from("user_profiles").select("referral_link").eq("user_id", user.id).maybeSingle()
       .then(({ data }) => {
@@ -41,6 +45,13 @@ const Dashboard = () => {
       .limit(10);
     setJobs(data || []);
     setLoading(false);
+  };
+
+  const todayList = splitToday(tasks);
+  const dueNow = [...todayList.overdue, ...todayList.today];
+  const completeTask = async (taskId: string) => {
+    setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    await supabase.from("tasks").update({ status: "done", updated_at: new Date().toISOString() } as any).eq("id", taskId);
   };
 
   const goCount = jobs.filter((j) => j.verdict === "go").length;
@@ -70,6 +81,28 @@ const Dashboard = () => {
           <Button size="sm" className="w-full sm:w-auto"><PlusCircle className="mr-2 h-4 w-4" />Check a Job</Button>
         </Link>
       </div>
+
+      <section className="rounded-xl border border-border bg-card p-5" aria-label="Today">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="font-heading text-base font-semibold text-foreground flex items-center gap-2"><CalendarCheck className="h-4 w-4 text-primary" aria-hidden />Today</h2>
+          <Link to="/app/tasks" className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">All tasks</Link>
+        </div>
+        {dueNow.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nothing due today. Save or apply to a job and we will add the follow-ups for you.</p>
+        ) : (
+          <ul className="space-y-2">
+            {dueNow.map((t) => (
+              <li key={t.id} className="flex items-center justify-between gap-3 rounded-lg bg-accent/40 px-3 py-2">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-foreground">{t.title}</p>
+                  {todayList.overdue.includes(t) && <p className="text-xs text-verdict-stop">Overdue since {new Date(t.due_date + "T00:00:00").toLocaleDateString()}</p>}
+                </div>
+                <Button size="sm" variant="outline" className="shrink-0" onClick={() => completeTask(t.id)} aria-label={"Mark done: " + t.title}><Check className="h-4 w-4" /></Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
         {stats.map((s) => (

@@ -5,6 +5,7 @@ import VerdictBadge, { type Verdict } from "@/components/VerdictBadge";
 import BlockerCard from "@/components/BlockerCard";
 import { ArrowLeft, ArrowRight, Bookmark, ShieldAlert, Loader2 } from "lucide-react";
 import RiskPanel from "@/components/RiskPanel";
+import { createJobTasks } from "@/lib/followups";
 import type { RiskResult } from "@/lib/risk";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,6 +53,7 @@ const DealbreakersCheck = () => {
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [risk, setRisk] = useState<RiskResult | null>(null);
+  const [jobRef, setJobRef] = useState<{ id: string; title?: string | null; company?: string | null } | null>(null);
 
   useEffect(() => {
     if (!id || !session) return;
@@ -81,8 +83,15 @@ const DealbreakersCheck = () => {
       }
 
       setResult(data.data);
-      const { data: jobRow } = await supabase.from("jobs").select("risk").eq("id", id!).single();
+      const { data: jobRow } = await supabase.from("jobs").select("risk, title, company").eq("id", id!).single();
       setRisk((jobRow?.risk as unknown as RiskResult | null) ?? null);
+      const ref = { id: id!, title: jobRow?.title, company: jobRow?.company };
+      setJobRef(ref);
+      // A REVIEW verdict means the posting is silent or vague on something that matters: remind the user to ask.
+      if (data.data.verdict === "review") {
+        const unclear = (data.data.blockers as AnalysisResult["blockers"]).filter((b) => b.state === "unknown").map((b) => b.category);
+        await createJobTasks(supabase, session!.user.id, "needs_checking", ref, { unclear });
+      }
     } catch (err) {
       console.error("Analysis error:", err);
       toast({ title: "Error", description: "Could not run dealbreaker analysis.", variant: "destructive" });
@@ -105,7 +114,8 @@ const DealbreakersCheck = () => {
 
   const handleSave = async () => {
     await supabase.from("jobs").update({ status: "saved" }).eq("id", id!);
-    toast({ title: "Job saved" });
+    const made = await createJobTasks(supabase, session!.user.id, "saved", jobRef ?? { id: id! });
+    toast({ title: "Job saved", description: made ? "We added a task to decide on it in two days." : undefined });
   };
 
   if (loading) {

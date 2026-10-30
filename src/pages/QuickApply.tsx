@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCredits } from "@/hooks/useCredits";
 import { Checkbox } from "@/components/ui/checkbox";
 import TracePanel from "@/components/TracePanel";
+import { createJobTasks } from "@/lib/followups";
 import type { Trace } from "../../supabase/functions/_shared/traceability";
 
 interface AppPack {
@@ -287,6 +288,7 @@ const QuickApply = () => {
       .update({ approved: true, is_draft: false, submitted_at: new Date().toISOString() } as any)
       .eq("job_id", id!) as any);
     await supabase.from("jobs").update({ status: "applied" }).eq("id", id!);
+    await createJobTasks(supabase, session!.user.id, "applied", { id: id!, title: job?.title, company: job?.company });
 
     setVersions(prev => prev.map(v =>
       v.version === activeVersion ? { ...v, isDraft: false, submittedAt: new Date().toISOString() } : v
