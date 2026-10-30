@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
-import { Download, Chrome, Loader2, Phone, Mail, User, Copy, Gift, Handshake, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Download, Chrome, Loader2, Phone, Mail, User, Copy, Gift, Handshake, ShieldCheck, ShieldAlert, Sun, Moon, Monitor } from "lucide-react";
+import { useTheme } from "next-themes";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 const Settings = () => {
   const { signOut, user } = useAuth();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -250,6 +252,37 @@ const Settings = () => {
               </div>
             </div>
           )}
+        </div>
+      </section>
+
+      <Separator />
+
+      {/* Appearance */}
+      <section className="rounded-xl border border-border bg-card p-6 space-y-4">
+        <h2 className="font-heading text-base font-semibold text-foreground flex items-center gap-2">
+          <Sun className="h-5 w-5 text-primary" /> Appearance
+        </h2>
+        <p className="text-sm text-muted-foreground">Choose how the app looks. System follows your device setting.</p>
+        <div className="grid grid-cols-3 gap-2 max-w-sm">
+          {([
+            { value: "light", label: "Light", icon: Sun },
+            { value: "dark", label: "Dark", icon: Moon },
+            { value: "system", label: "System", icon: Monitor },
+          ] as const).map(({ value, label, icon: Icon }) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setTheme(value)}
+              className={`flex flex-col items-center gap-1.5 rounded-lg border p-3 text-sm transition-colors ${
+                theme === value
+                  ? "border-primary bg-primary/10 text-primary font-semibold"
+                  : "border-border bg-muted/50 text-muted-foreground hover:border-primary/40"
+              }`}
+            >
+              <Icon className="h-5 w-5" />
+              {label}
+            </button>
+          ))}
         </div>
       </section>
 
