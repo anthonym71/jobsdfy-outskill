@@ -31,6 +31,8 @@ serve(async (req) => {
     if (userError) throw new Error(`Auth error: ${userError.message}`);
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated");
+    const { data: readOnly, error: accessError } = await supabaseClient.rpc("is_read_only_admin", { _user_id: user.id });
+    if (accessError || readOnly) throw new Error("This account has read-only access");
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     await requireTestStripe(stripe);

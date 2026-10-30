@@ -25,6 +25,9 @@ serve(async (req) => {
     const { data } = await supabaseClient.auth.getUser(token);
     const user = data.user;
     if (!user?.email) throw new Error("User not authenticated");
+    const accessClient = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_ANON_KEY") ?? "", { global: { headers: { Authorization: authHeader } } });
+    const { data: readOnly, error: accessError } = await accessClient.rpc("is_read_only_admin", { _user_id: user.id });
+    if (accessError || readOnly) throw new Error("This account has read-only access");
 
     const { priceId, mode } = await req.json();
     if (!priceId) throw new Error("priceId is required");
