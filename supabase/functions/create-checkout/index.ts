@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { requireTestResource, requireTestStripe } from "../_shared/stripe-test-mode.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,6 +32,9 @@ serve(async (req) => {
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
     });
+    await requireTestStripe(stripe);
+    const price = await stripe.prices.retrieve(priceId);
+    requireTestResource(price);
 
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId: string | undefined;
@@ -47,6 +51,7 @@ serve(async (req) => {
       cancel_url: `${req.headers.get("origin")}/app/settings?checkout=canceled`,
       metadata: { user_id: user.id },
     });
+    requireTestResource(session);
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
