@@ -48,6 +48,7 @@ import CompanyPage from "./pages/CompanyPage";
 import EventRegistrationsPage from "./pages/EventRegistrationsPage";
 import Terms from "./pages/Terms";
 import TermsGate from "./components/TermsGate";
+import FeatureGate from "./components/FeatureGate";
 
 const queryClient = new QueryClient();
 
@@ -109,12 +110,12 @@ const App = () => (
                   <Route path="/app/admin/knowledge" element={<AdminKnowledge />} />
                   <Route path="/app/tasks" element={<Tasks />} />
                   <Route path="/app/extension" element={<ExtensionDownload />} />
-                  <Route path="/app/books" element={<BooksPage />} />
-                  <Route path="/app/movies" element={<MoviesPage />} />
-                  <Route path="/app/memory-dump" element={<MemoryDumpPage />} />
+                  <Route path="/app/books" element={<FeatureGate feature="books"><BooksPage /></FeatureGate>} />
+                  <Route path="/app/movies" element={<FeatureGate feature="movies"><MoviesPage /></FeatureGate>} />
+                  <Route path="/app/memory-dump" element={<FeatureGate feature="memoryDump"><MemoryDumpPage /></FeatureGate>} />
                   <Route path="/app/social-media" element={<SocialMediaPage />} />
                   <Route path="/app/assessments" element={<AssessmentsPage />} />
-                  <Route path="/app/autobiography" element={<AutobiographyPage />} />
+                  <Route path="/app/autobiography" element={<FeatureGate feature="autobiography"><AutobiographyPage /></FeatureGate>} />
                   <Route path="/app/photo-gallery" element={<PhotoGalleryPage />} />
                   <Route path="/app/interview" element={<InterviewPage />} />
                   <Route path="/app/training" element={<TrainingPage />} />
