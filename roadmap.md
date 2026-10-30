@@ -4,4 +4,9 @@
 - [x] Add changelog and standing instructions.
 - [x] Verify public terms and signup gate in browser; 16 permission/Stripe tests passed.
 - [x] Include every registered account in Admin Users, including profile-less owners and judges, with user type and owner-only password reset.
-- [x] Verify the signed-in owner user list and password-reset email request in the browser; read-only judge permission tests pass.
+- [x] Verify the signed-in owner user list and password-reset email request in the browser; read-only judge permission tests pass.- [x] Voice CV interview saves, pause, live editable transcript, dictionary, topic picker.
+- [x] Flashing Profile - Onboarding, top search bar, admin Knowledgebase & User Guide + PDF.
+- [ ] Choose which CV when applying; offer "tailor now" when not a fit.
+- [ ] CV upload: Merge / Combine / Overwrite options and choose target CV.
+- [ ] GHL bot — waiting on widget ID from Anthony.
+- [ ] Job scraping beyond Firecrawl (Apify) — waiting on decision.
