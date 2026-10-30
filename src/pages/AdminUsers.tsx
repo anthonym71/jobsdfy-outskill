@@ -441,30 +441,30 @@ const AdminUsers = () => {
                       </TableCell>
                       <TableCell><span className="text-xs font-mono">{u.balance}</span></TableCell>
                       <TableCell>
-                        <div className="flex gap-1" inert={!canEditAdmin ? "" : undefined} aria-disabled={!canEditAdmin}>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" title="Edit User" onClick={() => {
+                        <div className="flex gap-1" aria-disabled={!canEditAdmin}>
+                          <Button disabled={!canEditAdmin} size="icon" variant="ghost" className="h-7 w-7" title="Edit User" onClick={() => {
                             setEditDialog(u);
                             setEditForm({ full_name: u.full_name, email: u.email, phone_number: u.phone_number || "" });
                           }}>
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" title={u.status === "active" ? "Suspend/Cancel" : "Reactivate"} onClick={() => {
+                          <Button disabled={!canEditAdmin} size="icon" variant="ghost" className="h-7 w-7" title={u.status === "active" ? "Suspend/Cancel" : "Reactivate"} onClick={() => {
                             setSuspendDialog({ userId: u.user_id, name: u.full_name, currentStatus: u.status });
                             setSuspendAction(u.status === "active" ? "suspended" : "active");
                             setSuspendReason(u.status_reason || "");
                           }}>
                             {u.status === "active" ? <Ban className="h-3.5 w-3.5" /> : <CheckCircle className="h-3.5 w-3.5 text-verdict-go" />}
                           </Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" title="Send SMS" onClick={() => setMessageDialog({ userId: u.user_id, name: u.full_name, phone: u.phone_number, email: u.email, type: "sms" })}>
+                          <Button disabled={!canEditAdmin} size="icon" variant="ghost" className="h-7 w-7" title="Send SMS" onClick={() => setMessageDialog({ userId: u.user_id, name: u.full_name, phone: u.phone_number, email: u.email, type: "sms" })}>
                             <MessageSquare className="h-3.5 w-3.5" />
                           </Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" title="Send Email" onClick={() => setMessageDialog({ userId: u.user_id, name: u.full_name, phone: u.phone_number, email: u.email, type: "email" })}>
+                          <Button disabled={!canEditAdmin} size="icon" variant="ghost" className="h-7 w-7" title="Send Email" onClick={() => setMessageDialog({ userId: u.user_id, name: u.full_name, phone: u.phone_number, email: u.email, type: "email" })}>
                             <Mail className="h-3.5 w-3.5" />
                           </Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" title="Add Tag" onClick={() => setTagDialog({ userId: u.user_id, name: u.full_name })}>
+                          <Button disabled={!canEditAdmin} size="icon" variant="ghost" className="h-7 w-7" title="Add Tag" onClick={() => setTagDialog({ userId: u.user_id, name: u.full_name })}>
                             <Tag className="h-3.5 w-3.5" />
                           </Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" title="Adjust Credits" onClick={() => setCreditDialog({ userId: u.user_id, name: u.full_name, balance: u.balance || 0 })}>
+                          <Button disabled={!canEditAdmin} size="icon" variant="ghost" className="h-7 w-7" title="Adjust Credits" onClick={() => setCreditDialog({ userId: u.user_id, name: u.full_name, balance: u.balance || 0 })}>
                             <Coins className="h-3.5 w-3.5" />
                           </Button>
                         </div>
