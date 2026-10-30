@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useCredits, CREDIT_REWARDS } from "@/hooks/useCredits";
+import { CURRENCIES, OFFICE_DAY_OPTIONS, extraLimitColumns, salaryInputToAmount, salaryLabel, salaryPlaceholder } from "@/lib/limits";
 import { Coins, Zap, Trophy, Phone, Loader2, CheckCircle } from "lucide-react";
 
 const totalSteps = 5;
@@ -46,6 +47,7 @@ const Onboarding = () => {
     nonNegSalaryMin: "", nonNegCountries: "", nonNegRemote: "",
     nonNegVisa: "no", nonNegLanguages: "", nonNegEmploymentType: "",
     nonNegMaxTravel: "", nonNegIndustryExclusions: "",
+    nonNegOfficeDays: "", nonNegNotice: "", nonNegUtc: "",
   });
 
   const update = (key: string, value: string) => setForm((p) => ({ ...p, [key]: value }));
@@ -137,10 +139,10 @@ const Onboarding = () => {
 
       const { error: nonNegError } = await supabase.from("user_non_negotiables").upsert({
         user_id: user.id,
-        min_salary: parseInt(form.nonNegSalaryMin) || 0,
+        min_salary: salaryInputToAmount(form.nonNegSalaryMin, form.salaryCurrency),
         salary_currency: form.salaryCurrency,
         allowed_countries: splitArray(form.nonNegCountries),
-        remote_preference: form.nonNegRemote || "any",
+        ...extraLimitColumns({ noticeDays: form.nonNegNotice, officeDays: form.nonNegOfficeDays, languages: form.nonNegLanguages, utcOffset: form.nonNegUtc }),
         requires_visa_sponsorship: form.nonNegVisa === "yes",
         employment_type_preferences: splitArray(form.nonNegEmploymentType),
         max_travel_percent: parseInt(form.nonNegMaxTravel) || 100,
@@ -229,8 +231,7 @@ const Onboarding = () => {
                   <Select value={form.salaryCurrency} onValueChange={(v) => update("salaryCurrency", v)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="USD">USD</SelectItem><SelectItem value="EUR">EUR</SelectItem>
-                      <SelectItem value="GBP">GBP</SelectItem><SelectItem value="CAD">CAD</SelectItem>
+                      {CURRENCIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -273,19 +274,20 @@ const Onboarding = () => {
               <h2 className="font-heading text-lg font-semibold text-foreground">Non-Negotiables</h2>
               <p className="text-sm text-muted-foreground">These are your hard limits. We'll flag any job that violates them.</p>
               <div className="space-y-4">
-                <div><Label>Minimum Acceptable Salary</Label><Input type="number" value={form.nonNegSalaryMin} onChange={(e) => update("nonNegSalaryMin", e.target.value)} placeholder="55000" /></div>
+                <div><Label>{salaryLabel(form.salaryCurrency)}</Label><Input type="number" step="any" value={form.nonNegSalaryMin} onChange={(e) => update("nonNegSalaryMin", e.target.value)} placeholder={salaryPlaceholder(form.salaryCurrency)} /></div>
                 <div><Label>Allowed Countries / Regions</Label><Input value={form.nonNegCountries} onChange={(e) => update("nonNegCountries", e.target.value)} placeholder="Germany, Netherlands, Remote EU" /></div>
                 <div>
-                  <Label>Work Model Requirement</Label>
-                  <Select value={form.nonNegRemote} onValueChange={(v) => update("nonNegRemote", v)}>
+                  <Label>Office days you accept per week</Label>
+                  <Select value={form.nonNegOfficeDays} onValueChange={(v) => update("nonNegOfficeDays", v)}>
                     <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="remote">Remote only</SelectItem><SelectItem value="hybrid">Hybrid OK</SelectItem>
-                      <SelectItem value="any">Any</SelectItem>
+                      {OFFICE_DAY_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
-                <div><Label>Required Languages</Label><Input value={form.nonNegLanguages} onChange={(e) => update("nonNegLanguages", e.target.value)} placeholder="English" /></div>
+                <div><Label>Notice period you can offer (days)</Label><Input type="number" min={0} value={form.nonNegNotice} onChange={(e) => update("nonNegNotice", e.target.value)} placeholder="60" /></div>
+                <div><Label>Languages you can work in</Label><Input value={form.nonNegLanguages} onChange={(e) => update("nonNegLanguages", e.target.value)} placeholder="English, Hindi" /></div>
+                <div><Label>Time zone (UTC offset, optional)</Label><Input type="number" step="0.5" value={form.nonNegUtc} onChange={(e) => update("nonNegUtc", e.target.value)} placeholder="5.5" /></div>
                 <div><Label>Employment Type</Label><Input value={form.nonNegEmploymentType} onChange={(e) => update("nonNegEmploymentType", e.target.value)} placeholder="Full-time, Contract" /></div>
                 <div><Label>Max Travel (%)</Label><Input value={form.nonNegMaxTravel} onChange={(e) => update("nonNegMaxTravel", e.target.value)} placeholder="10" /></div>
                 <div><Label>Industry Exclusions</Label><Input value={form.nonNegIndustryExclusions} onChange={(e) => update("nonNegIndustryExclusions", e.target.value)} placeholder="Gambling, Tobacco" /></div>

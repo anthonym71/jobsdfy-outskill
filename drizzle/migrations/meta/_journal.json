@@ -36,6 +36,13 @@
       "when": 1793382980510,
       "tag": "0004_verdict_evidence",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793383561067,
+      "tag": "0005_india_limits",
+      "breakpoints": true
     }
   ]
 }

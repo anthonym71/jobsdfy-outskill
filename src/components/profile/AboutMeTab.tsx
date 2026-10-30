@@ -12,6 +12,7 @@ import VoiceCVBuilderDialog from "./VoiceCVBuilder";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { OFFICE_DAY_OPTIONS, amountToSalaryInput, extraLimitColumns, salaryInputToAmount, salaryLabel } from "@/lib/limits";
 import { useRef } from "react";
 
 interface SocialAccount {
@@ -47,6 +48,7 @@ const AboutMeTab = () => {
     minSalary: "", salaryCurrency: "USD", allowedCountries: "",
     remotePreference: "any", visaSponsorship: "no",
     employmentTypes: "", maxTravel: "", industryExclusions: "",
+    officeDays: "", noticeDays: "", languages: "", utcOffset: "",
   });
 
   useEffect(() => {
@@ -83,7 +85,7 @@ const AboutMeTab = () => {
     if (nonNegRes.data) {
       const n = nonNegRes.data;
       setNonNegs({
-        minSalary: String(n.min_salary || ""),
+        minSalary: amountToSalaryInput(n.min_salary, n.salary_currency || "USD"),
         salaryCurrency: n.salary_currency || "USD",
         allowedCountries: (n.allowed_countries || []).join(", "),
         remotePreference: n.remote_preference || "any",
@@ -91,6 +93,10 @@ const AboutMeTab = () => {
         employmentTypes: (n.employment_type_preferences || []).join(", "),
         maxTravel: String(n.max_travel_percent || ""),
         industryExclusions: (n.industry_exclusions || []).join(", "),
+        officeDays: n.max_office_days == null ? "" : String(n.max_office_days),
+        noticeDays: n.notice_period_days == null ? "" : String(n.notice_period_days),
+        languages: (n.languages || []).join(", "),
+        utcOffset: n.utc_offset == null ? "" : String(n.utc_offset),
       });
     }
 
@@ -207,10 +213,10 @@ const AboutMeTab = () => {
 
       const { error: nonNegError } = await supabase.from("user_non_negotiables").upsert({
         user_id: user!.id,
-        min_salary: parseInt(nonNegs.minSalary) || 0,
+        min_salary: salaryInputToAmount(nonNegs.minSalary, nonNegs.salaryCurrency),
         salary_currency: nonNegs.salaryCurrency,
         allowed_countries: splitArray(nonNegs.allowedCountries),
-        remote_preference: nonNegs.remotePreference,
+        ...extraLimitColumns({ noticeDays: nonNegs.noticeDays, officeDays: nonNegs.officeDays, languages: nonNegs.languages, utcOffset: nonNegs.utcOffset }),
         requires_visa_sponsorship: nonNegs.visaSponsorship === "yes",
         employment_type_preferences: splitArray(nonNegs.employmentTypes),
         max_travel_percent: parseInt(nonNegs.maxTravel) || 100,
@@ -411,10 +417,19 @@ const AboutMeTab = () => {
         <h2 className="font-heading text-base font-semibold text-foreground">Non-Negotiables</h2>
         <p className="text-sm text-muted-foreground">Your hard limits that drive the dealbreaker check.</p>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div><Label>Minimum Salary</Label><Input type="number" value={nonNegs.minSalary} onChange={e => setNonNegs(n => ({ ...n, minSalary: e.target.value }))} className="mt-1" /></div>
+          <div><Label>{salaryLabel(nonNegs.salaryCurrency)}</Label><Input type="number" step="any" value={nonNegs.minSalary} onChange={e => setNonNegs(n => ({ ...n, minSalary: e.target.value }))} className="mt-1" /></div>
           <div><Label>Currency</Label><Input value={nonNegs.salaryCurrency} onChange={e => setNonNegs(n => ({ ...n, salaryCurrency: e.target.value }))} className="mt-1" /></div>
           <div><Label>Allowed Countries</Label><Input value={nonNegs.allowedCountries} onChange={e => setNonNegs(n => ({ ...n, allowedCountries: e.target.value }))} className="mt-1" /></div>
-          <div><Label>Work Model</Label><Input value={nonNegs.remotePreference} onChange={e => setNonNegs(n => ({ ...n, remotePreference: e.target.value }))} className="mt-1" placeholder="remote, hybrid, any" /></div>
+          <div>
+            <Label>Office days you accept per week</Label>
+            <select value={nonNegs.officeDays} onChange={e => setNonNegs(n => ({ ...n, officeDays: e.target.value }))} className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+              <option value="">Not set</option>
+              {OFFICE_DAY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+          <div><Label>Notice period you can offer (days)</Label><Input type="number" min={0} value={nonNegs.noticeDays} onChange={e => setNonNegs(n => ({ ...n, noticeDays: e.target.value }))} className="mt-1" placeholder="60" /></div>
+          <div><Label>Languages you can work in</Label><Input value={nonNegs.languages} onChange={e => setNonNegs(n => ({ ...n, languages: e.target.value }))} className="mt-1" placeholder="English, Hindi" /></div>
+          <div><Label>Time zone (UTC offset, optional)</Label><Input type="number" step="0.5" value={nonNegs.utcOffset} onChange={e => setNonNegs(n => ({ ...n, utcOffset: e.target.value }))} className="mt-1" placeholder="5.5" /></div>
           <div><Label>Employment Types</Label><Input value={nonNegs.employmentTypes} onChange={e => setNonNegs(n => ({ ...n, employmentTypes: e.target.value }))} className="mt-1" placeholder="Full-time, Contract" /></div>
           <div><Label>Max Travel (%)</Label><Input type="number" value={nonNegs.maxTravel} onChange={e => setNonNegs(n => ({ ...n, maxTravel: e.target.value }))} className="mt-1" /></div>
           <div><Label>Industry Exclusions</Label><Input value={nonNegs.industryExclusions} onChange={e => setNonNegs(n => ({ ...n, industryExclusions: e.target.value }))} className="mt-1" placeholder="Gambling, Tobacco" /></div>

@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { evaluate, type Extraction, type Limits } from "../_shared/verdict.ts";
+import { evaluate, type Extraction } from "../_shared/verdict.ts";
+import { toLimits } from "../_shared/limits.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,25 +14,6 @@ const json = (body: unknown, status = 200) =>
 
 // The verdict is decided by plain code (see _shared/verdict.ts), not by an AI model.
 // The AI only read the posting earlier, in extract-job, and had to quote every fact it used.
-
-// Maps a user's saved non-negotiables onto the rule engine's limits. Columns that
-// do not exist yet (languages, notice period, office days) are read if present.
-function toLimits(n: Record<string, any>): Limits {
-  const limits: Limits = {};
-  if (n.min_salary && n.min_salary > 0) limits.minSalary = { amount: n.min_salary, currency: n.salary_currency || "USD" };
-  if (n.allowed_countries?.length) limits.allowedCountries = n.allowed_countries;
-  if (typeof n.max_office_days === "number") limits.maxOfficeDays = n.max_office_days;
-  else if (n.remote_preference === "remote") limits.maxOfficeDays = 0;
-  else if (n.remote_preference === "hybrid") limits.maxOfficeDays = 4; // "hybrid OK" = anything but fully on site
-  if (n.employment_type_preferences?.length) limits.employmentTypes = n.employment_type_preferences;
-  if (n.languages?.length) limits.languages = n.languages;
-  if (typeof n.max_travel_percent === "number") limits.maxTravelPercent = n.max_travel_percent;
-  if (n.industry_exclusions?.length) limits.industryExclusions = n.industry_exclusions;
-  if (typeof n.notice_period_days === "number") limits.noticePeriodDays = n.notice_period_days;
-  if (typeof n.utc_offset === "number") limits.utcOffset = n.utc_offset;
-  if (n.requires_visa_sponsorship) limits.requiresVisaSponsorship = true;
-  return limits;
-}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });

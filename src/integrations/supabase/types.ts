@@ -1701,6 +1701,10 @@ export type Database = {
       }
       user_non_negotiables: {
         Row: {
+          languages: string[] | null
+          max_office_days: number | null
+          notice_period_days: number | null
+          utc_offset: number | null
           allowed_countries: string[] | null
           created_at: string
           employment_type_preferences: string[] | null
@@ -1715,6 +1719,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          languages?: string[] | null
+          max_office_days?: number | null
+          notice_period_days?: number | null
+          utc_offset?: number | null
           allowed_countries?: string[] | null
           created_at?: string
           employment_type_preferences?: string[] | null
@@ -1729,6 +1737,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          languages?: string[] | null
+          max_office_days?: number | null
+          notice_period_days?: number | null
+          utc_offset?: number | null
           allowed_countries?: string[] | null
           created_at?: string
           employment_type_preferences?: string[] | null
