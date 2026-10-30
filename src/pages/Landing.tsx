@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
+
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import jobyMascot from "@/assets/joby-mascot.webp";
