@@ -2183,6 +2183,22 @@ export type Database = {
     }
     Functions: {
       accept_current_terms: { Args: { _version: string }; Returns: undefined }
+      admin_list_registered_users: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          full_name: string
+          has_profile: boolean
+          headline: string
+          location: string
+          phone_number: string
+          status: string
+          status_reason: string
+          user_id: string
+          user_type: string
+        }[]
+      }
       can_write_admin: { Args: { _user_id: string }; Returns: boolean }
       earn_credits: {
         Args: {

@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ShieldCheck, Download, Tag, Coins, Search, X, Mail, MessageSquare, Users, Plus, ArrowUpDown, Trash2, Pencil, Ban, CheckCircle } from "lucide-react";
+import { Loader2, ShieldCheck, Download, Tag, Coins, Search, X, Mail, MessageSquare, Users, Plus, ArrowUpDown, Trash2, Pencil, Ban, CheckCircle, KeyRound } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +28,8 @@ interface UserRow {
   groups: string[];
   status: string;
   status_reason: string | null;
+  user_type: string;
+  has_profile: boolean;
 }
 
 interface UserGroup {
@@ -39,7 +41,7 @@ interface UserGroup {
 
 const AdminUsers = () => {
   const { user, session } = useAuth();
-  const { canEditAdmin, canDeleteUsers } = useAdminAccess();
+  const { canEditAdmin, canDeleteUsers, canManageRoles } = useAdminAccess();
   const { toast } = useToast();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,6 +88,8 @@ const AdminUsers = () => {
   const [suspendAction, setSuspendAction] = useState<"suspended" | "cancelled" | "active">("suspended");
   const [suspendReason, setSuspendReason] = useState("");
   const [suspendSaving, setSuspendSaving] = useState(false);
+  const [resetDialog, setResetDialog] = useState<UserRow | null>(null);
+  const [resetSending, setResetSending] = useState(false);
 
   useEffect(() => {
     if (user) loadUsers();
@@ -99,12 +103,13 @@ const AdminUsers = () => {
       setIsAdmin(true);
 
       const [profileRes, creditRes, tagRes, groupRes, memberRes] = await Promise.all([
-        supabase.from("user_profiles").select("*").order("created_at", { ascending: false }),
+        supabase.rpc("admin_list_registered_users"),
         supabase.from("user_credits").select("*"),
         supabase.from("user_tags").select("*"),
         supabase.from("user_groups").select("*"),
         supabase.from("user_group_members").select("*"),
       ]);
+      if (profileRes.error) throw profileRes.error;
 
       const creditsMap = new Map((creditRes.data || []).map(c => [c.user_id, c]));
       const tagsMap = new Map<string, string[]>();
@@ -149,6 +154,8 @@ const AdminUsers = () => {
           groups: userGroupsMap.get(p.user_id) || [],
           status: (p as any).status || "active",
           status_reason: (p as any).status_reason || null,
+          user_type: p.user_type,
+          has_profile: p.has_profile,
         };
       });
       setUsers(userRows);
@@ -294,11 +301,27 @@ const AdminUsers = () => {
     finally { setSuspendSaving(false); }
   };
 
+  const handleResetPassword = async () => {
+    if (!canManageRoles || !resetDialog) return;
+    setResetSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-reset-password", {
+        body: { user_id: resetDialog.user_id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "Password reset email sent", description: `A reset link was sent to ${resetDialog.email}.` });
+      setResetDialog(null);
+    } catch (err: any) {
+      toast({ title: "Password reset failed", description: err.message, variant: "destructive" });
+    } finally { setResetSending(false); }
+  };
+
   const exportCSV = () => {
-    const headers = ["Name","Email","Phone","Location","Headline","Status","Balance","Lifetime Earned","Tags","Groups","Joined"];
+    const headers = ["Name","Email","Phone","Location","Headline","Status","User Type","Balance","Lifetime Earned","Tags","Groups","Joined"];
     const rows = filtered.map(u => [
       u.full_name, u.email, u.phone_number || "", u.location || "",
-      u.headline || "", u.status, u.balance, u.lifetime_earned, u.tags.join("; "), u.groups.join("; "),
+      u.headline || "", u.status, u.user_type, u.balance, u.lifetime_earned, u.tags.join("; "), u.groups.join("; "),
       new Date(u.created_at).toLocaleDateString()
     ]);
     const csv = [headers.join(","), ...rows.map(r => r.map(v => `"${v}"`).join(","))].join("\n");
@@ -409,6 +432,7 @@ const AdminUsers = () => {
                   <TableHead>First Name</TableHead>
                   <TableHead>Last Name</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>User Type</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Tags</TableHead>
@@ -424,6 +448,7 @@ const AdminUsers = () => {
                       <TableCell className="font-medium text-sm">{first}</TableCell>
                       <TableCell className="text-sm">{last}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{u.email || "—"}</TableCell>
+                      <TableCell><Badge variant="secondary" className="whitespace-nowrap">{u.user_type}</Badge></TableCell>
                       <TableCell className="text-xs text-muted-foreground">{u.phone_number || "—"}</TableCell>
                       <TableCell>
                         <Badge variant={u.status === "active" ? "default" : "destructive"} className="text-[10px]">
@@ -442,13 +467,13 @@ const AdminUsers = () => {
                       <TableCell><span className="text-xs font-mono">{u.balance}</span></TableCell>
                       <TableCell>
                         <div className="flex gap-1" aria-disabled={!canEditAdmin}>
-                          <Button disabled={!canEditAdmin} size="icon" variant="ghost" className="h-7 w-7" title="Edit User" onClick={() => {
+                          <Button disabled={!canEditAdmin || !u.has_profile} size="icon" variant="ghost" className="h-7 w-7" title={u.has_profile ? "Edit User" : "Profile not completed"} onClick={() => {
                             setEditDialog(u);
                             setEditForm({ full_name: u.full_name, email: u.email, phone_number: u.phone_number || "" });
                           }}>
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
-                          <Button disabled={!canEditAdmin} size="icon" variant="ghost" className="h-7 w-7" title={u.status === "active" ? "Suspend/Cancel" : "Reactivate"} onClick={() => {
+                          <Button disabled={!canEditAdmin || !u.has_profile} size="icon" variant="ghost" className="h-7 w-7" title={u.status === "active" ? "Suspend/Cancel" : "Reactivate"} onClick={() => {
                             setSuspendDialog({ userId: u.user_id, name: u.full_name, currentStatus: u.status });
                             setSuspendAction(u.status === "active" ? "suspended" : "active");
                             setSuspendReason(u.status_reason || "");
@@ -460,6 +485,9 @@ const AdminUsers = () => {
                           </Button>
                           <Button disabled={!canEditAdmin} size="icon" variant="ghost" className="h-7 w-7" title="Send Email" onClick={() => setMessageDialog({ userId: u.user_id, name: u.full_name, phone: u.phone_number, email: u.email, type: "email" })}>
                             <Mail className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button disabled={!canManageRoles || !u.email} size="icon" variant="ghost" className="h-7 w-7" title="Reset Password" aria-label={`Reset password for ${u.email}`} onClick={() => setResetDialog(u)}>
+                            <KeyRound className="h-3.5 w-3.5" />
                           </Button>
                           <Button disabled={!canEditAdmin} size="icon" variant="ghost" className="h-7 w-7" title="Add Tag" onClick={() => setTagDialog({ userId: u.user_id, name: u.full_name })}>
                             <Tag className="h-3.5 w-3.5" />
@@ -508,6 +536,19 @@ const AdminUsers = () => {
           )}
         </TabsContent>
       </Tabs>
+
+      <Dialog open={!!resetDialog} onOpenChange={open => !open && !resetSending && setResetDialog(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Reset Password</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">Send a secure password reset link to {resetDialog?.email}?</p>
+          <DialogFooter>
+            <Button variant="outline" disabled={resetSending} onClick={() => setResetDialog(null)}>Cancel</Button>
+            <Button disabled={resetSending || !canManageRoles} onClick={handleResetPassword}>
+              {resetSending && <Loader2 className="h-4 w-4 animate-spin mr-1" />}Send Reset Email
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit User Dialog */}
       <Dialog open={!!editDialog} onOpenChange={open => !open && setEditDialog(null)}>
