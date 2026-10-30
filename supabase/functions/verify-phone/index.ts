@@ -40,6 +40,8 @@ serve(async (req) => {
     if (userError) throw new Error(`Auth error: ${userError.message}`);
     const user = userData.user;
     if (!user) throw new Error("Not authenticated");
+    const { data: readOnly, error: accessError } = await supabase.rpc("is_read_only_admin", { _user_id: user.id });
+    if (accessError || readOnly) throw new Error("This account has read-only access");
 
     const { action, phoneNumber, code } = await req.json();
 

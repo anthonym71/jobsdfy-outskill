@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
 
 interface SupportTicket {
   id: string;
@@ -34,6 +35,7 @@ interface PhoneChangeReq {
 
 const AdminHelpdesk = () => {
   const { user } = useAuth();
+  const { canEditAdmin, canChangeSettings } = useAdminAccess();
   const { toast } = useToast();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [phoneRequests, setPhoneRequests] = useState<PhoneChangeReq[]>([]);
@@ -90,6 +92,7 @@ const AdminHelpdesk = () => {
   };
 
   const saveOverrideSettings = async () => {
+    if (!canChangeSettings) return;
     setSavingOverride(true);
     try {
       await supabase.from("app_settings").upsert({ key: "otp_override_enabled", value: otpOverrideEnabled ? "true" : "false", updated_at: new Date().toISOString() }, { onConflict: "key" });
@@ -103,6 +106,7 @@ const AdminHelpdesk = () => {
   };
 
   const updateTicket = async (ticketId: string, status: string, adminNotes?: string) => {
+    if (!canEditAdmin) return;
     setUpdatingId(ticketId);
     try {
       const { data, error } = await supabase.functions.invoke("support-tickets", {
@@ -120,6 +124,7 @@ const AdminHelpdesk = () => {
   };
 
   const handlePhoneRequest = async (requestId: string, approve: boolean) => {
+    if (!canEditAdmin) return;
     setUpdatingId(requestId);
     try {
       const { data, error } = await supabase.functions.invoke("support-tickets", {
@@ -188,6 +193,7 @@ const AdminHelpdesk = () => {
               <TicketCard
                 key={ticket.id}
                 ticket={ticket}
+                readOnly={!canEditAdmin}
                 statusColor={statusColor}
                 updatingId={updatingId}
                 onUpdate={updateTicket}
@@ -213,7 +219,7 @@ const AdminHelpdesk = () => {
                     {req.status}
                   </span>
                 </div>
-                {req.status === "pending" && (
+                {req.status === "pending" && canEditAdmin && (
                   <div className="flex gap-2">
                     <Button size="sm" onClick={() => handlePhoneRequest(req.id, true)} disabled={updatingId === req.id}>
                       Approve
@@ -242,6 +248,7 @@ const AdminHelpdesk = () => {
               <Switch
                 id="otp-override-toggle"
                 checked={otpOverrideEnabled}
+                disabled={!canChangeSettings}
                 onCheckedChange={setOtpOverrideEnabled}
               />
             </div>
@@ -253,6 +260,7 @@ const AdminHelpdesk = () => {
                   <Input
                     type={showOverrideCode ? "text" : "password"}
                     value={otpOverrideCode}
+                    disabled={!canChangeSettings}
                     onChange={(e) => setOtpOverrideCode(e.target.value)}
                     placeholder="Enter override code"
                   />
@@ -267,7 +275,7 @@ const AdminHelpdesk = () => {
               </div>
             </div>
 
-            <Button size="sm" onClick={saveOverrideSettings} disabled={savingOverride}>
+            <Button size="sm" onClick={saveOverrideSettings} disabled={savingOverride || !canChangeSettings}>
               {savingOverride ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
               Save Override Settings
             </Button>
@@ -280,11 +288,13 @@ const AdminHelpdesk = () => {
 
 const TicketCard = ({
   ticket,
+  readOnly,
   statusColor,
   updatingId,
   onUpdate,
 }: {
   ticket: SupportTicket;
+  readOnly: boolean;
   statusColor: (s: string) => string;
   updatingId: string | null;
   onUpdate: (id: string, status: string, notes?: string) => void;
@@ -310,6 +320,7 @@ const TicketCard = ({
         <div className="flex-1">
           <Textarea
             value={notes}
+            readOnly={readOnly}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Admin notes / response…"
             rows={2}
@@ -317,7 +328,7 @@ const TicketCard = ({
           />
         </div>
         <div className="flex flex-col gap-1">
-          <Select value={status} onValueChange={setStatus}>
+          <Select value={status} onValueChange={setStatus} disabled={readOnly}>
             <SelectTrigger className="w-32 h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="open">Open</SelectItem>
@@ -330,7 +341,7 @@ const TicketCard = ({
             size="sm"
             className="h-8"
             onClick={() => onUpdate(ticket.id, status, notes)}
-            disabled={updatingId === ticket.id}
+            disabled={updatingId === ticket.id || readOnly}
           >
             {updatingId === ticket.id ? <Loader2 className="h-3 w-3 animate-spin" /> : "Save"}
           </Button>

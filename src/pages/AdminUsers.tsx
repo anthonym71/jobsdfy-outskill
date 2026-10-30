@@ -12,6 +12,7 @@ import { Loader2, ShieldCheck, Download, Tag, Coins, Search, X, Mail, MessageSqu
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
 
 interface UserRow {
   user_id: string;
@@ -38,6 +39,7 @@ interface UserGroup {
 
 const AdminUsers = () => {
   const { user, session } = useAuth();
+  const { canEditAdmin, canDeleteUsers } = useAdminAccess();
   const { toast } = useToast();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,8 +92,9 @@ const AdminUsers = () => {
   }, [user]);
 
   const loadUsers = async () => {
+    if (!user) return;
     try {
-      const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user!.id);
+      const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
       if (!roles?.some(r => r.role === "admin")) { setIsAdmin(false); setLoading(false); return; }
       setIsAdmin(true);
 
@@ -157,6 +160,7 @@ const AdminUsers = () => {
   };
 
   const handleAdjustCredits = async () => {
+    if (!canEditAdmin) return;
     if (!creditDialog || creditAmount <= 0 || !creditReason.trim()) return;
     setAllocating(true);
     try {
@@ -174,6 +178,7 @@ const AdminUsers = () => {
   };
 
   const handleAddTag = async () => {
+    if (!canEditAdmin) return;
     if (!tagDialog || !newTag.trim()) return;
     try {
       const { error } = await supabase.from("user_tags").insert({ user_id: tagDialog.userId, tag: newTag.trim().toLowerCase() });
@@ -184,11 +189,13 @@ const AdminUsers = () => {
   };
 
   const handleRemoveTag = async (userId: string, tag: string) => {
+    if (!canEditAdmin) return;
     await supabase.from("user_tags").delete().eq("user_id", userId).eq("tag", tag);
     loadUsers();
   };
 
   const handleCreateGroup = async () => {
+    if (!canEditAdmin) return;
     if (!newGroupName.trim()) return;
     try {
       const { error } = await supabase.from("user_groups").insert({ name: newGroupName.trim(), description: newGroupDesc.trim() });
@@ -200,6 +207,7 @@ const AdminUsers = () => {
   };
 
   const handleAssignGroup = async () => {
+    if (!canEditAdmin) return;
     if (!assignGroupDialog || !selectedGroupId) return;
     try {
       const { error } = await supabase.from("user_group_members").insert({ group_id: selectedGroupId, user_id: assignGroupDialog.userId });
@@ -211,6 +219,7 @@ const AdminUsers = () => {
   };
 
   const handleSendMessage = async () => {
+    if (!canEditAdmin) return;
     if (!messageDialog || !messageBody.trim()) return;
     setSending(true);
     try {
@@ -232,6 +241,7 @@ const AdminUsers = () => {
   };
 
   const handleEditUser = async () => {
+    if (!canEditAdmin) return;
     if (!editDialog) return;
     setEditSaving(true);
     try {
@@ -258,6 +268,8 @@ const AdminUsers = () => {
   };
 
   const handleSuspendUser = async () => {
+    if (!canDeleteUsers && suspendAction === "cancelled") return;
+    if (!canEditAdmin) return;
     if (!suspendDialog) return;
     setSuspendSaving(true);
     try {
@@ -333,7 +345,7 @@ const AdminUsers = () => {
         <div className="flex gap-2">
           <Dialog open={groupDialog} onOpenChange={setGroupDialog}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm"><Users className="h-4 w-4 mr-1" />New Group</Button>
+              <Button variant="outline" size="sm" disabled={!canEditAdmin}><Users className="h-4 w-4 mr-1" />New Group</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Create User Group</DialogTitle></DialogHeader>
@@ -422,37 +434,37 @@ const AdminUsers = () => {
                         <div className="flex gap-1 flex-wrap">
                           {u.tags.map(t => (
                             <Badge key={t} variant="secondary" className="text-[10px] gap-0.5">
-                              {t}<button onClick={() => handleRemoveTag(u.user_id, t)} className="hover:text-destructive"><X className="h-2.5 w-2.5" /></button>
+                              {t}{canEditAdmin && <button onClick={() => handleRemoveTag(u.user_id, t)} className="hover:text-destructive"><X className="h-2.5 w-2.5" /></button>}
                             </Badge>
                           ))}
                         </div>
                       </TableCell>
                       <TableCell><span className="text-xs font-mono">{u.balance}</span></TableCell>
                       <TableCell>
-                        <div className="flex gap-1">
-                          <Button size="icon" variant="ghost" className="h-7 w-7" title="Edit User" onClick={() => {
+                        <div className="flex gap-1" aria-disabled={!canEditAdmin}>
+                          <Button disabled={!canEditAdmin} size="icon" variant="ghost" className="h-7 w-7" title="Edit User" onClick={() => {
                             setEditDialog(u);
                             setEditForm({ full_name: u.full_name, email: u.email, phone_number: u.phone_number || "" });
                           }}>
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" title={u.status === "active" ? "Suspend/Cancel" : "Reactivate"} onClick={() => {
+                          <Button disabled={!canEditAdmin} size="icon" variant="ghost" className="h-7 w-7" title={u.status === "active" ? "Suspend/Cancel" : "Reactivate"} onClick={() => {
                             setSuspendDialog({ userId: u.user_id, name: u.full_name, currentStatus: u.status });
                             setSuspendAction(u.status === "active" ? "suspended" : "active");
                             setSuspendReason(u.status_reason || "");
                           }}>
                             {u.status === "active" ? <Ban className="h-3.5 w-3.5" /> : <CheckCircle className="h-3.5 w-3.5 text-verdict-go" />}
                           </Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" title="Send SMS" onClick={() => setMessageDialog({ userId: u.user_id, name: u.full_name, phone: u.phone_number, email: u.email, type: "sms" })}>
+                          <Button disabled={!canEditAdmin} size="icon" variant="ghost" className="h-7 w-7" title="Send SMS" onClick={() => setMessageDialog({ userId: u.user_id, name: u.full_name, phone: u.phone_number, email: u.email, type: "sms" })}>
                             <MessageSquare className="h-3.5 w-3.5" />
                           </Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" title="Send Email" onClick={() => setMessageDialog({ userId: u.user_id, name: u.full_name, phone: u.phone_number, email: u.email, type: "email" })}>
+                          <Button disabled={!canEditAdmin} size="icon" variant="ghost" className="h-7 w-7" title="Send Email" onClick={() => setMessageDialog({ userId: u.user_id, name: u.full_name, phone: u.phone_number, email: u.email, type: "email" })}>
                             <Mail className="h-3.5 w-3.5" />
                           </Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" title="Add Tag" onClick={() => setTagDialog({ userId: u.user_id, name: u.full_name })}>
+                          <Button disabled={!canEditAdmin} size="icon" variant="ghost" className="h-7 w-7" title="Add Tag" onClick={() => setTagDialog({ userId: u.user_id, name: u.full_name })}>
                             <Tag className="h-3.5 w-3.5" />
                           </Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" title="Adjust Credits" onClick={() => setCreditDialog({ userId: u.user_id, name: u.full_name, balance: u.balance || 0 })}>
+                          <Button disabled={!canEditAdmin} size="icon" variant="ghost" className="h-7 w-7" title="Adjust Credits" onClick={() => setCreditDialog({ userId: u.user_id, name: u.full_name, balance: u.balance || 0 })}>
                             <Coins className="h-3.5 w-3.5" />
                           </Button>
                         </div>
@@ -482,7 +494,8 @@ const AdminUsers = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     <Badge variant="secondary" className="text-xs">{g.member_count} members</Badge>
-                    <Button size="icon" variant="ghost" className="h-7 w-7" title="Delete group" onClick={async () => {
+                    <Button disabled={!canEditAdmin} size="icon" variant="ghost" className="h-7 w-7" title="Delete group" onClick={async () => {
+                      if (!canEditAdmin) return;
                       await supabase.from("user_group_members").delete().eq("group_id", g.id);
                       await supabase.from("user_groups").delete().eq("id", g.id);
                       loadUsers();
@@ -530,7 +543,7 @@ const AdminUsers = () => {
                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="suspended">Suspend (temporary)</SelectItem>
-                    <SelectItem value="cancelled">Cancel (permanent)</SelectItem>
+                    {canDeleteUsers && <SelectItem value="cancelled">Cancel (permanent)</SelectItem>}
                   </SelectContent>
                 </Select>
               </div>

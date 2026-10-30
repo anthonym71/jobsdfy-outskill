@@ -11,9 +11,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, ArrowRight } from "lucide-react";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
 
 const OnboardingGuard = () => {
   const { user, isLoading } = useAuth();
+  const { canViewAdmin, loading: accessLoading } = useAdminAccess();
   const navigate = useNavigate();
   const location = useLocation();
   const [checked, setChecked] = useState(false);
@@ -47,7 +49,8 @@ const OnboardingGuard = () => {
     navigate("/onboarding");
   };
 
-  if (isLoading || !checked) {
+  if (canViewAdmin && !accessLoading) return <Outlet />;
+  if (isLoading || !checked || accessLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-sm text-muted-foreground">Loading…</div>

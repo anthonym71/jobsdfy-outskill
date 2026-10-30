@@ -26,7 +26,11 @@ serve(async (req) => {
     const user = userData.user;
     if (!user) throw new Error("Not authenticated");
 
-    const { action, ticketId, adminNotes, status: newStatus, subject, description, category } = await req.json();
+    const { action, ticketId, adminNotes, status: newStatus, subject, description, category, approve } = await req.json();
+    if (action !== "list-all") {
+      const { data: readOnly, error: accessError } = await supabase.rpc("is_read_only_admin", { _user_id: user.id });
+      if (accessError || readOnly) throw new Error("This account has read-only access");
+    }
 
     if (action === "create") {
       // Any authenticated user can create a ticket
@@ -48,9 +52,8 @@ serve(async (req) => {
 
     if (action === "update") {
       // Only admins can update tickets
-      const { data: roleCheck } = await supabase.rpc("has_role", {
+      const { data: roleCheck } = await supabase.rpc("can_write_admin", {
         _user_id: user.id,
-        _role: "admin",
       });
 
       if (!roleCheck) throw new Error("Admin access required");
@@ -104,13 +107,11 @@ serve(async (req) => {
     }
 
     if (action === "approve-phone-change") {
-      const { data: roleCheck } = await supabase.rpc("has_role", {
+      const { data: roleCheck } = await supabase.rpc("can_write_admin", {
         _user_id: user.id,
-        _role: "admin",
       });
       if (!roleCheck) throw new Error("Admin access required");
 
-      const { requestId, approve } = await req.json().catch(() => ({}));
       
       const { data: request, error: reqErr } = await supabase
         .from("phone_change_requests")
