@@ -57,7 +57,7 @@ serve(async (req) => {
       });
     }
 
-    const { jobId, version = 1 } = await req.json();
+    const { jobId, version = 1, cvVersionId = null } = await req.json();
 
     const [jobRes, profileRes, workHistoryRes, educationRes] = await Promise.all([
       supabase.from("jobs").select("*").eq("id", jobId).eq("user_id", user.id).single(),
@@ -73,6 +73,12 @@ serve(async (req) => {
     }
 
     const job = jobRes.data;
+    let selectedCvText = "";
+    if (cvVersionId) {
+      const { data: cv, error: cvError } = await supabase.from("cv_versions").select("version_name, content").eq("id", cvVersionId).eq("user_id", user.id).single();
+      if (cvError || !cv) return new Response(JSON.stringify({ error: "Selected CV not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      selectedCvText = `\nSELECTED CV TO TAILOR (${cv.version_name}). Use this as the primary CV source, while keeping facts consistent with the profile:\n${JSON.stringify(cv.content).slice(0, 20000)}\n`;
+    }
     const profile = profileRes.data;
     const workHistory = workHistoryRes.data || [];
     const education = educationRes.data || [];
@@ -120,6 +126,7 @@ ${workHistoryText || "No work history provided"}
 
 EDUCATION:
 ${educationText || "No education provided"}
+${selectedCvText}
 
 Generate:
 1. A tailored resume using ATS-friendly formatting with standard headings (Professional Summary, Core Skills, Professional Experience, Education). Rewrite experience bullets using STAR logic: action verb + scope + result + metric. Use exact keywords from the job description naturally.

@@ -22,10 +22,22 @@ serve(async (req) => {
     if (authError || !user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const body = await req.json();
-    const { jobId, sessionId, questionIndex, answer } = body;
+    const { jobId, transcript } = body;
+    let { sessionId, questionIndex, answer } = body;
 
     const lovableKey = Deno.env.get("LOVABLE_API_KEY");
     if (!lovableKey) return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+    if (typeof transcript === "string") {
+      const clean = transcript.trim().slice(0, 30000);
+      if (!clean.includes("Candidate:")) return new Response(JSON.stringify({ error: "No candidate answers to assess" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const adminClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      const { data: saved, error: saveError } = await adminClient.from("interview_sessions").insert({ user_id: user.id, job_id: jobId && jobId !== "general" ? jobId : null, questions: ["Assess the candidate's answers across this voice interview. Use only stated facts and give an overall score from 1 to 10."], answers: [clean], feedback: [] }).select("id").single();
+      if (saveError || !saved) throw new Error("Could not save interview transcript. Please retry.");
+      sessionId = saved.id;
+      questionIndex = 0;
+      answer = clean;
+    }
 
     // MODE 1: Score an answer for an existing session
     if (sessionId && typeof questionIndex === "number" && answer) {

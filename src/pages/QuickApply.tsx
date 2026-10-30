@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Check, Copy, RefreshCw, ShieldCheck, Loader2, Clock, FileText, Mail, MessageSquare, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
@@ -45,6 +45,9 @@ interface TimelineData {
 const QuickApply = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [cvOptions, setCvOptions] = useState<{ id: string; version_name: string }[]>([]);
+  const [selectedCv, setSelectedCv] = useState("profile");
   const { session } = useAuth();
   const { toast } = useToast();
   const { credits, spendCredits, loading: creditsLoading } = useCredits();
@@ -64,6 +67,12 @@ const QuickApply = () => {
     if (creditsLoading) return; // Wait for credits to load
     loadJobAndPacks();
   }, [id, session, creditsLoading]);
+
+  useEffect(() => {
+    if (!session) return;
+    supabase.from("cv_versions").select("id, version_name").eq("user_id", session.user.id).order("created_at", { ascending: false })
+      .then(({ data }) => setCvOptions(data || []));
+  }, [session?.user.id]);
 
   const loadJobAndPacks = async () => {
     setLoading(true);
@@ -111,8 +120,7 @@ const QuickApply = () => {
         return;
       }
 
-      // No existing packs — generate one
-      await generateNewPack(1);
+      // Let the user choose a CV before spending credits on the first pack.
     } catch (err) {
       console.error("Error:", err);
       toast({ title: "Error", description: "Could not load application pack.", variant: "destructive" });
@@ -122,18 +130,20 @@ const QuickApply = () => {
   };
 
   const generateNewPack = async (version: number) => {
+    if (!session || !id) return;
     if (!credits || credits.balance < 3) {
       toast({ title: "Insufficient credits", description: "You need 3 credits to generate an application pack.", variant: "destructive" });
       return;
     }
-    await spendCredits(3, "generate_application_pack");
+    const spent = await spendCredits(3, "generate_application_pack");
+    if (!spent) return;
 
     const resp = await fetch(
       `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-application`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session!.access_token}` },
-        body: JSON.stringify({ jobId: id, version }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ jobId: id, version, cvVersionId: selectedCv === "profile" ? null : selectedCv }),
       }
     );
 
@@ -303,8 +313,15 @@ const QuickApply = () => {
 
   if (!pack) {
     return (
-      <div className="p-6 md:p-8 max-w-4xl mx-auto">
-        <p className="text-muted-foreground">Could not generate application pack.</p>
+      <div className="p-6 md:p-8 max-w-4xl mx-auto space-y-4">
+        <h1 className="font-heading text-2xl font-bold text-foreground">Create application pack</h1>
+        <p className="text-muted-foreground">{job?.title || "Job"}{job?.company ? ` · ${job.company}` : ""}</p>
+        <label htmlFor="initial-cv-choice" className="block text-sm font-medium text-foreground">CV to use</label>
+        <select id="initial-cv-choice" value={selectedCv} onChange={e => setSelectedCv(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground">
+          <option value="profile">My main profile</option>
+          {cvOptions.map(cv => <option key={cv.id} value={cv.id}>{cv.version_name}</option>)}
+        </select>
+        <Button onClick={regenerate} disabled={!job}>Generate application pack (3 credits)</Button>
         <Button variant="outline" className="mt-4" onClick={() => navigate("/app")}>Back to Dashboard</Button>
       </div>
     );
@@ -353,6 +370,18 @@ const QuickApply = () => {
           </div>
 
           {/* Pack Versions */}
+          <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+            {searchParams.get("tailor") === "1" && <p className="text-sm text-verdict-review">This job was not a strong fit. Choose a CV and create a version tailored more closely to the role.</p>}
+            <label htmlFor="cv-choice" className="font-heading text-sm font-semibold text-foreground">CV to use</label>
+            <select id="cv-choice" value={selectedCv} onChange={e => setSelectedCv(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground">
+              <option value="profile">My main profile</option>
+              {cvOptions.map(cv => <option key={cv.id} value={cv.id}>{cv.version_name}</option>)}
+            </select>
+            <Button size="sm" variant="outline" className="w-full" onClick={regenerate} disabled={loading}>
+              <RefreshCw className="h-4 w-4 mr-1" />Create tailored version with this CV (3 credits)
+            </Button>
+          </div>
+
           {versions.length > 0 && (
             <div className="rounded-xl border border-border bg-card p-5 space-y-3">
               <h3 className="font-heading text-sm font-semibold text-foreground">Pack Versions</h3>

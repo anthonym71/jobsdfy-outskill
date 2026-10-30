@@ -8,9 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface CVUploadParserProps {
   onImportComplete: () => void;
+  onReviewComplete?: (data: any) => void;
 }
 
-const CVUploadParser = ({ onImportComplete }: CVUploadParserProps) => {
+const CVUploadParser = ({ onImportComplete, onReviewComplete }: CVUploadParserProps) => {
   const { user, session } = useAuth();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -176,6 +177,11 @@ const CVUploadParser = ({ onImportComplete }: CVUploadParserProps) => {
 
   const handleImport = async () => {
     if (!user || !parsedData) return;
+    if (onReviewComplete) {
+      onReviewComplete(parsedData);
+      setStep("upload");
+      return;
+    }
     setStep("importing");
 
     try {

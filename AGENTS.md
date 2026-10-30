@@ -1,4 +1,6 @@
 # Architecture rules
+ - Normalize uploaded CVs through the shared CV-content adapter; destination-specific imports must not implicitly overwrite the main profile.
+ - Save voice interview transcripts to protected interview sessions before reusing the existing assessment flow; history derives analytics from stored feedback.
 
 - Hackathon page visibility is controlled solely by src/config/features.ts and a shared route gate using protected owner access; backend functions remain enabled for dependent workflows.
 

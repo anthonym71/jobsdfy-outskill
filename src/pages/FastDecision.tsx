@@ -134,6 +134,11 @@ const FastDecision = () => {
       </div>
 
       {/* Actions */}
+      {fit.score < 70 && <div className="rounded-xl border border-verdict-review bg-card p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div><h2 className="font-heading font-semibold text-foreground">Not a strong fit yet</h2><p className="text-sm text-muted-foreground">Would you like to tailor your CV now to show more relevant experience? Facts will not be invented.</p></div>
+        <Button onClick={() => navigate(`/app/apply/${id}?tailor=1`)}>Tailor my CV now</Button>
+      </div>}
+
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-between rounded-xl border border-border bg-card p-5">
         <div className="flex gap-2">
           <Button variant="ghost" size="sm" onClick={() => navigate("/app")}><SkipForward className="mr-1.5 h-4 w-4" />Skip</Button>
