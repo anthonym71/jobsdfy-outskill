@@ -6,6 +6,7 @@ import { Loader2, Plus, Trash2, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import CVImportDestination from "./CVImportDestination";
 import {
   Dialog,
   DialogContent,
@@ -103,6 +104,7 @@ const CVVersionsTab = () => {
       </div>
 
       {/* Existing versions */}
+      <CVImportDestination onSaved={loadVersions} />
       {versions.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-8">No CV versions yet. Create one above.</p>
       ) : (
@@ -184,6 +186,8 @@ const CVVersionsTab = () => {
                     <p className="text-xs text-muted-foreground">{c.positioningNotes}</p>
                   </div>
                 )}
+                {c.educationSection && <div><h4 className="font-medium text-foreground">Education</h4><p className="whitespace-pre-wrap text-muted-foreground">{typeof c.educationSection === "string" ? c.educationSection : JSON.stringify(c.educationSection)}</p></div>}
+                {c.certificatesSection && <div><h4 className="font-medium text-foreground">Certificates</h4><p className="whitespace-pre-wrap text-muted-foreground">{typeof c.certificatesSection === "string" ? c.certificatesSection : JSON.stringify(c.certificatesSection)}</p></div>}
               </div>
             );
           })()}
