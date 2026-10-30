@@ -7,7 +7,8 @@ const connectedSection = document.getElementById('connected-section');
 const savedUrlEl = document.getElementById('saved-url');
 const statusEl = document.getElementById('status');
 
-const DEFAULT_APP_URL = 'https://www.jobsdfy.com';
+const DEFAULT_APP_URL = 'https://jobsdfy.com';
+  const fixUrl = (u) => (!u || /lovable|www\.jobsdfy\.com/.test(u)) ? DEFAULT_APP_URL : u;
 
 function setStatus(text, type = '') {
   statusEl.textContent = text;
@@ -16,7 +17,7 @@ function setStatus(text, type = '') {
 
 // Load saved URL — default to jobsdfy.com
 chrome.storage.local.get(['appUrl'], (result) => {
-  if (result.appUrl) {
+  if (result.appUrl && fixUrl(result.appUrl) === result.appUrl) {
     showConnected(result.appUrl);
   } else {
     // Auto-save the default URL
@@ -53,7 +54,7 @@ sendBtn.addEventListener('click', async () => {
       target: { tabId: tab.id },
       func: () => {
         const selectors = [
-          '.jobs-description__content',
+          '.jobs-search__job-details--container', '.jobs-details', '#job-details', '.jobs-description__content', '.jobsearch-JobComponent', '#jobDescriptionText',
           '.job-view-layout',
           '[class*="job-details"]',
           '[class*="jobDescription"]',
@@ -79,10 +80,10 @@ sendBtn.addEventListener('click', async () => {
 
     const { appUrl } = await chrome.storage.local.get(['appUrl']);
     
-    const baseUrl = (appUrl || DEFAULT_APP_URL).replace(/\/+$/, '');
+    const baseUrl = fixUrl(appUrl).replace(/\/+$/, '');
     const params = new URLSearchParams({
       source: 'extension',
-      text: result.text.slice(0, 15000),
+      text: result.text.slice(0, 6000),
       url: result.url || '',
       title: result.title || '',
     });
