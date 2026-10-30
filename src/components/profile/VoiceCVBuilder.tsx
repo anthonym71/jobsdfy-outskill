@@ -5,6 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Mic, MicOff, Loader2, Volume2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useMicrophone } from "@/hooks/useMicrophone";
+import MicrophoneControl from "./MicrophoneControl";
 
 interface VoiceCVBuilderProps {
   category: string;
@@ -20,6 +22,7 @@ const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose
   const [inputVolume, setInputVolume] = useState(0);
   const [outputVolume, setOutputVolume] = useState(0);
   const animationRef = useRef<number>();
+  const microphone = useMicrophone();
 
   const conversation = useConversation({
     onConnect: () => {
@@ -55,13 +58,13 @@ const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose
   const startConversation = useCallback(async () => {
     setIsConnecting(true);
     try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      const input = await microphone.prepare();
       const { data, error } = await supabase.functions.invoke("elevenlabs-conversation-token", {
         body: { agent_id: agentId, category },
       });
       if (error || !data?.signed_url) throw new Error(data?.error || error?.message || "Failed to get signed URL");
 
-      await conversation.startSession({ signedUrl: data.signed_url });
+      await conversation.startSession({ signedUrl: data.signed_url, ...input });
     } catch (e: any) {
       if (e.name === "NotAllowedError") {
         toast({ title: "Microphone Required", description: "Please allow microphone access.", variant: "destructive" });
@@ -71,7 +74,7 @@ const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose
     } finally {
       setIsConnecting(false);
     }
-  }, [conversation, toast, agentId, category]);
+  }, [conversation, toast, agentId, category, microphone.prepare]);
 
   const stopAndExtract = useCallback(async () => {
     await conversation.endSession();
@@ -153,6 +156,7 @@ const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose
         </div>
       )}
 
+      <MicrophoneControl microphone={microphone} disabled={isConnecting || isConnected} />
       <div className="flex justify-center gap-3">
         {!isConnected ? (
           <Button onClick={startConversation} disabled={isConnecting} className="gap-2">

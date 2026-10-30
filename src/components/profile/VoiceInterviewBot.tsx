@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Loader2, Volume2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useMicrophone } from "@/hooks/useMicrophone";
+import MicrophoneControl from "./MicrophoneControl";
 
 interface VoiceInterviewBotProps {
   jobTitle?: string;
@@ -13,6 +15,7 @@ interface VoiceInterviewBotProps {
 const VoiceInterviewBotInner = ({ jobTitle, company }: VoiceInterviewBotProps) => {
   const { toast } = useToast();
   const [isConnecting, setIsConnecting] = useState(false);
+  const microphone = useMicrophone();
 
   const conversation = useConversation({
     onConnect: () => {
@@ -30,7 +33,7 @@ const VoiceInterviewBotInner = ({ jobTitle, company }: VoiceInterviewBotProps) =
   const startConversation = useCallback(async () => {
     setIsConnecting(true);
     try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      const input = await microphone.prepare();
 
       const { data, error } = await supabase.functions.invoke("elevenlabs-conversation-token");
       if (error || !data?.signed_url) {
@@ -39,6 +42,7 @@ const VoiceInterviewBotInner = ({ jobTitle, company }: VoiceInterviewBotProps) =
 
       await conversation.startSession({
         signedUrl: data.signed_url,
+        ...input,
       });
     } catch (e: any) {
       console.error("Voice AI error:", e);
@@ -50,7 +54,7 @@ const VoiceInterviewBotInner = ({ jobTitle, company }: VoiceInterviewBotProps) =
     } finally {
       setIsConnecting(false);
     }
-  }, [conversation, toast]);
+  }, [conversation, toast, microphone.prepare]);
 
   const stopConversation = useCallback(async () => {
     await conversation.endSession();
@@ -75,6 +79,7 @@ const VoiceInterviewBotInner = ({ jobTitle, company }: VoiceInterviewBotProps) =
         </span>
       </div>
 
+      <MicrophoneControl microphone={microphone} disabled={isConnecting || isConnected} />
       <div className="flex items-center gap-3">
         {!isConnected ? (
           <Button onClick={startConversation} disabled={isConnecting} className="gap-2">

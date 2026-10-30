@@ -5,3 +5,4 @@
 - Keep versioned terms acceptance in a dedicated protected table and gate signup and authenticated pages; server timestamps are authoritative.
 - Keep owner/team/judge access in protected admin_access alongside user_roles; verified auth email assignment, database policies and server handlers enforce privileges, never UI-only checks.
 - Admin user lists use the protected registered-account query rather than profile rows so incomplete profiles remain visible; password-reset emails are owner-authorized on the server and target the account's verified auth email.
+- ElevenLabs voice sessions share local microphone selection and a free input test; release test/permission streams before SDK capture and pass the chosen inputDeviceId to session startup to avoid unused captures and wrong-device routing.
