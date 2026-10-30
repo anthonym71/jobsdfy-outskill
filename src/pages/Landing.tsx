@@ -147,6 +147,15 @@ const Landing = () => {
                 </button>
               ))}
             </div>
+            <button
+              type="button"
+              aria-label={landingTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              title={landingTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              onClick={() => setTheme(landingTheme === "dark" ? "light" : "dark")}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              {landingTheme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
             <Link to="/auth">
               <Button variant="ghost" size="sm">Sign In</Button>
             </Link>
