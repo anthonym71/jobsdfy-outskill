@@ -5,7 +5,7 @@ import {
   Shield, Zap, Link2, ChevronDown, Check, ArrowRight, Sparkles, Eye, FileText,
   BookOpen, Brain, Mic, Camera, Users, Award, Calendar, MessageSquare,
   GraduationCap, Target, Clock, TrendingUp, Briefcase, Crown, Star, Handshake,
-  CalendarDays, MapPin, Search, Building2, Globe
+  CalendarDays, MapPin, Search, Building2, Globe, Sun, Moon
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
