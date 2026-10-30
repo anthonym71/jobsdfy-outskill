@@ -10,14 +10,24 @@ import MicrophoneControl from "./MicrophoneControl";
 interface VoiceInterviewBotProps {
   jobTitle?: string;
   company?: string;
+  jobId?: string;
+  onSaved?: () => void;
 }
 
-const VoiceInterviewBotInner = ({ jobTitle, company }: VoiceInterviewBotProps) => {
+const VoiceInterviewBotInner = ({ jobTitle, company, jobId, onSaved }: VoiceInterviewBotProps) => {
   const { toast } = useToast();
   const [isConnecting, setIsConnecting] = useState(false);
+  const [lines, setLines] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
   const microphone = useMicrophone();
 
   const conversation = useConversation({
+    onMessage: (message: any) => {
+      const user = message?.user_transcription_event?.user_transcript;
+      const agent = message?.agent_response_event?.agent_response;
+      if (message?.type === "user_transcript" && user) setLines(prev => [...prev, `Candidate: ${user}`]);
+      if (message?.type === "agent_response" && agent) setLines(prev => [...prev, `Interviewer: ${agent}`]);
+    },
     onConnect: () => {
       toast({ title: "Connected", description: "Voice AI interviewer is ready. Start speaking!" });
     },
@@ -34,6 +44,7 @@ const VoiceInterviewBotInner = ({ jobTitle, company }: VoiceInterviewBotProps) =
     setIsConnecting(true);
     try {
       const input = await microphone.prepare();
+      setLines([]);
 
       const { data, error } = await supabase.functions.invoke("elevenlabs-conversation-token");
       if (error || !data?.signed_url) {
@@ -58,7 +69,17 @@ const VoiceInterviewBotInner = ({ jobTitle, company }: VoiceInterviewBotProps) =
 
   const stopConversation = useCallback(async () => {
     await conversation.endSession();
-  }, [conversation]);
+    if (!lines.some(line => line.startsWith("Candidate:"))) return;
+    setSaving(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("interview-practice", { body: { transcript: lines.join("\n"), jobId: jobId || null } });
+      if (error || data?.error) throw new Error(data?.error || error?.message);
+      toast({ title: "Interview assessed and saved", description: "Your overview is ready below." });
+      onSaved?.();
+    } catch (e: any) {
+      toast({ title: "Couldn't save interview feedback", description: e.message || "Please try again.", variant: "destructive" });
+    } finally { setSaving(false); }
+  }, [conversation, lines, jobId, onSaved, toast]);
 
   const isConnected = conversation.status === "connected";
 
@@ -82,7 +103,7 @@ const VoiceInterviewBotInner = ({ jobTitle, company }: VoiceInterviewBotProps) =
       <MicrophoneControl microphone={microphone} disabled={isConnecting || isConnected} />
       <div className="flex items-center gap-3">
         {!isConnected ? (
-          <Button onClick={startConversation} disabled={isConnecting} className="gap-2">
+          <Button onClick={startConversation} disabled={isConnecting || saving} className="gap-2">
             {isConnecting ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -91,7 +112,7 @@ const VoiceInterviewBotInner = ({ jobTitle, company }: VoiceInterviewBotProps) =
             ) : (
               <>
                 <Mic className="h-4 w-4" />
-                Start Voice Practice
+                {saving ? "Saving feedback…" : "Start Voice Practice"}
               </>
             )}
           </Button>

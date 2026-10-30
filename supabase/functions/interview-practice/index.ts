@@ -22,10 +22,33 @@ serve(async (req) => {
     if (authError || !user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const body = await req.json();
-    const { jobId, sessionId, questionIndex, answer } = body;
+    const { jobId, sessionId, questionIndex, answer, transcript } = body;
 
     const lovableKey = Deno.env.get("LOVABLE_API_KEY");
     if (!lovableKey) return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+    if (typeof transcript === "string") {
+      const clean = transcript.trim().slice(0, 30000);
+      if (!clean.includes("Candidate:")) return new Response(JSON.stringify({ error: "No candidate answers to assess" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST", headers: { Authorization: `Bearer ${lovableKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "google/gemini-3-flash-preview", messages: [
+          { role: "system", content: "You are an honest interview coach. Assess only what the candidate said. Never invent experience." },
+          { role: "user", content: `Assess this voice interview transcript:\n${clean}` }],
+          tools: [{ type: "function", function: { name: "assess_interview", parameters: { type: "object", properties: {
+            score: { type: "number" }, strengths: { type: "array", items: { type: "string" } }, improvements: { type: "array", items: { type: "string" } }, suggestedAnswer: { type: "string" } },
+            required: ["score", "strengths", "improvements", "suggestedAnswer"], additionalProperties: false } } }],
+          tool_choice: { type: "function", function: { name: "assess_interview" } } }),
+      });
+      if (!aiResp.ok) return new Response(JSON.stringify({ error: aiResp.status === 429 ? "Rate limited." : aiResp.status === 402 ? "AI credits exhausted." : "AI assessment failed" }), { status: aiResp.status === 429 || aiResp.status === 402 ? aiResp.status : 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const args = (await aiResp.json()).choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+      if (!args) throw new Error("AI did not return an assessment");
+      const assessment = JSON.parse(args);
+      const adminClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      const { data: saved, error: saveError } = await adminClient.from("interview_sessions").insert({ user_id: user.id, job_id: jobId && jobId !== "general" ? jobId : null, questions: ["Voice interview"], answers: [clean], feedback: [assessment] }).select("id").single();
+      if (saveError) throw new Error("Could not save interview assessment. Please retry.");
+      return new Response(JSON.stringify({ success: true, data: { ...assessment, sessionId: saved.id } }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     // MODE 1: Score an answer for an existing session
     if (sessionId && typeof questionIndex === "number" && answer) {
