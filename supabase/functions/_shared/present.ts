@@ -48,3 +48,11 @@ export function toResponse(result: VerdictResult, hasEvidence: boolean): Verdict
     hasEvidence,
   };
 }
+
+/** Job statuses the verdict may set. Saved, applied, archived and later stages are the user's decisions and are kept. */
+const VERDICT_SETTABLE = new Set(["new", "reviewing", "blocked"]);
+
+export function nextStatus(current: string | null | undefined, verdict: Verdict): string {
+  if (current && !VERDICT_SETTABLE.has(current)) return current;
+  return verdict === "stop" ? "blocked" : "reviewing";
+}

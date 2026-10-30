@@ -51,8 +51,13 @@ const Dashboard = () => {
   const todayList = splitToday(tasks);
   const dueNow = [...todayList.overdue, ...todayList.today];
   const completeTask = async (taskId: string) => {
+    const before = tasks;
     setTasks((prev) => prev.filter((t) => t.id !== taskId));
-    await supabase.from("tasks").update({ status: "done", updated_at: new Date().toISOString() } as any).eq("id", taskId);
+    const { error } = await supabase.from("tasks").update({ status: "done", updated_at: new Date().toISOString() } as any).eq("id", taskId);
+    if (error) {
+      setTasks(before);
+      toast({ title: "Could not mark it done", description: "Please try again.", variant: "destructive" });
+    }
   };
 
   const goCount = jobs.filter((j) => j.verdict === "go").length;

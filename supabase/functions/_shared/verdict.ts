@@ -102,8 +102,25 @@ const GAMBLING = ["gambling", "casino", "betting", "sports betting", "real-money
 const norm = (s: string) => s.trim().toLowerCase();
 const country = (s: string) => COUNTRY_ALIASES[norm(s)] ?? norm(s);
 
+/**
+ * The user's allowed places are free text ("Germany, Netherlands, Remote EU"). Drop a leading "remote", expand regions
+ * to their countries, and report whether any entry could not be understood.
+ */
+function expandAllowed(allowed: string[]): { allow: string[]; unknownEntries: boolean } {
+  const allow: string[] = [];
+  let unknownEntries = false;
+  for (const raw of allowed) {
+    const t = country(norm(raw).replace(/^(remote|anywhere in|work from)\s+/, ""));
+    allow.push(t);
+    const region = REGIONS[t];
+    if (region) allow.push(...region.map(country));
+    else if (!isKnownCountry(t)) unknownEntries = true;
+  }
+  return { allow, unknownEntries };
+}
+
 function matchCountries(tokens: string[], allowed: string[]): "match" | "none" | "unrecognised" {
-  const allow = allowed.map(country);
+  const { allow, unknownEntries } = expandAllowed(allowed);
   let unrecognised = false;
   for (const raw of tokens) {
     const t = country(raw);
@@ -115,7 +132,8 @@ function matchCountries(tokens: string[], allowed: string[]): "match" | "none" |
       unrecognised = true;
     }
   }
-  return unrecognised ? "unrecognised" : "none";
+  // If part of the user's own list could not be understood, we cannot honestly say nothing matches.
+  return unrecognised || unknownEntries ? "unrecognised" : "none";
 }
 
 const KNOWN_COUNTRIES = new Set([
@@ -167,6 +185,7 @@ function location(x: Extraction["location"], l: Limits): LimitResult {
     return mk("location", { state: inside ? "pass" : "fail", userValue: `UTC${fmtOffset(l.utcOffset)}`, jobValue, quote: x.quote, reason: inside ? "Your time zone is inside the stated range." : "Your time zone is outside the stated range." });
   }
   const countries = x.countries ?? [];
+  if (!countries.length) return mk("location", { state: "unknown", userValue, jobValue: "no place named", quote: x.quote, reason: "The posting limits where you can work but does not name the places." });
   const m = matchCountries(countries, allowed);
   const jobValue = list(countries);
   if (m === "none") return mk("location", { state: "fail", userValue, jobValue, quote: x.quote, reason: "None of the places the posting accepts are in your allowed countries." });
@@ -235,7 +254,9 @@ function industry(x: Extraction["industries"], excluded: string[]): LimitResult 
   const hit = excluded.find((ex) => {
     const e = norm(ex);
     const group = GAMBLING.includes(e) ? GAMBLING : [e];
-    return names.some((n) => group.some((g) => n.includes(g) || g.includes(n)));
+    // One way only: the posting's industry must contain the excluded term or a synonym. The reverse test made
+    // "Gaming" match "real-money gaming" and "Sports" match "fantasy sports".
+    return names.some((n) => n.length > 0 && group.some((g) => n.includes(g)));
   });
   if (hit) return mk("industry", { state: "fail", userValue, jobValue: list(x?.names), quote: x?.quote, reason: `The company is in an industry you excluded (${hit}).` });
   return mk("industry", { state: "pass", userValue, jobValue: list(x?.names), reason: "No excluded industry found." });
@@ -293,12 +314,15 @@ export function evaluate(ex: Extraction | null | undefined, limits: Limits): Ver
 const squash = (s: string) =>
   s.toLowerCase().replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/[–—]/g, "-").replace(/\s+/g, " ").trim();
 
+const MIN_QUOTE = 5;
+
 /** Drops any quote that is not a verbatim piece of the posting. Returns the cleaned extraction and what was dropped. */
 export function verifyQuotes(ex: Extraction, sourceText: string): { extraction: Extraction; rejected: string[] } {
   const hay = squash(sourceText);
   const rejected: string[] = [];
   const clean = <T extends { quote?: string }>(o: T, where: string): T => {
-    if (o.quote && !hay.includes(squash(o.quote))) {
+    // A quote must be a real, specific piece of the posting. Very short ones (a letter, a word like "a") prove nothing.
+    if (o.quote && (squash(o.quote).length < MIN_QUOTE || !hay.includes(squash(o.quote)))) {
       rejected.push(`${where}: ${o.quote}`);
       return { ...o, quote: undefined };
     }

@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link2, FileText, Image, Mic, ArrowRight, Sparkles, AlertTriangle, ClipboardPaste, Chrome, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { withHistory } from "@/lib/risk";
+import { normaliseEditedSalary } from "@/lib/limits";
 import RiskPanel from "@/components/RiskPanel";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -79,11 +80,12 @@ const NewJob = () => {
     // If the user corrected the salary on the form, their figures replace the AI's and count as verified.
     const evidence = values.evidence ? { ...values.evidence } : null;
     if (evidence && (parseSalary(values.salaryMin) !== parseSalary(extracted?.salaryMin) || parseSalary(values.salaryMax) !== parseSalary(extracted?.salaryMax))) {
-      const min = parseSalary(values.salaryMin) || null;
-      const max = parseSalary(values.salaryMax) || null;
+      const cur = values.salaryCurrency || evidence.salary?.currency || "USD";
+      const min = normaliseEditedSalary(parseSalary(values.salaryMin), cur);
+      const max = normaliseEditedSalary(parseSalary(values.salaryMax), cur);
       // Clearing the salary means "not stated", not "zero".
       if (min === null && max === null) delete evidence.salary;
-      else evidence.salary = { min, max, currency: values.salaryCurrency || evidence.salary?.currency || "USD", userEdited: true };
+      else evidence.salary = { min, max, currency: cur, userEdited: true };
     }
 
     // History signs need data from outside the pasted text: have you saved this posting before, and since when?

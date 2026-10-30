@@ -27,8 +27,16 @@ export interface CheckedClaim {
   unsupported: string[];
 }
 
+/** A number in the generated text that appears nowhere in the user's profile. */
+export interface UnsupportedNumber {
+  number: string;
+  line: string;
+}
+
 export interface Trace {
   claims: CheckedClaim[];
+  /** Numbers anywhere in the generated text that no profile record contains. Checked on the text itself, not on the model's claims. */
+  unsupportedNumbers?: UnsupportedNumber[];
   total: number;
   /** Claims with no valid source or with numbers the source does not contain. */
   untraceable: number;
@@ -46,7 +54,7 @@ export function buildSources(profile: Row | null, work: Row[], education: Row[])
       kind: "profile",
       label: "Your profile summary",
       text: [
-        s(profile.full_name), s(profile.headline), s(profile.summary), s(profile.location),
+        s(profile.full_name), s(profile.headline), s(profile.summary), s(profile.location), s(profile.phone_number), s(profile.email),
         `${s(profile.years_of_experience)} years of experience`,
         list(profile.top_skills), list(profile.industries), list(profile.languages_spoken),
       ].join("\n"),
@@ -85,6 +93,33 @@ export function numbersIn(text: string): string[] {
   return found.map((n) => n.replace(/,/g, "").replace(/\.$/, ""));
 }
 
+/** "35" and "35%" count as the same number. */
+const inSet = (have: Set<string>, n: string) => {
+  const bare = n.replace(/%$/, "");
+  return have.has(n) || have.has(bare) || have.has(bare + "%");
+};
+
+/**
+ * The model decides which lines to list as claims, so a fabricated bullet it leaves out would never be checked.
+ * This looks at the generated text itself: every number must appear somewhere in the user's own records.
+ */
+export function findUnsupportedNumbers(texts: string[], sources: Source[]): UnsupportedNumber[] {
+  const have = new Set(sources.flatMap((x) => numbersIn(x.text)));
+  const seen = new Set<string>();
+  const out: UnsupportedNumber[] = [];
+  for (const text of texts) {
+    for (const rawLine of text.split(/\r?\n/)) {
+      const line = rawLine.replace(/^\s*\d+[.)]\s+/, ""); // "1. " list markers are not data
+      for (const n of numbersIn(line)) {
+        if (inSet(have, n) || seen.has(n)) continue;
+        seen.add(n);
+        out.push({ number: n, line: rawLine.trim().slice(0, 200) });
+      }
+    }
+  }
+  return out;
+}
+
 export function checkClaims(claims: Claim[], sources: Source[]): Trace {
   const byId = new Map(sources.map((x) => [x.id, x]));
   const checked: CheckedClaim[] = claims
@@ -95,7 +130,7 @@ export function checkClaims(claims: Claim[], sources: Source[]): Trace {
       const src = byId.get(c.sourceId);
       if (!src) return { ...base, sourceLabel: null, status: "unknown_source" as const, unsupported: [] };
       const have = new Set(numbersIn(src.text));
-      const missing = numbersIn(c.text).filter((n) => !have.has(n) && !have.has(n.replace(/%$/, "")));
+      const missing = numbersIn(c.text).filter((n) => !inSet(have, n));
       return missing.length
         ? { ...base, sourceLabel: src.label, status: "unsupported_number" as const, unsupported: missing }
         : { ...base, sourceLabel: src.label, status: "ok" as const, unsupported: [] };

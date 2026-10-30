@@ -10,6 +10,7 @@ import { useCredits } from "@/hooks/useCredits";
 import { Checkbox } from "@/components/ui/checkbox";
 import TracePanel from "@/components/TracePanel";
 import { createJobTasks } from "@/lib/followups";
+import type { Json } from "@/integrations/supabase/types";
 import type { Trace } from "../../supabase/functions/_shared/traceability";
 
 interface AppPack {
@@ -205,9 +206,9 @@ const QuickApply = () => {
       const remaining = versions.filter(vv => vv.version !== version);
       for (const rv of remaining) {
         await supabase.from("application_assets").insert([
-          { job_id: id!, user_id: session!.user.id, asset_type: "resume", content: rv.resume },
-          { job_id: id!, user_id: session!.user.id, asset_type: "cover_note", content: rv.coverNote },
-          { job_id: id!, user_id: session!.user.id, asset_type: "recruiter_note", content: rv.recruiterNote },
+          { job_id: id!, user_id: session!.user.id, asset_type: "resume", content: rv.resume, version: rv.version, is_draft: rv.isDraft, trace: rv.trace as unknown as Json },
+          { job_id: id!, user_id: session!.user.id, asset_type: "cover_note", content: rv.coverNote, version: rv.version, is_draft: rv.isDraft },
+          { job_id: id!, user_id: session!.user.id, asset_type: "recruiter_note", content: rv.recruiterNote, version: rv.version, is_draft: rv.isDraft },
         ]);
       }
       setVersions(remaining);
@@ -258,7 +259,7 @@ const QuickApply = () => {
           ? { resume: drafts.resume, coverNote: drafts.coverNote, recruiterNote: drafts.recruiterNote }
           : { resume: v.resume, coverNote: v.coverNote, recruiterNote: v.recruiterNote };
         allAssets.push(
-          { job_id: id!, user_id: session!.user.id, asset_type: "resume", content: data.resume, version: v.version, is_draft: v.isDraft },
+          { job_id: id!, user_id: session!.user.id, asset_type: "resume", content: data.resume, version: v.version, is_draft: v.isDraft, trace: v.trace as unknown as Json },
           { job_id: id!, user_id: session!.user.id, asset_type: "cover_note", content: data.coverNote, version: v.version, is_draft: v.isDraft },
           { job_id: id!, user_id: session!.user.id, asset_type: "recruiter_note", content: data.recruiterNote, version: v.version, is_draft: v.isDraft },
         );

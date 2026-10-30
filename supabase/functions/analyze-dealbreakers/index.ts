@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { evaluate, type Extraction } from "../_shared/verdict.ts";
 import { toLimits } from "../_shared/limits.ts";
-import { toResponse } from "../_shared/present.ts";
+import { nextStatus, toResponse } from "../_shared/present.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -72,7 +72,7 @@ serve(async (req) => {
     }
     await admin.from("jobs").update({
       verdict: result.verdict,
-      status: result.verdict === "stop" ? "blocked" : "reviewing",
+      status: nextStatus(job.status, result.verdict),
       updated_at: new Date().toISOString(),
     }).eq("id", jobId);
 

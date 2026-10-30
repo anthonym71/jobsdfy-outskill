@@ -62,3 +62,13 @@ export function extraLimitColumns(f: LimitFormValues) {
     remote_preference: officeDaysToRemotePreference(maxOfficeDays),
   };
 }
+
+/**
+ * A salary the user retyped on the extraction form may be in the units they think in rather than rupees or dollars.
+ * Treat a tiny INR figure as lakh per year, and a small figure in any other currency as thousands.
+ */
+export function normaliseEditedSalary(n: number | null, currency: string): number | null {
+  if (!n || n <= 0) return null;
+  if (isInr(currency)) return n < 10_000 ? n * 100_000 : n;
+  return n < 1_000 ? n * 1_000 : n;
+}

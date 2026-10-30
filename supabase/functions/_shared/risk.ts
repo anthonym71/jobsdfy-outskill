@@ -83,7 +83,9 @@ const RULES: TextRule[] = [
     id: "off_platform_contact", strength: "strong", label: "Contact only through a chat app or personal email",
     explanation: "Hiring that runs only through WhatsApp, Telegram or a free email address is a common pattern in fraudulent postings.",
     test: (l) =>
-      /\b(whatsapp|telegram|signal)\b/i.test(l) ||
+      // A chat app named together with an instruction to get in touch. "Share on WhatsApp" buttons and words like
+      // "signal processing" are not a hiring channel.
+      (/\b(whatsapp|telegram)\b/i.test(l) && !/\bshare\b/i.test(l) && /\b(send|contact|reach|message|msg|chat|apply|resume|cv|dm|call|text|ping)\b/i.test(l)) ||
       (/\b[\w.+-]+@(gmail|yahoo|hotmail|outlook|rediffmail)\.com\b/i.test(l) && /\b(send|apply|contact|mail|email|cv|resume)\b/i.test(l)),
   },
   {

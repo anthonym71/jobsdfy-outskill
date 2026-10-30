@@ -159,9 +159,13 @@ const Onboarding = () => {
       if (imported) {
         const { work, education } = cvToRows(imported, user.id);
         const { count } = await supabase.from("work_history").select("id", { count: "exact", head: true }).eq("user_id", user.id);
-        if (!count && work.length) await supabase.from("work_history").insert(work);
+        let importFailed = false;
+        if (!count && work.length) importFailed = !!(await supabase.from("work_history").insert(work)).error;
         const { count: eduCount } = await supabase.from("education").select("id", { count: "exact", head: true }).eq("user_id", user.id);
-        if (!eduCount && education.length) await supabase.from("education").insert(education);
+        if (!eduCount && education.length) importFailed = importFailed || !!(await supabase.from("education").insert(education)).error;
+        if (importFailed) {
+          toast({ title: "Profile saved, but your CV history was not imported", description: "Add your work history and education from Profile.", variant: "destructive" });
+        }
       }
 
       await awardStepCredits(4);

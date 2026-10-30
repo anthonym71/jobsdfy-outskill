@@ -86,3 +86,25 @@ describe("verifyQuotes", () => {
     expect(evaluate(extraction, { minSalary: L.minSalary }).verdict).toBe("review");
   });
 });
+
+describe("hardening", () => {
+  it("a restricted location that names no places is unknown, never a STOP", () => {
+    expect(state({ location: { eligibility: "listed", countries: [], confirmed: true, quote: "q" } }, L, "location")).toBe("unknown");
+  });
+
+  it("a trivially short quote is rejected, so it cannot support a STOP", () => {
+    const { extraction, rejected } = verifyQuotes({ salary: { min: 1, max: 2, currency: "INR", quote: "a" } }, "a salary line, a b c");
+    expect(rejected).toHaveLength(1);
+    expect(extraction.salary?.quote).toBeUndefined();
+    expect(evaluate(extraction, { minSalary: L.minSalary }).verdict).toBe("review");
+  });
+
+  it("currency codes are case-insensitive", () => {
+    expect(state({ salary: { min: 3_000_000, max: 4_000_000, currency: "inr", quote: "CTC 30-40" } }, L, "ctc_min")).toBe("pass");
+  });
+
+  it("zero travel passes and a missing salary object is unknown", () => {
+    expect(state({ travel: { percentMax: 0, quote: "no travel" } }, { maxTravelPercent: 10 }, "travel")).toBe("pass");
+    expect(state({}, { minSalary: L.minSalary }, "ctc_min")).toBe("unknown");
+  });
+});

@@ -40,7 +40,7 @@ describe("TracePanel", () => {
       { text: "Cut cost by 90%", sourceId: "work:w1" },
     ], sources);
     render(<TracePanel trace={trace} />);
-    expect(screen.getByText(/1 of 2 lines trace to your profile/)).toBeInTheDocument();
+    expect(screen.getByText(/1 of 2 listed lines trace to your profile/)).toBeInTheDocument();
     expect(screen.getByText("Dev at Acme")).toBeInTheDocument();
     expect(screen.getByText(/90% does not appear in the record it cites/)).toBeInTheDocument();
   });

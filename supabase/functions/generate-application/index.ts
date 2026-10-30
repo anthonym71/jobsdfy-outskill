@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { buildSources, checkClaims, sourcesForPrompt } from "../_shared/traceability.ts";
+import { buildSources, checkClaims, findUnsupportedNumbers, sourcesForPrompt } from "../_shared/traceability.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -214,7 +214,8 @@ Use the tool provided to return structured output.`;
 
     // Check each claim against the user's own records. Flagged lines are shown to the user, never hidden.
     const trace = checkClaims(Array.isArray(result.claims) ? result.claims : [], sources);
-    result.traceability = { ...trace, sources: sources.map((x) => ({ id: x.id, label: x.label })) };
+    const unsupportedNumbers = findUnsupportedNumbers([result.resume, result.coverNote, result.recruiterNote].filter((t): t is string => typeof t === "string"), sources);
+    result.traceability = { ...trace, unsupportedNumbers, sources: sources.map((x) => ({ id: x.id, label: x.label })) };
 
     // Save application assets to DB
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
