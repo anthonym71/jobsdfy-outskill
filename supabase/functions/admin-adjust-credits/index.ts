@@ -30,7 +30,7 @@ serve(async (req) => {
     const callerEmail = userData.user.email || "";
 
     // Verify admin role
-    const { data: roleCheck } = await supabaseAdmin.rpc("has_role", { _user_id: callerId, _role: "admin" });
+    const { data: roleCheck } = await supabaseAdmin.rpc("can_write_admin", { _user_id: callerId });
     if (!roleCheck) throw new Error("Unauthorized: admin role required");
 
     // Parse request body

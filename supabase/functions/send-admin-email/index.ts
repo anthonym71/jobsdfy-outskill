@@ -22,8 +22,8 @@ serve(async (req) => {
     const { data: userData, error: userError } = await supabase.auth.getUser(token);
     if (userError || !userData.user) throw new Error("Unauthorized");
 
-    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userData.user.id);
-    if (!roles?.some((r: any) => r.role === "admin")) throw new Error("Admin access required");
+    const { data: allowed } = await supabase.rpc("can_write_admin", { _user_id: userData.user.id });
+    if (!allowed) throw new Error("Writable admin access required");
 
     const { to, subject, body } = await req.json();
     if (!to || !subject || !body) throw new Error("'to', 'subject', and 'body' are required");

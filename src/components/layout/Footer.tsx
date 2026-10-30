@@ -38,6 +38,7 @@ const Footer = () => (
         <div className="space-y-3">
           <span className="text-sm font-semibold text-foreground">Legal</span>
           <div className="space-y-2 text-xs text-muted-foreground">
+            <Link to="/terms" className="block hover:text-foreground transition-colors">Terms</Link>
             <a href="http://fflipi.com/privacy-policy" target="_blank" rel="noopener noreferrer" className="block hover:text-foreground transition-colors">
               Privacy Policy
             </a>

@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
+import TermsCheckbox from "@/components/TermsCheckbox";
+import { TERMS_VERSION } from "@/lib/terms";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -14,6 +16,7 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [termsChecked, setTermsChecked] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, isLoading } = useAuth();
@@ -30,13 +33,14 @@ const Auth = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSignUp && !termsChecked) return;
     setLoading(true);
     try {
       if (isSignUp) {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin },
+          options: { emailRedirectTo: window.location.origin, data: { terms_accepted: true, terms_version: TERMS_VERSION } },
         });
         if (error) throw error;
         if (data.session) {
@@ -101,7 +105,8 @@ const Auth = () => {
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            {isSignUp && <TermsCheckbox checked={termsChecked} onChange={setTermsChecked} />}
+            <Button type="submit" className="w-full" disabled={loading || (isSignUp && !termsChecked)}>
               {loading ? (
                 <span className="flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />

@@ -44,6 +44,8 @@ import PhotoGalleryPage from "./pages/PhotoGalleryPage";
 import EventsPage from "./pages/EventsPage";
 import CompanyPage from "./pages/CompanyPage";
 import EventRegistrationsPage from "./pages/EventRegistrationsPage";
+import Terms from "./pages/Terms";
+import TermsGate from "./components/TermsGate";
 
 const queryClient = new QueryClient();
 
@@ -78,7 +80,9 @@ const App = () => (
             <Route path="/r/:slug" element={<SlugRedirect type="ref" />} />
             <Route path="/a/:slug" element={<SlugRedirect type="aff" />} />
             <Route path="/affiliate-terms" element={<AffiliateTerms />} />
+            <Route path="/terms" element={<Terms />} />
             <Route element={<ProtectedRoute />}>
+              <Route element={<TermsGate />}>
               <Route path="/onboarding" element={<Onboarding />} />
               <Route element={<OnboardingGuard />}>
                 <Route element={<AppLayout />}>
@@ -114,6 +118,7 @@ const App = () => (
                   <Route path="/app/companies" element={<CompanyPage />} />
                   <Route path="/app/event-registrations" element={<EventRegistrationsPage />} />
                 </Route>
+              </Route>
               </Route>
             </Route>
             <Route path="*" element={<NotFound />} />

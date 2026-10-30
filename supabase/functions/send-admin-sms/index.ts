@@ -31,8 +31,8 @@ serve(async (req) => {
     if (userError || !userData.user) throw new Error("Unauthorized");
 
     // Check admin role
-    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userData.user.id);
-    if (!roles?.some((r: any) => r.role === "admin")) throw new Error("Admin access required");
+    const { data: allowed } = await supabase.rpc("can_write_admin", { _user_id: userData.user.id });
+    if (!allowed) throw new Error("Writable admin access required");
 
     const { to, message } = await req.json();
     if (!to || !message) throw new Error("'to' and 'message' are required");
