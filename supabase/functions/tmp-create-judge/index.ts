@@ -8,7 +8,7 @@ Deno.serve(async (req) => {
     email: "judges@jobsdfy.com",
     password: body.password,
     email_confirm: true,
-    user_metadata: { full_name: "Hackathon Judges" },
+    user_metadata: { full_name: "Hackathon Judges", terms_version: "2026-10-30", terms_accepted: "true" },
   });
   return new Response(JSON.stringify({ id: data?.user?.id, error: error?.message }), {
     headers: { "Content-Type": "application/json" },
