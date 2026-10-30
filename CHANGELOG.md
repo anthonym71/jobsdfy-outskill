@@ -6,3 +6,4 @@
 | 2026-10-30 | Owner, hackathon team and read-only judges access | Anthony | Lovable | Verified emails required; owner designated as anthony@ifactoryusa.com; anthony@fflipi.com included in team |
 | 2026-10-30 | Mandatory change log and standing project instructions | Anthony | Lovable | Default suggester: Anthony |
 | 2026-10-30 | Server write guards, protected cancellation, read-only payment/phone actions and admin onboarding bypass | Anthony | Lovable | Judges can reach admin pages without creating a profile; terms acceptance still required |
+| 2026-10-30 | Created judges@jobsdfy.com (confirmed, read-only judge, 500 credits); fixed access guard bug that blocked owner/team/judge signups | Anthony | Lovable | Guard referenced a missing column on user_roles inserts |
