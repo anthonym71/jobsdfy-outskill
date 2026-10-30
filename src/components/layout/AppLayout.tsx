@@ -4,8 +4,10 @@ import {
   CreditCard, HelpCircle, ShieldCheck, Users, UserCircle, CalendarDays, 
   Coins, ListTodo, ClipboardList, Bookmark, Film, Lightbulb, Share2, 
   Brain, Crown, MessageSquare, GraduationCap, Camera, Building2, Ticket,
-  BookOpen
+  BookOpen, Library
 } from "lucide-react";
+import AppSearch from "@/components/layout/AppSearch";
+import { loadGhlWidget } from "@/lib/ghl";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,7 +21,7 @@ const baseNavItems: { to: string; icon: any; label: string; end?: boolean }[] = 
   { to: "/app", icon: LayoutDashboard, label: "Dashboard", end: true },
   { to: "/app/new-job", icon: PlusCircle, label: "Check a Job" },
   { to: "/app/jobs", icon: Briefcase, label: "Jobs" },
-  { to: "/app/profile", icon: UserCircle, label: "Profile" },
+  { to: "/app/profile", icon: UserCircle, label: "Profile - Onboarding" },
   { to: "/app/events", icon: CalendarDays, label: "Calendar / Events" },
   { to: "/app/tasks", icon: ListTodo, label: "Tasks" },
 { to: "/app/books", icon: BookOpen, label: "Intellectual Foundation" },
@@ -42,6 +44,7 @@ const adminNavItems: { to: string; icon: any; label: string; end?: boolean }[] =
   { to: "/app/admin", icon: ShieldCheck, label: "Admin" },
   { to: "/app/admin/users", icon: Users, label: "Users" },
   { to: "/app/admin/logs", icon: ClipboardList, label: "Events Log" },
+  { to: "/app/admin/knowledge", icon: Library, label: "Knowledgebase & Guide" },
 ];
 
 const AppLayout = () => {
@@ -50,6 +53,9 @@ const AppLayout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [profileName, setProfileName] = useState("");
+  const [onboarded, setOnboarded] = useState(true);
+
+  useEffect(() => { loadGhlWidget(); }, []);
   const { credits } = useCredits();
 
   useEffect(() => {
@@ -57,7 +63,7 @@ const AppLayout = () => {
     supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle()
       .then(({ data }) => setIsAdmin(!!data));
     supabase.from("user_profiles").select("full_name").eq("user_id", user.id).maybeSingle()
-      .then(({ data }) => setProfileName(data?.full_name || ""));
+      .then(({ data }) => { setProfileName(data?.full_name || ""); setOnboarded(!!data); });
   }, [user]);
 
   const navItems = isAdmin ? [...baseNavItems, ...adminNavItems] : baseNavItems;
@@ -95,7 +101,7 @@ const AppLayout = () => {
             key={item.to}
             to={item.to}
             end={item.end}
-            onClick={() => setMobileOpen(false)}
+            onClick={(e) => { setMobileOpen(false); if (item.to === "/app/profile" && !onboarded) { e.preventDefault(); navigate("/onboarding"); } }}
             className={({ isActive }) => cn(
               "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
               isActive
@@ -104,7 +110,11 @@ const AppLayout = () => {
             )}
           >
             <item.icon className="h-4 w-4" />
-            {item.label}
+            {item.to === "/app/profile" ? (
+              <span>Profile - <span className={cn(!onboarded && "animate-pulse font-semibold text-verdict-review")}>Onboarding</span>
+                {!onboarded && <span className="ml-1.5 inline-block h-2 w-2 rounded-full bg-verdict-review animate-ping" aria-label="Onboarding incomplete" />}
+              </span>
+            ) : item.label}
           </NavLink>
         ))}
       </nav>
@@ -139,8 +149,8 @@ const AppLayout = () => {
         </div>
       </div>
 
-      <div className="hidden md:flex fixed top-0 left-60 right-0 z-40 items-center justify-between border-b border-border bg-card px-6 py-2">
-        <div />
+      <div className="hidden md:flex fixed top-0 left-60 right-0 z-40 items-center justify-between border-b border-border bg-card px-6 py-2 gap-4">
+        <AppSearch pages={navItems.map(({ to, label }) => ({ to, label }))} />
         <div className="flex items-center gap-3">
           {userInfoBlock}
           <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-muted-foreground hover:text-foreground">

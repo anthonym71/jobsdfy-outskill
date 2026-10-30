@@ -23,6 +23,7 @@ import Pricing from "./pages/Pricing";
 import Support from "./pages/Support";
 import AdminHelpdesk from "./pages/AdminHelpdesk";
 import AdminUsers from "./pages/AdminUsers";
+import AdminKnowledge from "./pages/AdminKnowledge";
 import PostJob from "./pages/PostJob";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -105,6 +106,7 @@ const App = () => (
                   <Route path="/app/admin" element={<AdminHelpdesk />} />
                   <Route path="/app/admin/users" element={<AdminUsers />} />
                   <Route path="/app/admin/logs" element={<AdminAuditLog />} />
+                  <Route path="/app/admin/knowledge" element={<AdminKnowledge />} />
                   <Route path="/app/tasks" element={<Tasks />} />
                   <Route path="/app/extension" element={<ExtensionDownload />} />
                   <Route path="/app/books" element={<BooksPage />} />
