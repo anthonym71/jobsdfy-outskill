@@ -1,14 +1,24 @@
 {
   "_note": "Sample candidate used to judge every posting in labels.json. Replace with your own real limits before labelling real postings.",
   "location": "Bengaluru, India",
-  "allowed_countries": ["India"],
+  "allowed_countries": [
+    "India"
+  ],
   "requires_visa_sponsorship": false,
   "min_ctc_lpa": 25,
   "ctc_currency": "INR",
   "notice_period_days": 60,
   "office_policy": "hybrid_max_3_days_or_remote",
-  "languages": ["English", "Hindi"],
-  "employment_type_preferences": ["Full-time"],
+  "languages": [
+    "English",
+    "Hindi"
+  ],
+  "employment_type_preferences": [
+    "Full-time"
+  ],
   "max_travel_percent": 10,
-  "industry_exclusions": ["Gambling"]
+  "industry_exclusions": [
+    "Gambling"
+  ],
+  "utc_offset": 5.5
 }

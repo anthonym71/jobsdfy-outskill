@@ -21,3 +21,9 @@ npm run eval:score                       # accuracy, STOP->GO misses, wrong STOP
 npm test                                 # includes scorer unit tests
 ```
 Track STOP->GO misses first: a missed STOP wastes the user's time, which is the product's whole promise.
+
+## Engine v2 (plain-code verdict)
+The AI only reads quoted evidence out of a posting; `supabase/functions/_shared/verdict.ts` decides.
+- `oracle-extractions.ts` is a hand-written perfect reading of all 53 postings. `npm test` proves the rules turn it into every confirmed label.
+- `LOVABLE_API_KEY=... npm run eval:run:v2` then `npm run eval:score:v2` measures the real AI reader plus the rules.
+- Compare `results/engine-v2.extractions.json` with the oracle: a disagreement is an extraction error, not a rules error.

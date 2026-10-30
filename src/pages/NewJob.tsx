@@ -73,7 +73,19 @@ const NewJob = () => {
     const sourceType = options?.sourceType ?? (tab as "url" | "text" | "screenshot" | "voice");
     const sourceInput = options?.sourceInput ?? (sourceType === "url" ? url : text);
 
+    // Keep the AI's quoted evidence with the job so the verdict can be checked later.
+    // If the user corrected the salary on the form, their figures replace the AI's and count as verified.
+    const evidence = values.evidence ? { ...values.evidence } : null;
+    if (evidence && (parseSalary(values.salaryMin) !== parseSalary(extracted?.salaryMin) || parseSalary(values.salaryMax) !== parseSalary(extracted?.salaryMax))) {
+      const min = parseSalary(values.salaryMin) || null;
+      const max = parseSalary(values.salaryMax) || null;
+      // Clearing the salary means "not stated", not "zero".
+      if (min === null && max === null) delete evidence.salary;
+      else evidence.salary = { min, max, currency: values.salaryCurrency || evidence.salary?.currency || "USD", userEdited: true };
+    }
+
     const { data: job, error } = await supabase.from("jobs").insert({
+      extraction: evidence,
       user_id: user.id,
       title: values.title || "",
       company: values.company || "",

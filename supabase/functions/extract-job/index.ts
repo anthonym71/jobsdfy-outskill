@@ -1,4 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { EVIDENCE_PROMPT, EVIDENCE_SCHEMA } from "../_shared/extraction-schema.ts";
+import { verifyQuotes } from "../_shared/verdict.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -104,7 +106,8 @@ serve(async (req) => {
 If a field is not found or unclear, use an empty string "" for strings or an empty array [] for arrays.
 
 Content:
-${jobContent.slice(0, 12000)}`;
+${jobContent.slice(0, 12000)}
+${EVIDENCE_PROMPT}`;
 
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -152,6 +155,7 @@ ${jobContent.slice(0, 12000)}`;
                   atsKeywords: { type: "array", items: { type: "string" }, description: "Top 15 ATS keywords ranked by importance" },
                   successSignals: { type: "array", items: { type: "string" }, description: "Success signals the hiring manager is looking for" },
                   rejectionReasons: { type: "array", items: { type: "string" }, description: "Likely reasons a candidate would be rejected" },
+                  evidence: EVIDENCE_SCHEMA,
                 },
                 required: [
                   "title", "company", "location", "salaryMin", "salaryMax",
@@ -160,7 +164,7 @@ ${jobContent.slice(0, 12000)}`;
                   "requirementsSummary", "applicationUrl",
                   "seniorityLevel", "requiredSkills", "preferredSkills",
                   "coreResponsibilities", "systemsTools", "atsKeywords",
-                  "successSignals", "rejectionReasons",
+                  "successSignals", "rejectionReasons", "evidence",
                 ],
                 additionalProperties: false,
               },
@@ -204,6 +208,11 @@ ${jobContent.slice(0, 12000)}`;
     }
 
     const extracted = JSON.parse(toolCall.function.arguments);
+
+    // Keep only quotes that really appear in the posting; a quote we cannot find cannot support a STOP.
+    const checked = verifyQuotes(extracted.evidence ?? {}, jobContent);
+    extracted.evidence = checked.extraction;
+    extracted.evidenceRejected = checked.rejected;
 
     if (url && !extracted.applicationUrl) {
       extracted.applicationUrl = url;

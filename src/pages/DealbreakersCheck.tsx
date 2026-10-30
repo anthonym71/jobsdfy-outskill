@@ -30,9 +30,17 @@ interface AnalysisResult {
     userValue: string;
     jobValue: string;
     note?: string;
+    limit?: string;
+    state?: "pass" | "fail" | "unknown";
+    soft?: boolean;
+    quote?: string | null;
   }>;
   alignment: Array<{ label: string; aligned: boolean }>;
+  hasEvidence?: boolean;
 }
+
+// Show what breaks first, then what is unclear, then what fits.
+const rank = (status: string) => (status === "confirmed" ? 0 : status === "unclear" ? 1 : 2);
 
 const DealbreakersCheck = () => {
   const { id } = useParams();
@@ -78,6 +86,18 @@ const DealbreakersCheck = () => {
     }
   };
 
+  // Logs the user's disagreement so wrong results can be added to the eval set.
+  const reportWrong = async (limit?: string) => {
+    await supabase.functions.invoke("log-event", {
+      body: {
+        action: limit ? "verdict_field_wrong" : "verdict_disagree",
+        description: limit ? `User says the ${limit} result is wrong` : "User disagrees with the verdict",
+        metadata: { jobId: id, verdict: result?.verdict, limit: limit ?? null },
+      },
+    });
+    toast({ title: "Thanks, noted", description: "We will use this to check the verdict." });
+  };
+
   const handleSave = async () => {
     await supabase.from("jobs").update({ status: "saved" }).eq("id", id!);
     toast({ title: "Job saved" });
@@ -112,7 +132,7 @@ const DealbreakersCheck = () => {
           <ShieldAlert className={`h-10 w-10 ${vs.text}`} />
           <VerdictBadge verdict={verdict} size="lg" />
           <p className={`text-sm font-medium ${vs.text} max-w-md`}>
-            {verdictMessages[verdict]}
+            {result.summary || verdictMessages[verdict]}
           </p>
         </div>
       </div>
@@ -133,9 +153,11 @@ const DealbreakersCheck = () => {
       <div>
         <h2 className="font-heading text-base font-semibold text-foreground mb-4">Detailed Breakdown</h2>
         <div className="grid gap-3 sm:grid-cols-2">
-          {blockers.map((b, i) => (
-            <BlockerCard key={i} {...b} />
-          ))}
+          {[...blockers]
+            .sort((a, b) => rank(a.status) - rank(b.status))
+            .map((b, i) => (
+              <BlockerCard key={i} {...b} onDisagree={() => reportWrong(b.limit ?? b.category)} />
+            ))}
         </div>
       </div>
 
@@ -144,6 +166,7 @@ const DealbreakersCheck = () => {
         <div className="flex gap-2">
           <Button variant="ghost" size="sm" onClick={() => navigate(-1)}><ArrowLeft className="mr-1.5 h-4 w-4" />Back</Button>
           <Button variant="outline" size="sm" onClick={handleSave}><Bookmark className="mr-1.5 h-4 w-4" />Save</Button>
+          <Button variant="ghost" size="sm" onClick={() => reportWrong()}>I disagree</Button>
         </div>
         <Button size="sm" onClick={() => navigate(`/app/decision/${id}`)}>
           Approved & Continue

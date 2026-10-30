@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { evaluate, type Extraction, type Limits } from "../_shared/verdict.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,217 +8,109 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+// The verdict is decided by plain code (see _shared/verdict.ts), not by an AI model.
+// The AI only read the posting earlier, in extract-job, and had to quote every fact it used.
+
+// Maps a user's saved non-negotiables onto the rule engine's limits. Columns that
+// do not exist yet (languages, notice period, office days) are read if present.
+function toLimits(n: Record<string, any>): Limits {
+  const limits: Limits = {};
+  if (n.min_salary && n.min_salary > 0) limits.minSalary = { amount: n.min_salary, currency: n.salary_currency || "USD" };
+  if (n.allowed_countries?.length) limits.allowedCountries = n.allowed_countries;
+  if (typeof n.max_office_days === "number") limits.maxOfficeDays = n.max_office_days;
+  else if (n.remote_preference === "remote") limits.maxOfficeDays = 0;
+  else if (n.remote_preference === "hybrid") limits.maxOfficeDays = 4; // "hybrid OK" = anything but fully on site
+  if (n.employment_type_preferences?.length) limits.employmentTypes = n.employment_type_preferences;
+  if (n.languages?.length) limits.languages = n.languages;
+  if (typeof n.max_travel_percent === "number") limits.maxTravelPercent = n.max_travel_percent;
+  if (n.industry_exclusions?.length) limits.industryExclusions = n.industry_exclusions;
+  if (typeof n.notice_period_days === "number") limits.noticePeriodDays = n.notice_period_days;
+  if (typeof n.utc_offset === "number") limits.utcOffset = n.utc_offset;
+  if (n.requires_visa_sponsorship) limits.requiresVisaSponsorship = true;
+  return limits;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Missing authorization" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!authHeader) return json({ error: "Missing authorization" }, 401);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey, {
+    const supabase = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (authError || !user) return json({ error: "Unauthorized" }, 401);
 
     const { jobId } = await req.json();
-    if (!jobId) {
-      return new Response(JSON.stringify({ error: "jobId required" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!jobId) return json({ error: "jobId required" }, 400);
 
-    // Fetch job + user non-negotiables
     const [jobRes, nonNegRes] = await Promise.all([
       supabase.from("jobs").select("*").eq("id", jobId).eq("user_id", user.id).single(),
       supabase.from("user_non_negotiables").select("*").eq("user_id", user.id).single(),
     ]);
-
-    if (jobRes.error || !jobRes.data) {
-      return new Response(JSON.stringify({ error: "Job not found" }), {
-        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (jobRes.error || !jobRes.data) return json({ error: "Job not found" }, 404);
+    if (!nonNegRes.data) return json({ error: "Please complete onboarding first (set your non-negotiables)." }, 422);
 
     const job = jobRes.data;
-    const nonNegs = nonNegRes.data;
+    const hasEvidence = !!job.extraction;
+    // Salary corrections made on the extraction form are merged into job.extraction when the job is saved (NewJob.tsx).
+    const result = evaluate((job.extraction ?? {}) as Extraction, toLimits(nonNegRes.data));
 
-    if (!nonNegs) {
-      return new Response(JSON.stringify({ error: "Please complete onboarding first (set your non-negotiables)." }), {
-        status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Same shape the screen already reads (status / severity), plus the new evidence fields.
+    const blockers = result.results.map((r) => ({
+      limit: r.limit,
+      category: r.label,
+      state: r.state,
+      soft: !!r.soft,
+      status: r.state === "fail" ? "confirmed" : r.state === "unknown" ? "unclear" : "ok",
+      severity: r.state === "fail" ? "confirmed" : "unclear",
+      userValue: r.userValue,
+      jobValue: r.jobValue,
+      note: r.reason,
+      quote: r.quote ?? null,
+    }));
+    const alignment = result.results.map((r) => ({ label: r.label, aligned: r.state === "pass" }));
+    const summary = hasEvidence
+      ? result.summary
+      : "This job was saved before evidence checking existed, so nothing could be verified. Add it again to get a full check.";
+
+    // Save one row per checked limit, then the verdict.
+    const admin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    await admin.from("job_blockers").delete().eq("job_id", jobId);
+    if (blockers.length) {
+      await admin.from("job_blockers").insert(
+        blockers.map((b) => ({
+          job_id: jobId,
+          user_id: user.id,
+          category: b.category,
+          label: b.category,
+          description: b.note,
+          severity: b.severity,
+          job_value: b.jobValue,
+          user_value: b.userValue,
+          limit_key: b.limit,
+          state: b.state,
+          quote: b.quote,
+          soft: b.soft,
+        })),
+      );
     }
-
-    const lovableKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!lovableKey) {
-      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const prompt = `You are a job dealbreaker analyzer. Compare this job against the user's non-negotiables and determine if there are hard blockers.
-
-JOB DATA:
-- Title: ${job.title}
-- Company: ${job.company}
-- Location: ${job.location}
-- Salary: ${job.salary_min}-${job.salary_max} ${job.salary_currency}
-- Work Model: ${job.work_model}
-- Employment Type: ${job.employment_type}
-- Visa Policy: ${job.visa_policy}
-- Language Requirements: ${job.language_requirements}
-- Description: ${job.description}
-- Requirements: ${job.requirements_summary}
-
-USER NON-NEGOTIABLES:
-- Minimum Salary: ${nonNegs.min_salary} ${nonNegs.salary_currency}
-- Allowed Countries: ${(nonNegs.allowed_countries || []).join(", ") || "Any"}
-- Remote Preference: ${nonNegs.remote_preference}
-- Requires Visa Sponsorship: ${nonNegs.requires_visa_sponsorship}
-- Employment Types: ${(nonNegs.employment_type_preferences || []).join(", ") || "Any"}
-- Max Travel: ${nonNegs.max_travel_percent}%
-- Industry Exclusions: ${(nonNegs.industry_exclusions || []).join(", ") || "None"}
-
-Analyze each category and return the result using the tool provided. The verdict should be:
-- "stop" if there's at least one confirmed hard mismatch
-- "review" if there are unclear or likely issues
-- "go" if everything aligns well`;
-
-    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${lovableKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: "You are a precise job dealbreaker analyzer. Only flag real mismatches." },
-          { role: "user", content: prompt },
-        ],
-        tools: [{
-          type: "function",
-          function: {
-            name: "analyze_dealbreakers",
-            description: "Return structured dealbreaker analysis",
-            parameters: {
-              type: "object",
-              properties: {
-                verdict: { type: "string", enum: ["go", "review", "stop"] },
-                summary: { type: "string", description: "One-line summary of the verdict" },
-                blockers: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      category: { type: "string", description: "e.g. Salary, Visa, Location, Remote/Onsite, Language, Experience, Travel" },
-                      severity: { type: "string", enum: ["confirmed", "likely", "unclear"] },
-                      status: { type: "string", enum: ["confirmed", "ok", "unclear"] },
-                      userValue: { type: "string" },
-                      jobValue: { type: "string" },
-                      note: { type: "string" },
-                    },
-                    required: ["category", "severity", "status", "userValue", "jobValue"],
-                    additionalProperties: false,
-                  },
-                },
-                alignment: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      label: { type: "string" },
-                      aligned: { type: "boolean" },
-                    },
-                    required: ["label", "aligned"],
-                    additionalProperties: false,
-                  },
-                },
-              },
-              required: ["verdict", "summary", "blockers", "alignment"],
-              additionalProperties: false,
-            },
-          },
-        }],
-        tool_choice: { type: "function", function: { name: "analyze_dealbreakers" } },
-      }),
-    });
-
-    if (!aiResp.ok) {
-      if (aiResp.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limited. Please try again shortly." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (aiResp.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const errText = await aiResp.text();
-      console.error("AI error:", aiResp.status, errText);
-      return new Response(JSON.stringify({ error: "AI analysis failed" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const aiData = await aiResp.json();
-    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall?.function?.arguments) {
-      return new Response(JSON.stringify({ error: "AI did not return structured data" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const result = JSON.parse(toolCall.function.arguments);
-
-    // Save blockers to DB and update job verdict
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const adminClient = createClient(supabaseUrl, serviceKey);
-
-    // Delete old blockers for this job
-    await adminClient.from("job_blockers").delete().eq("job_id", jobId);
-
-    // Insert new blockers
-    if (result.blockers?.length) {
-      const blockerRows = result.blockers.map((b: any) => ({
-        job_id: jobId,
-        user_id: user.id,
-        category: b.category,
-        label: b.category,
-        description: b.note || "",
-        severity: b.severity === "ok" ? "unclear" : b.severity,
-        job_value: b.jobValue,
-        user_value: b.userValue,
-      }));
-      await adminClient.from("job_blockers").insert(blockerRows);
-    }
-
-    // Update job verdict
-    await adminClient.from("jobs").update({
+    await admin.from("jobs").update({
       verdict: result.verdict,
       status: result.verdict === "stop" ? "blocked" : "reviewing",
       updated_at: new Date().toISOString(),
     }).eq("id", jobId);
 
-    return new Response(JSON.stringify({ success: true, data: result }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ success: true, data: { verdict: result.verdict, summary, blockers, alignment, hasEvidence } });
   } catch (e) {
     console.error("analyze-dealbreakers error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ error: e instanceof Error ? e.message : "Unknown error" }, 500);
   }
 });

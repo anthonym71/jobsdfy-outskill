@@ -736,6 +736,10 @@ export type Database = {
       }
       job_blockers: {
         Row: {
+          limit_key: string | null
+          quote: string | null
+          soft: boolean
+          state: string | null
           category: string
           created_at: string
           description: string | null
@@ -748,6 +752,10 @@ export type Database = {
           user_value: string | null
         }
         Insert: {
+          limit_key?: string | null
+          quote?: string | null
+          soft?: boolean
+          state?: string | null
           category: string
           created_at?: string
           description?: string | null
@@ -760,6 +768,10 @@ export type Database = {
           user_value?: string | null
         }
         Update: {
+          limit_key?: string | null
+          quote?: string | null
+          soft?: boolean
+          state?: string | null
           category?: string
           created_at?: string
           description?: string | null
@@ -833,6 +845,8 @@ export type Database = {
       }
       jobs: {
         Row: {
+          extraction: Json | null
+          first_seen_at: string
           application_url: string | null
           company: string | null
           created_at: string
@@ -859,6 +873,8 @@ export type Database = {
           work_model: string | null
         }
         Insert: {
+          extraction?: Json | null
+          first_seen_at?: string
           application_url?: string | null
           company?: string | null
           created_at?: string
@@ -885,6 +901,8 @@ export type Database = {
           work_model?: string | null
         }
         Update: {
+          extraction?: Json | null
+          first_seen_at?: string
           application_url?: string | null
           company?: string | null
           created_at?: string

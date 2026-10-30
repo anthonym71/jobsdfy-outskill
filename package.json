@@ -12,7 +12,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "eval:run": "node eval/run-current-engine.ts",
-    "eval:score": "node eval/score.ts eval/results/current.json"
+    "eval:score": "node eval/score.ts eval/results/current.json",
+    "eval:run:v2": "node eval/run-engine.ts",
+    "eval:score:v2": "node eval/score.ts eval/results/engine-v2.json"
   },
   "dependencies": {
     "@elevenlabs/react": "^1.0.2",
