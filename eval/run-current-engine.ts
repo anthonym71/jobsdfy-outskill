@@ -51,6 +51,7 @@ function limitKey(category: string): string {
   return c;
 }
 
+type Blocker = { status?: string; category: string };
 const profile = JSON.parse(readFileSync("eval/profile.sample.json", "utf8"));
 const labels = JSON.parse(readFileSync("eval/labels.json", "utf8")).postings;
 const out: Record<string, { verdict: string; failedLimits: string[]; summary: string }> = {};
@@ -112,7 +113,7 @@ Analyze each category and return the result using the tool provided. The verdict
   out[label.id] = {
     verdict: result.verdict,
     summary: result.summary,
-    failedLimits: (result.blockers ?? []).filter((b: any) => b.status !== "ok").map((b: any) => limitKey(b.category)),
+    failedLimits: (result.blockers ?? []).filter((b: Blocker) => b.status !== "ok").map((b: Blocker) => limitKey(b.category)),
   };
   console.log(label.id, "->", result.verdict);
 }

@@ -6,7 +6,8 @@ import { ymd, addDays } from "@/lib/followups";
 const state: { tasks: unknown[]; updated: unknown[] } = { tasks: [], updated: [] };
 
 // A chainable stand-in for the Supabase query builder: any method returns itself, awaiting it yields data.
-const chain = (data: unknown): any =>
+type Chain = Record<string, unknown>;
+const chain = (data: unknown): Chain =>
   new Proxy({}, {
     get: (_t, prop) => {
       if (prop === "then") return (resolve: (v: unknown) => void) => resolve({ data, error: null });

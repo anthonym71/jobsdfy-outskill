@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlusCircle, Briefcase, ShieldOff, Zap, Search, Loader2, Gift, Copy, CalendarCheck, Check } from "lucide-react";
-import { splitToday } from "@/lib/followups";
+import { splitToday, type TaskLike } from "@/lib/followups";
 import { isEnabled } from "@/lib/features";
 import VerdictBadge from "@/components/VerdictBadge";
 import StatusPill from "@/components/StatusPill";
@@ -18,7 +18,7 @@ const Dashboard = () => {
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [referralLink, setReferralLink] = useState("");
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<TaskLike[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -53,7 +53,7 @@ const Dashboard = () => {
   const completeTask = async (taskId: string) => {
     const before = tasks;
     setTasks((prev) => prev.filter((t) => t.id !== taskId));
-    const { error } = await supabase.from("tasks").update({ status: "done", updated_at: new Date().toISOString() } as any).eq("id", taskId);
+    const { error } = await supabase.from("tasks").update({ status: "done", updated_at: new Date().toISOString() }).eq("id", taskId);
     if (error) {
       setTasks(before);
       toast({ title: "Could not mark it done", description: "Please try again.", variant: "destructive" });
