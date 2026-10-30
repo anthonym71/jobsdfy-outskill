@@ -132,6 +132,7 @@ export type Database = {
       }
       application_assets: {
         Row: {
+          trace: Json | null
           approved: boolean | null
           asset_type: string
           content: string | null
@@ -145,6 +146,7 @@ export type Database = {
           version: number
         }
         Insert: {
+          trace?: Json | null
           approved?: boolean | null
           asset_type: string
           content?: string | null
@@ -158,6 +160,7 @@ export type Database = {
           version?: number
         }
         Update: {
+          trace?: Json | null
           approved?: boolean | null
           asset_type?: string
           content?: string | null

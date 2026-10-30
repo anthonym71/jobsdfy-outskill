@@ -7,6 +7,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useCredits } from "@/hooks/useCredits";
+import { Checkbox } from "@/components/ui/checkbox";
+import TracePanel from "@/components/TracePanel";
+import type { Trace } from "../../supabase/functions/_shared/traceability";
 
 interface AppPack {
   resume: string;
@@ -24,6 +27,7 @@ interface PackVersion {
   isDraft: boolean;
   submittedAt: string | null;
   createdAt: string;
+  trace?: Trace | null;
 }
 
 interface TimelineEvent {
@@ -52,6 +56,8 @@ const QuickApply = () => {
   const [saving, setSaving] = useState(false);
   const [job, setJob] = useState<any>(null);
   const [pack, setPack] = useState<AppPack | null>(null);
+  const [trace, setTrace] = useState<Trace | null>(null);
+  const [reviewed, setReviewed] = useState(false);
   const [drafts, setDrafts] = useState({ resume: "", coverNote: "", recruiterNote: "" });
   const [timeline, setTimeline] = useState<TimelineData | null>(null);
   const [generatingTimeline, setGeneratingTimeline] = useState(false);
@@ -94,7 +100,7 @@ const QuickApply = () => {
             });
           }
           const entry = versionMap.get(v)!;
-          if (a.asset_type === "resume") entry.resume = a.content || "";
+          if (a.asset_type === "resume") { entry.resume = a.content || ""; entry.trace = (a.trace as unknown as Trace | null) ?? null; }
           if (a.asset_type === "cover_note") entry.coverNote = a.content || "";
           if (a.asset_type === "recruiter_note") entry.recruiterNote = a.content || "";
         }
@@ -105,6 +111,8 @@ const QuickApply = () => {
         // Show the latest version
         const latest = allVersions[allVersions.length - 1];
         setActiveVersion(latest.version);
+        setTrace(latest.trace ?? null);
+        setReviewed(false);
         setDrafts({ resume: latest.resume, coverNote: latest.coverNote, recruiterNote: latest.recruiterNote });
         setPack({ resume: latest.resume, coverNote: latest.coverNote, recruiterNote: latest.recruiterNote, mustHaves: [], emphasisPoints: [] });
         setLoading(false);
@@ -151,11 +159,14 @@ const QuickApply = () => {
       isDraft: true,
       submittedAt: null,
       createdAt: new Date().toISOString(),
+      trace: data.data.traceability ?? null,
     };
 
     setVersions(prev => [...prev, newVersion]);
     setActiveVersion(version);
     setPack(data.data);
+    setTrace(data.data.traceability ?? null);
+    setReviewed(false);
     setDrafts({ resume: data.data.resume, coverNote: data.data.coverNote, recruiterNote: data.data.recruiterNote });
   };
 
@@ -174,6 +185,8 @@ const QuickApply = () => {
 
   const switchVersion = (v: PackVersion) => {
     setActiveVersion(v.version);
+    setTrace(v.trace ?? null);
+    setReviewed(false);
     setDrafts({ resume: v.resume, coverNote: v.coverNote, recruiterNote: v.recruiterNote });
     setPack({ resume: v.resume, coverNote: v.coverNote, recruiterNote: v.recruiterNote, mustHaves: [], emphasisPoints: [] });
   };
@@ -441,6 +454,7 @@ const QuickApply = () => {
 
         {/* Right: Editable drafts */}
         <div className="lg:col-span-3 space-y-5">
+          <TracePanel trace={trace} />
           {([
             { key: "resume" as const, label: "Tailored Resume Draft", icon: FileText },
             { key: "coverNote" as const, label: "Cover Note", icon: Mail },
@@ -465,6 +479,11 @@ const QuickApply = () => {
             </div>
           ))}
 
+          <label className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 text-sm text-foreground">
+            <Checkbox checked={reviewed} onCheckedChange={(v) => setReviewed(v === true)} className="mt-0.5" />
+            <span>I have read every line and it is accurate. Nothing is sent for me; you apply on the employer's own site or email.</span>
+          </label>
+
           <div className="flex gap-3 justify-end">
             <Button variant="ghost" size="sm" onClick={regenerate}>
               <RefreshCw className="mr-1.5 h-4 w-4" />Regenerate (3 credits)
@@ -472,7 +491,7 @@ const QuickApply = () => {
             <Button variant="outline" onClick={handleSave} disabled={saving}>
               {saving ? "Saving…" : "Save Draft"}
             </Button>
-            <Button onClick={handleApprove}>
+            <Button onClick={handleApprove} disabled={!reviewed}>
               <Check className="mr-2 h-4 w-4" />Approve Pack
             </Button>
           </div>

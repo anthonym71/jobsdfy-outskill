@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { buildSources, checkClaims, sourcesForPrompt } from "../_shared/traceability.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -94,6 +95,9 @@ serve(async (req) => {
       `- ${e.degree || ""} ${e.field || ""} at ${e.institution} (${e.start_year || ""}-${e.end_year || ""})`
     ).join("\n");
 
+    // Every factual line must cite one of these records; plain code checks the citation afterwards.
+    const sources = buildSources(profile, workHistory, education);
+
     const prompt = `Generate a tailored Quick Apply pack for this job application. Use the candidate's full structured profile data below.
 
 JOB DESCRIPTION:
@@ -126,6 +130,11 @@ Generate:
 2. A concise cover note (300-400 words max) that connects the candidate's experience to this specific role's requirements. Professional, confident, human tone.
 3. A short recruiter outreach message (2-3 sentences, direct and relevant).
 
+4. A "claims" list: every experience bullet in the resume and every sentence in the cover note that states a fact about the candidate, copied word for word, each with the id of the ONE record it comes from. Use only ids from the SOURCES list. Do not include a claim you cannot source. Never put a number in a claim unless it appears in the cited record.
+
+SOURCES YOU MAY CITE:
+${sourcesForPrompt(sources)}
+
 Use the tool provided to return structured output.`;
 
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -156,8 +165,17 @@ Use the tool provided to return structured output.`;
                 mustHaves: { type: "array", items: { type: "string" }, description: "Key requirements the candidate meets" },
                 emphasisPoints: { type: "array", items: { type: "string" }, description: "Candidate strengths to emphasize" },
                 keywordsUsed: { type: "array", items: { type: "string" }, description: "ATS keywords incorporated into the resume" },
+                claims: {
+                  type: "array",
+                  description: "Every factual bullet/sentence, word for word, with the id of the source record it comes from",
+                  items: {
+                    type: "object",
+                    properties: { text: { type: "string" }, sourceId: { type: "string", description: "An id from the SOURCES list" } },
+                    required: ["text", "sourceId"],
+                  },
+                },
               },
-              required: ["resume", "coverNote", "recruiterNote", "professionalSummary", "coreSkills", "mustHaves", "emphasisPoints", "keywordsUsed"],
+              required: ["resume", "coverNote", "recruiterNote", "professionalSummary", "coreSkills", "mustHaves", "emphasisPoints", "keywordsUsed", "claims"],
               additionalProperties: false,
             },
           },
@@ -194,13 +212,17 @@ Use the tool provided to return structured output.`;
 
     const result = JSON.parse(toolCall.function.arguments);
 
+    // Check each claim against the user's own records. Flagged lines are shown to the user, never hidden.
+    const trace = checkClaims(Array.isArray(result.claims) ? result.claims : [], sources);
+    result.traceability = { ...trace, sources: sources.map((x) => ({ id: x.id, label: x.label })) };
+
     // Save application assets to DB
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminClient = createClient(supabaseUrl, serviceKey);
 
     // Don't delete old versions — insert new version
     const assets = [
-      { job_id: jobId, user_id: user.id, asset_type: "resume", content: result.resume, version, is_draft: true },
+      { job_id: jobId, user_id: user.id, asset_type: "resume", content: result.resume, version, is_draft: true, trace: result.traceability },
       { job_id: jobId, user_id: user.id, asset_type: "cover_note", content: result.coverNote, version, is_draft: true },
       { job_id: jobId, user_id: user.id, asset_type: "recruiter_note", content: result.recruiterNote, version, is_draft: true },
     ];
