@@ -14,6 +14,21 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_access: {
+        Row: {
+          access_level: string
+          user_id: string
+        }
+        Insert: {
+          access_level: string
+          user_id: string
+        }
+        Update: {
+          access_level?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       affiliate_conversions: {
         Row: {
           affiliate_id: string | null
@@ -1828,6 +1843,24 @@ export type Database = {
         }
         Relationships: []
       }
+      user_terms_acceptance: {
+        Row: {
+          terms_accepted_at: string
+          terms_version: string
+          user_id: string
+        }
+        Insert: {
+          terms_accepted_at?: string
+          terms_version: string
+          user_id: string
+        }
+        Update: {
+          terms_accepted_at?: string
+          terms_version?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       work_history: {
         Row: {
           achievements: string | null
@@ -2149,6 +2182,8 @@ export type Database = {
       }
     }
     Functions: {
+      accept_current_terms: { Args: { _version: string }; Returns: undefined }
+      can_write_admin: { Args: { _user_id: string }; Returns: boolean }
       earn_credits: {
         Args: {
           _credits: number
@@ -2169,6 +2204,8 @@ export type Database = {
         Args: { _user_id: string }
         Returns: undefined
       }
+      is_owner: { Args: { _user_id: string }; Returns: boolean }
+      is_read_only_admin: { Args: { _user_id: string }; Returns: boolean }
       log_audit_event: {
         Args: {
           p_action: string
