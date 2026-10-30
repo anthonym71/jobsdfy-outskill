@@ -8,6 +8,13 @@
       "when": 1793340787909,
       "tag": "0000_outskill_terms_and_admin_access",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793340913607,
+      "tag": "0001_outskill_privileged_write_guards",
+      "breakpoints": true
     }
   ]
 }
