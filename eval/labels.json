@@ -1,0 +1,1089 @@
+{
+  "_schema": "Each entry: id, file (in eval/postings), source (synthetic|real), market (general|india), suspicious (true if you believe it is stale/fake), expected.verdict (go|review|stop), expected.failedLimits (limit keys that should trigger STOP, or unknown limits that force REVIEW), notes. Limit keys: salary_min, location, work_model, office_policy, visa_sponsorship, language, employment_type, travel, notice_period, ctc_min, industry, experience. Optional: evidence[] ({limit,state:fail|unknown,soft?,quote,why}) where quote is a verbatim line from the posting; suspiciousSignals[] verbatim lines. Verdict rule: any fail=stop, else any unknown=review, else go. Confirmed labels G01-G30 (general) and I01-I20 (india) are synthetic; 001-003 are earlier synthetic examples.",
+  "postings": [
+    {
+      "id": "001",
+      "file": "001-india-wfo-immediate-joiner.txt",
+      "source": "synthetic",
+      "market": "india",
+      "suspicious": false,
+      "expected": {
+        "verdict": "stop",
+        "failedLimits": [
+          "ctc_min",
+          "notice_period",
+          "office_policy"
+        ]
+      },
+      "notes": "CTC 18-24 LPA below 25; immediate joiner vs 60-day notice; 5-day WFO vs max 3 days."
+    },
+    {
+      "id": "002",
+      "file": "002-india-clean-go.txt",
+      "source": "synthetic",
+      "market": "india",
+      "suspicious": false,
+      "expected": {
+        "verdict": "go",
+        "failedLimits": []
+      },
+      "notes": "All limits satisfied."
+    },
+    {
+      "id": "003",
+      "file": "003-india-remote-fineprint-no-salary.txt",
+      "source": "synthetic",
+      "market": "india",
+      "suspicious": false,
+      "expected": {
+        "verdict": "review",
+        "failedLimits": [
+          "ctc_min"
+        ]
+      },
+      "notes": "Salary not stated, so ctc_min is unknown and must force REVIEW. Tue-Thu office is 3 days, within the limit; 'remote-first' headline is fine print to check."
+    },
+    {
+      "id": "G01",
+      "file": "G01-remote-backend-india-eligible.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "go",
+        "failedLimits": []
+      },
+      "evidence": [],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "G02",
+      "file": "G02-remote-frontend-worldwide.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "go",
+        "failedLimits": []
+      },
+      "evidence": [],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "G03",
+      "file": "G03-remote-data-engineer-gbp.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "go",
+        "failedLimits": []
+      },
+      "evidence": [],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "G04",
+      "file": "G04-remote-devops-anywhere.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "go",
+        "failedLimits": []
+      },
+      "evidence": [],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "G05",
+      "file": "G05-remote-qa-lead-apac-timezone.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "go",
+        "failedLimits": []
+      },
+      "evidence": [],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "G06",
+      "file": "G06-remote-ml-engineer.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "go",
+        "failedLimits": []
+      },
+      "evidence": [],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "G07",
+      "file": "G07-remote-tech-writer.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "go",
+        "failedLimits": []
+      },
+      "evidence": [],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "G08",
+      "file": "G08-remote-eng-manager.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "go",
+        "failedLimits": []
+      },
+      "evidence": [],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "G09",
+      "file": "G09-remote-swe-no-salary-typos.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": true,
+      "expected": {
+        "verdict": "review",
+        "failedLimits": [
+          "ctc_min"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "ctc_min",
+          "state": "unknown",
+          "quote": "Competitive salary and great benifits.",
+          "why": "No figure given"
+        }
+      ],
+      "suspiciousSignals": [
+        "HURRY!! Apply NOW, limited seats are avilable.",
+        "Software Enginer - Remote"
+      ]
+    },
+    {
+      "id": "G10",
+      "file": "G10-remote-location-flexibility-stale.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": true,
+      "expected": {
+        "verdict": "review",
+        "failedLimits": [
+          "location"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "location",
+          "state": "unknown",
+          "quote": "Remote (location flexibility depends on team needs).",
+          "why": "Unclear whether India is eligible"
+        }
+      ],
+      "suspiciousSignals": [
+        "Originally posted 11 months ago - still hiring."
+      ]
+    },
+    {
+      "id": "G11",
+      "file": "G11-contract-to-hire.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "review",
+        "failedLimits": [
+          "employment_type"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "employment_type",
+          "state": "unknown",
+          "quote": "Employment: contract-to-hire, converting to full-time after 6 months.",
+          "why": "Starts as a contract, not full-time"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "G12",
+      "file": "G12-support-engineer-some-travel.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "review",
+        "failedLimits": [
+          "travel"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "travel",
+          "state": "unknown",
+          "quote": "Some travel to client sites may be required.",
+          "why": "Amount of travel not stated"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "G13",
+      "file": "G13-cloud-architect-regions-case-by-case.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "review",
+        "failedLimits": [
+          "location"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "location",
+          "state": "unknown",
+          "quote": "Remote (US and Canada preferred; other regions considered case by case).",
+          "why": "India not ruled in or out"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "G14",
+      "file": "G14-data-analyst-up-to.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "review",
+        "failedLimits": [
+          "ctc_min"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "ctc_min",
+          "state": "unknown",
+          "quote": "Salary: up to $50,000 depending on experience.",
+          "why": "Only an upper bound is stated"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "G15",
+      "file": "G15-mobile-dev-hybrid-or-remote-tbd.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "review",
+        "failedLimits": [
+          "office_policy",
+          "location"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "office_policy",
+          "state": "unknown",
+          "quote": "Hybrid or remote - discuss with the hiring manager.",
+          "why": "Office days not stated"
+        },
+        {
+          "limit": "location",
+          "state": "unknown",
+          "quote": "Hybrid or remote - discuss with the hiring manager.",
+          "why": "No office location given"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "G16",
+      "file": "G16-pm-negotiable-whatsapp.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": true,
+      "expected": {
+        "verdict": "review",
+        "failedLimits": [
+          "ctc_min"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "ctc_min",
+          "state": "unknown",
+          "quote": "Salary: negotiable.",
+          "why": "No figure given"
+        }
+      ],
+      "suspiciousSignals": [
+        "Send your CV on WhatsApp to +91-90000-00000 for a quick response."
+      ]
+    },
+    {
+      "id": "G17",
+      "file": "G17-swe-spanish-preferred.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "review",
+        "failedLimits": [
+          "language"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "language",
+          "state": "unknown",
+          "soft": true,
+          "quote": "Language: fluent Spanish preferred, English required.",
+          "why": "Spanish is a soft preference only"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "G18",
+      "file": "G18-backend-wide-salary-range.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "review",
+        "failedLimits": [
+          "ctc_min"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "ctc_min",
+          "state": "unknown",
+          "quote": "Salary: $30,000-$100,000 depending on level.",
+          "why": "Range straddles the 25 LPA (~$30k) floor"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "G19",
+      "file": "G19-hybrid-city-tbd.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "review",
+        "failedLimits": [
+          "location"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "location",
+          "state": "unknown",
+          "quote": "Hybrid, 2-3 days in the office (city to be confirmed).",
+          "why": "Office city unknown"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "G20",
+      "file": "G20-contractor-with-training-fee.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": true,
+      "expected": {
+        "verdict": "review",
+        "failedLimits": [
+          "employment_type"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "employment_type",
+          "state": "unknown",
+          "quote": "Full-time equivalent, engaged as an independent contractor.",
+          "why": "Contractor, not employee"
+        }
+      ],
+      "suspiciousSignals": [
+        "A one-time training fee of $50 applies before onboarding."
+      ]
+    },
+    {
+      "id": "G21",
+      "file": "G21-us-residents-only.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "stop",
+        "failedLimits": [
+          "location"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "location",
+          "state": "fail",
+          "quote": "Candidates must reside in the United States.",
+          "why": "India not eligible"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "G22",
+      "file": "G22-onsite-london.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "stop",
+        "failedLimits": [
+          "location",
+          "office_policy"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "location",
+          "state": "fail",
+          "quote": "This is an onsite role in London; relocation is not offered.",
+          "why": "Outside India"
+        },
+        {
+          "limit": "office_policy",
+          "state": "fail",
+          "quote": "This is an onsite role in London; relocation is not offered.",
+          "why": "Fully onsite"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "G23",
+      "file": "G23-part-time.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "stop",
+        "failedLimits": [
+          "employment_type"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "employment_type",
+          "state": "fail",
+          "quote": "Part-time, 20 hours per week.",
+          "why": "Candidate wants full-time"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "G24",
+      "file": "G24-online-casino.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "stop",
+        "failedLimits": [
+          "industry"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "industry",
+          "state": "fail",
+          "quote": "Join the engineering team at an online casino and sports betting platform.",
+          "why": "Gambling is excluded"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "G25",
+      "file": "G25-heavy-travel.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "stop",
+        "failedLimits": [
+          "travel"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "travel",
+          "state": "fail",
+          "quote": "Travel: up to 50% of the time.",
+          "why": "Over the 10% limit"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "G26",
+      "file": "G26-low-salary-usd.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "stop",
+        "failedLimits": [
+          "ctc_min"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "ctc_min",
+          "state": "fail",
+          "quote": "Salary: $18,000-$22,000 per year.",
+          "why": "Top of range ~18.5 LPA, below 25 LPA"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "G27",
+      "file": "G27-german-mandatory.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "stop",
+        "failedLimits": [
+          "language"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "language",
+          "state": "fail",
+          "quote": "Fluent German (C1) is mandatory; English alone is not sufficient.",
+          "why": "Not among candidate languages"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "G28",
+      "file": "G28-onsite-dubai.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "stop",
+        "failedLimits": [
+          "office_policy",
+          "location"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "office_policy",
+          "state": "fail",
+          "quote": "Office-based in Dubai, 5 days a week.",
+          "why": "Fully onsite"
+        },
+        {
+          "limit": "location",
+          "state": "fail",
+          "quote": "Office-based in Dubai, 5 days a week.",
+          "why": "Outside India"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "G29",
+      "file": "G29-freelance-per-project.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "stop",
+        "failedLimits": [
+          "employment_type"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "employment_type",
+          "state": "fail",
+          "quote": "Freelance engagement, paid per project.",
+          "why": "Not full-time"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "G30",
+      "file": "G30-eu-residents-only.txt",
+      "source": "synthetic",
+      "market": "general",
+      "suspicious": false,
+      "expected": {
+        "verdict": "stop",
+        "failedLimits": [
+          "location"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "location",
+          "state": "fail",
+          "quote": "EU residents only (we employ through a GDPR-compliant EU entity).",
+          "why": "India not eligible"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "I01",
+      "file": "I01-bengaluru-hybrid-3-days.txt",
+      "source": "synthetic",
+      "market": "india",
+      "suspicious": false,
+      "expected": {
+        "verdict": "go",
+        "failedLimits": []
+      },
+      "evidence": [],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "I02",
+      "file": "I02-remote-india-90-day-notice-ok.txt",
+      "source": "synthetic",
+      "market": "india",
+      "suspicious": false,
+      "expected": {
+        "verdict": "go",
+        "failedLimits": []
+      },
+      "evidence": [],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "I03",
+      "file": "I03-bengaluru-hybrid-2-days-hindi-english.txt",
+      "source": "synthetic",
+      "market": "india",
+      "suspicious": false,
+      "expected": {
+        "verdict": "go",
+        "failedLimits": []
+      },
+      "evidence": [],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "I04",
+      "file": "I04-remote-first-optional-hub.txt",
+      "source": "synthetic",
+      "market": "india",
+      "suspicious": false,
+      "expected": {
+        "verdict": "go",
+        "failedLimits": []
+      },
+      "evidence": [],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "I05",
+      "file": "I05-hsr-hybrid-fixed-plus-variable.txt",
+      "source": "synthetic",
+      "market": "india",
+      "suspicious": false,
+      "expected": {
+        "verdict": "go",
+        "failedLimits": []
+      },
+      "evidence": [],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "I06",
+      "file": "I06-undisclosed-ctc-deposit.txt",
+      "source": "synthetic",
+      "market": "india",
+      "suspicious": true,
+      "expected": {
+        "verdict": "review",
+        "failedLimits": [
+          "ctc_min"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "ctc_min",
+          "state": "unknown",
+          "quote": "CTC: as per industry standards.",
+          "why": "No figure given"
+        }
+      ],
+      "suspiciousSignals": [
+        "A refundable security deposit of INR 3,000 is required for the onboarding kit."
+      ]
+    },
+    {
+      "id": "I07",
+      "file": "I07-notice-30-preferred.txt",
+      "source": "synthetic",
+      "market": "india",
+      "suspicious": false,
+      "expected": {
+        "verdict": "review",
+        "failedLimits": [
+          "notice_period"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "notice_period",
+          "state": "unknown",
+          "soft": true,
+          "quote": "Notice period: 30 days preferred.",
+          "why": "Preference, not a requirement; candidate has 60 days"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "I08",
+      "file": "I08-remote-occasional-office-stale.txt",
+      "source": "synthetic",
+      "market": "india",
+      "suspicious": true,
+      "expected": {
+        "verdict": "review",
+        "failedLimits": [
+          "office_policy"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "office_policy",
+          "state": "unknown",
+          "quote": "Remote, with occasional visits to the Bengaluru office.",
+          "why": "'Occasional' is undefined"
+        }
+      ],
+      "suspiciousSignals": [
+        "Originally posted 14 months ago."
+      ]
+    },
+    {
+      "id": "I09",
+      "file": "I09-multi-city-tbd.txt",
+      "source": "synthetic",
+      "market": "india",
+      "suspicious": false,
+      "expected": {
+        "verdict": "review",
+        "failedLimits": [
+          "location"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "location",
+          "state": "unknown",
+          "quote": "Location: Bengaluru / Hyderabad / Pune (to be decided).",
+          "why": "Candidate may not be placed in Bengaluru"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "I10",
+      "file": "I10-ctc-range-straddles-floor-reposted.txt",
+      "source": "synthetic",
+      "market": "india",
+      "suspicious": true,
+      "expected": {
+        "verdict": "review",
+        "failedLimits": [
+          "ctc_min"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "ctc_min",
+          "state": "unknown",
+          "quote": "CTC: INR 20-30 LPA.",
+          "why": "Range straddles the 25 LPA floor"
+        }
+      ],
+      "suspiciousSignals": [
+        "Reposted for the 6th time."
+      ]
+    },
+    {
+      "id": "I11",
+      "file": "I11-office-3-to-4-days.txt",
+      "source": "synthetic",
+      "market": "india",
+      "suspicious": false,
+      "expected": {
+        "verdict": "review",
+        "failedLimits": [
+          "office_policy"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "office_policy",
+          "state": "unknown",
+          "quote": "Hybrid, 3 to 4 days in office depending on project.",
+          "why": "Could exceed the 3-day limit"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "I12",
+      "file": "I12-immediate-joiner-only.txt",
+      "source": "synthetic",
+      "market": "india",
+      "suspicious": false,
+      "expected": {
+        "verdict": "stop",
+        "failedLimits": [
+          "notice_period"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "notice_period",
+          "state": "fail",
+          "quote": "Immediate joiners only (0-15 days notice).",
+          "why": "Candidate has 60 days"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "I13",
+      "file": "I13-low-ctc.txt",
+      "source": "synthetic",
+      "market": "india",
+      "suspicious": false,
+      "expected": {
+        "verdict": "stop",
+        "failedLimits": [
+          "ctc_min"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "ctc_min",
+          "state": "fail",
+          "quote": "CTC: INR 14-20 LPA.",
+          "why": "Below 25 LPA"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "I14",
+      "file": "I14-wfo-5-days.txt",
+      "source": "synthetic",
+      "market": "india",
+      "suspicious": false,
+      "expected": {
+        "verdict": "stop",
+        "failedLimits": [
+          "office_policy"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "office_policy",
+          "state": "fail",
+          "quote": "Work from office, 5 days a week.",
+          "why": "Exceeds hybrid max of 3 days"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "I15",
+      "file": "I15-onsite-singapore.txt",
+      "source": "synthetic",
+      "market": "india",
+      "suspicious": false,
+      "expected": {
+        "verdict": "stop",
+        "failedLimits": [
+          "location",
+          "office_policy"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "location",
+          "state": "fail",
+          "quote": "Onsite role in Singapore. Relocation provided.",
+          "why": "Outside India"
+        },
+        {
+          "limit": "office_policy",
+          "state": "fail",
+          "quote": "Onsite role in Singapore. Relocation provided.",
+          "why": "Fully onsite"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "I16",
+      "file": "I16-kannada-mandatory.txt",
+      "source": "synthetic",
+      "market": "india",
+      "suspicious": false,
+      "expected": {
+        "verdict": "stop",
+        "failedLimits": [
+          "language"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "language",
+          "state": "fail",
+          "quote": "Kannada fluency (reading, writing and speaking) is mandatory.",
+          "why": "Not among candidate languages"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "I17",
+      "file": "I17-contract-11-months.txt",
+      "source": "synthetic",
+      "market": "india",
+      "suspicious": false,
+      "expected": {
+        "verdict": "stop",
+        "failedLimits": [
+          "employment_type"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "employment_type",
+          "state": "fail",
+          "quote": "Contract role for 11 months on third-party payroll.",
+          "why": "Not full-time"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "I18",
+      "file": "I18-real-money-gaming.txt",
+      "source": "synthetic",
+      "market": "india",
+      "suspicious": false,
+      "expected": {
+        "verdict": "stop",
+        "failedLimits": [
+          "industry"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "industry",
+          "state": "fail",
+          "quote": "Build features for our real-money gaming and fantasy sports platform.",
+          "why": "Gambling is excluded"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "I19",
+      "file": "I19-low-ctc-wfo-immediate.txt",
+      "source": "synthetic",
+      "market": "india",
+      "suspicious": false,
+      "expected": {
+        "verdict": "stop",
+        "failedLimits": [
+          "ctc_min",
+          "office_policy",
+          "notice_period"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "ctc_min",
+          "state": "fail",
+          "quote": "CTC: INR 16 LPA.",
+          "why": "Below 25 LPA"
+        },
+        {
+          "limit": "office_policy",
+          "state": "fail",
+          "quote": "Work from office, 6 days a week.",
+          "why": "Exceeds hybrid max of 3 days"
+        },
+        {
+          "limit": "notice_period",
+          "state": "fail",
+          "quote": "Immediate joiners only, maximum 15 days notice.",
+          "why": "Candidate has 60 days"
+        }
+      ],
+      "suspiciousSignals": []
+    },
+    {
+      "id": "I20",
+      "file": "I20-heavy-travel-india.txt",
+      "source": "synthetic",
+      "market": "india",
+      "suspicious": false,
+      "expected": {
+        "verdict": "stop",
+        "failedLimits": [
+          "travel"
+        ]
+      },
+      "evidence": [
+        {
+          "limit": "travel",
+          "state": "fail",
+          "quote": "Travel: 40% across India.",
+          "why": "Over the 10% limit"
+        }
+      ],
+      "suspiciousSignals": []
+    }
+  ]
+}

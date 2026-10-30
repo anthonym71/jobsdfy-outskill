@@ -10,3 +10,4 @@
 | 2026-10-30 | Show all registered accounts in Admin Users with user type and owner-only password reset emails | Anthony | Lovable | Includes owner and judges without profiles; preserves read-only judge access; incomplete profile edit/status actions cannot silently succeed |
 | 2026-10-30 | Add microphone selection and sound test to voice CV and interview sessions | Anthony | Lovable | Pass selected microphone to ElevenLabs; release temporary microphone streams; show permission/device errors; no AI calls for microphone test |
 | 2026-10-30 | Dark mode theme selection (Light / Dark / System) in Settings | Anthony | Lovable | next-themes class provider; dark tokens already defined; choice persists per device |
+| 2026-10-30 | Add verdict eval harness (labelled postings, scorer, baseline runner) | Sajvinder | Claude | Phase 1 of priorities plan; no app behaviour changed; 53 confirmed synthetic labelled postings (30 general, 23 india) to be supplemented with real ones |

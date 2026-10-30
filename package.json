@@ -10,7 +10,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "eval:run": "node eval/run-current-engine.ts",
+    "eval:score": "node eval/score.ts eval/results/current.json"
   },
   "dependencies": {
     "@elevenlabs/react": "^1.0.2",

@@ -1,0 +1,7 @@
+[SYNTHETIC EXAMPLE - replace with real postings]
+Senior Software Engineer - Product Company, Bengaluru
+Hybrid role: 3 days a week in our Bengaluru office, 2 days remote.
+Compensation: INR 30-40 LPA plus ESOPs.
+Notice period up to 60 days is fine; we can buy out longer notice.
+Full-time, permanent. Occasional travel (under 5%). Working language is English.
+5+ years of experience with TypeScript and distributed systems.
