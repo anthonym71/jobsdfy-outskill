@@ -42,7 +42,7 @@ export async function saveVoiceData(userId: string, category: string, data: any)
     const skills = arr(d.top_skills ?? d.skills);
     if (skills.length) upd.top_skills = mergeList(p.top_skills, skills);
     if (!Object.keys(upd).length) return "Nothing new to add — kept your existing details";
-    const { error } = await supabase.from("user_profiles").update(upd).eq("user_id", userId);
+    const { error } = await supabase.from("user_profiles").update(upd as never).eq("user_id", userId);
     if (error) throw error;
     return `Updated ${Object.keys(upd).length} profile field(s)`;
   }
