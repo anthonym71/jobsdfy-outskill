@@ -10,7 +10,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useCredits, CREDIT_REWARDS } from "@/hooks/useCredits";
 import VoiceFieldInput from "@/components/profile/VoiceFieldInput";
-import GuidedVoiceFill, { type GuidedField } from "@/components/onboarding/GuidedVoiceFill";
+import { type GuidedField } from "@/components/onboarding/GuidedVoiceFill";
+import { parsedCvContent } from "@/lib/cvContent";
 import ConversationalVoiceFill from "@/components/onboarding/ConversationalVoiceFill";
 import OnboardingCVUpload from "@/components/onboarding/OnboardingCVUpload";
 import { spokenNumber } from "@/lib/voiceCommands";
@@ -193,7 +194,7 @@ const Onboarding = () => {
 
       if (nonNegError) throw nonNegError;
       if (cvData) {
-        const { error: cvError } = await supabase.from("cv_versions").insert({ user_id: user.id, version_name: "Onboarding CV", content: cvData });
+        const { error: cvError } = await supabase.from("cv_versions").insert({ user_id: user.id, version_name: "Onboarding CV", content: parsedCvContent(cvData) });
         if (cvError) throw cvError;
         const workRows = (cvData.workHistory || []).map((work: any) => ({ user_id: user.id, title: work.title || "", company: work.company || "", start_year: work.startYear || null, end_year: work.endYear || null, start_month: work.startMonth || null, end_month: work.endMonth || null, is_current: !!work.isCurrent, description: work.description || "", achievements: work.achievements || "", skills: work.skills || [] }));
         if (workRows.length) { const { error } = await supabase.from("work_history").insert(workRows); if (error) throw error; }
@@ -417,9 +418,9 @@ const Onboarding = () => {
           )}
 
           {VOICE_STEPS[step] && <ConversationalVoiceFill key={`voice-${step}`} fields={VOICE_STEPS[step]} values={form} onFill={voiceSet} onContinue={next} />}
-          <div className="flex justify-between pt-2">
+          <div className="flex flex-wrap justify-between gap-3 pt-2">
             <Button variant="outline" onClick={back} disabled={step === 1}>Back</Button>
-            <div className="flex items-start gap-2">
+            <div className="flex flex-wrap items-start gap-2">
             <OnboardingCVUpload onParsed={data => { setCvData(data); setForm(current => ({ ...current, fullName: data.fullName || current.fullName, headline: data.headline || current.headline, summary: data.summary || current.summary, location: data.location || current.location, topSkills: data.topSkills?.join(", ") || current.topSkills, languages: data.languages?.join(", ") || current.languages })); }} />
             {step < totalSteps ? (
               <Button onClick={next}>

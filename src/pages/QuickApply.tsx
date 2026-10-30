@@ -120,8 +120,7 @@ const QuickApply = () => {
         return;
       }
 
-      // No existing packs — generate one
-      await generateNewPack(1);
+      // Let the user choose a CV before spending credits on the first pack.
     } catch (err) {
       console.error("Error:", err);
       toast({ title: "Error", description: "Could not load application pack.", variant: "destructive" });
@@ -131,17 +130,19 @@ const QuickApply = () => {
   };
 
   const generateNewPack = async (version: number) => {
+    if (!session || !id) return;
     if (!credits || credits.balance < 3) {
       toast({ title: "Insufficient credits", description: "You need 3 credits to generate an application pack.", variant: "destructive" });
       return;
     }
-    await spendCredits(3, "generate_application_pack");
+    const spent = await spendCredits(3, "generate_application_pack");
+    if (!spent) return;
 
     const resp = await fetch(
       `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-application`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session!.access_token}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
         body: JSON.stringify({ jobId: id, version, cvVersionId: selectedCv === "profile" ? null : selectedCv }),
       }
     );

@@ -1,8 +1,9 @@
 # Tasks
 - [x] Hide four hackathon features from all except owner using reversible flags, sidebar badges and route gates.
 - [ ] Verify owner/non-owner visibility and Quick Apply.
-- [ ] ElevenLabs onboarding with selected microphone and upfront CV upload; admin cost-tier option.
-- [ ] Persist interview analytics and improvement feedback.
+- [x] Add upfront CV upload, conversational onboarding microphone control, CV import destinations and saved interview history.
+- [ ] Verify real voice onboarding and assessment; requires agent question configuration and physical microphone session.
+- [ ] Admin cost-tier voice option — Option B capture/TTS implementation and secure server setting still outstanding.
 - [x] Add public terms and recorded signup/login acceptance.
 - [x] Enforce owner/team/read-only judge permissions in the app and on the server.
 - [x] Add changelog and standing instructions.
@@ -10,7 +11,8 @@
 - [x] Include every registered account in Admin Users, including profile-less owners and judges, with user type and owner-only password reset.
 - [x] Verify the signed-in owner user list and password-reset email request in the browser; read-only judge permission tests pass.- [x] Voice CV interview saves, pause, live editable transcript, dictionary, topic picker.
 - [x] Flashing Profile - Onboarding, top search bar, admin Knowledgebase & User Guide + PDF.
-- [ ] Choose which CV when applying; offer "tailor now" when not a fit.
-- [ ] CV upload: Merge / Combine / Overwrite options and choose target CV.
+- [x] Choose which CV before application generation; offer "tailor now" when not a fit.
+- [x] CV upload: Merge / Combine / Overwrite options and choose target CV.
+- [ ] Voice interview save directly to chosen CV — destination/extraction isolation remains outstanding.
 - [ ] GHL bot — waiting on widget ID from Anthony.
 - [ ] Job scraping beyond Firecrawl (Apify) — waiting on decision.

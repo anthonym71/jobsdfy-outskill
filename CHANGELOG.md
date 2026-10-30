@@ -2,6 +2,7 @@
 
 | Date | Change | Suggested by | Implemented by | Notes |
 | --- | --- | --- | --- | --- |
+| 2026-10-30 | Added CV upload destination and Merge/Combine/Overwrite; CV choice before application generation and tailor-now prompt; saved interview overview/history; upfront onboarding CV upload and selected-microphone conversational input | Anthony | Lovable | Voice agent question configuration and physical-microphone checks still required; interview transcripts saved before assessment |
 | 2026-10-30 | Hid Books, Movies, Brain Dump and Autobiography from users (owner-only, greyed out) | Anthony | Lovable | Single-file switches; owner banner; Quick Apply and generate-timeline preserved |
 | 2026-10-30 | Public terms with Anthony Mallett IP restrictions and versioned signup/login acceptance | Anthony | Lovable | Version 2026-10-30; existing features retained |
 | 2026-10-30 | Owner, hackathon team and read-only judges access | Anthony | Lovable | Verified emails required; owner designated as anthony@ifactoryusa.com; anthony@fflipi.com included in team |
