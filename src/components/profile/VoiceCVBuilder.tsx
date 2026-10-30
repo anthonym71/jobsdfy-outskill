@@ -1,12 +1,16 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useConversation, ConversationProvider } from "@elevenlabs/react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Mic, MicOff, Loader2, Volume2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Mic, MicOff, Loader2, Volume2, Pause, Play, BookA, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { useMicrophone } from "@/hooks/useMicrophone";
 import MicrophoneControl from "./MicrophoneControl";
+import { PROFILE_UPDATED_EVENT, VOICE_DICTIONARY_KEY, VOICE_TOPICS, saveVoiceData } from "@/lib/voiceSave";
 
 interface VoiceCVBuilderProps {
   category: string;
@@ -15,27 +19,41 @@ interface VoiceCVBuilderProps {
   agentId?: string;
 }
 
+type Line = { who: "You" | "Joby"; text: string };
+
+const loadDictionary = (): string[] => {
+  try { return JSON.parse(localStorage.getItem(VOICE_DICTIONARY_KEY) || "[]"); } catch { return []; }
+};
+
 const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose, agentId }: VoiceCVBuilderProps & { onClose: () => void }) => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [topic, setTopic] = useState(category);
   const [isConnecting, setIsConnecting] = useState(false);
-  const [transcript, setTranscript] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [lines, setLines] = useState<Line[]>([]);
+  const [dictionary, setDictionary] = useState<string[]>(loadDictionary);
+  const [newWord, setNewWord] = useState("");
+  const [showDict, setShowDict] = useState(false);
   const [inputVolume, setInputVolume] = useState(0);
   const [outputVolume, setOutputVolume] = useState(0);
   const animationRef = useRef<number>();
+  const endRef = useRef<HTMLDivElement>(null);
   const microphone = useMicrophone();
+  const topicLabel = VOICE_TOPICS.find((t) => t.value === topic)?.label || categoryLabel;
 
   const conversation = useConversation({
-    onConnect: () => {
-      toast({ title: "Joby is ready!", description: `Tell me about your ${categoryLabel.toLowerCase()}.` });
-    },
-    onDisconnect: () => {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
-    },
+    micMuted: paused,
+    onConnect: () => toast({ title: "Joby is ready!", description: `Tell me about your ${topicLabel.toLowerCase()}.` }),
+    onDisconnect: () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); },
     onMessage: (message: any) => {
       if (message?.type === "user_transcript") {
-        setTranscript(prev => [...prev, `You: ${message?.user_transcription_event?.user_transcript || ""}`]);
+        const t = message?.user_transcription_event?.user_transcript || "";
+        if (t) setLines((prev) => [...prev, { who: "You", text: t }]);
       } else if (message?.type === "agent_response") {
-        setTranscript(prev => [...prev, `Joby: ${message?.agent_response_event?.agent_response || ""}`]);
+        const t = message?.agent_response_event?.agent_response || "";
+        if (t) setLines((prev) => [...prev, { who: "Joby", text: t }]);
       }
     },
     onError: (error) => {
@@ -43,6 +61,9 @@ const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose
       toast({ title: "Connection Error", description: "Failed to connect. Please try again.", variant: "destructive" });
     },
   });
+
+  useEffect(() => { endRef.current?.scrollIntoView({ block: "nearest" }); }, [lines.length]);
+  useEffect(() => { localStorage.setItem(VOICE_DICTIONARY_KEY, JSON.stringify(dictionary)); }, [dictionary]);
 
   useEffect(() => {
     if (conversation.status !== "connected") return;
@@ -60,11 +81,13 @@ const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose
     try {
       const input = await microphone.prepare();
       const { data, error } = await supabase.functions.invoke("elevenlabs-conversation-token", {
-        body: { agent_id: agentId, category },
+        body: { agent_id: agentId, category: topic },
       });
       if (error || !data?.signed_url) throw new Error(data?.error || error?.message || "Failed to get signed URL");
-
-      await conversation.startSession({ signedUrl: data.signed_url, ...input });
+      await conversation.startSession({
+        signedUrl: data.signed_url, ...input,
+        dynamicVariables: { topic: topicLabel },
+      } as any);
     } catch (e: any) {
       if (e.name === "NotAllowedError") {
         toast({ title: "Microphone Required", description: "Please allow microphone access.", variant: "destructive" });
@@ -74,97 +97,137 @@ const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose
     } finally {
       setIsConnecting(false);
     }
-  }, [conversation, toast, agentId, category, microphone.prepare]);
+  }, [conversation, toast, agentId, topic, topicLabel, microphone.prepare]);
 
-  const stopAndExtract = useCallback(async () => {
-    await conversation.endSession();
-    if (transcript.length > 0) {
-      toast({ title: "Processing your responses…", description: "Extracting profile data from conversation." });
-      try {
-        const { data, error } = await supabase.functions.invoke("voice-profile-extract", {
-          body: { transcript: transcript.join("\n"), category },
-        });
-        if (error) throw error;
-        if (data?.data) {
-          onDataExtracted?.(data.data);
-          toast({ title: "Data extracted!", description: "Review the extracted information below." });
-        }
-      } catch (e: any) {
-        toast({ title: "Extraction failed", description: e.message, variant: "destructive" });
-      }
+  const stopAndSave = useCallback(async () => {
+    if (conversation.status === "connected") await conversation.endSession();
+    const transcript = lines.map((l) => `${l.who}: ${l.text}`).join("\n");
+    if (!lines.some((l) => l.who === "You")) {
+      toast({ title: "Nothing to save yet", description: "Say a few things to Joby first." });
+      return;
     }
-    onClose();
-  }, [conversation, transcript, category, onDataExtracted, onClose, toast]);
+    setSaving(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("voice-profile-extract", {
+        body: { transcript, category: topic, dictionary },
+      });
+      if (error || data?.error) throw new Error(data?.error || error?.message);
+      let msg = "Saved to your Knowledgebase";
+      if (onDataExtracted && topic === category) {
+        onDataExtracted(data.data);
+        msg = "Added to the form below — review and press Save";
+      } else if (user) {
+        msg = await saveVoiceData(user.id, topic, data.data);
+        window.dispatchEvent(new CustomEvent(PROFILE_UPDATED_EVENT, { detail: { category: topic } }));
+      }
+      toast({ title: "Interview saved", description: msg });
+      onClose();
+    } catch (e: any) {
+      // Keep the dialog and transcript open so nothing is lost
+      toast({ title: "Couldn't save yet", description: `${e.message || "Please try again"}. Your transcript is still here.`, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  }, [conversation, lines, topic, category, dictionary, onDataExtracted, user, toast, onClose]);
+
+  const addWord = () => {
+    const w = newWord.trim();
+    if (w && !dictionary.some((d) => d.toLowerCase() === w.toLowerCase())) setDictionary([...dictionary, w]);
+    setNewWord("");
+  };
 
   const isConnected = conversation.status === "connected";
+  const editable = paused || !isConnected;
+  const hasContent = lines.some((l) => l.who === "You");
 
-  const generateBars = (volume: number, count: number) =>
-    Array.from({ length: count }, (_, i) => {
-      const base = 4;
-      const max = 28;
-      const variation = Math.sin(Date.now() / 200 + i * 0.8) * 0.3 + 0.7;
-      return base + volume * max * variation;
-    });
-
-  const inputBars = generateBars(inputVolume, 7);
-  const outputBars = generateBars(outputVolume, 7);
+  const bars = (volume: number) => Array.from({ length: 7 }, (_, i) =>
+    4 + volume * 28 * (Math.sin(Date.now() / 200 + i * 0.8) * 0.3 + 0.7));
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col items-center gap-3">
-        <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/30">
-          <img src="/joby-192.png" alt="Joby" className="h-16 w-16 rounded-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+    <div className="space-y-4">
+      <div className="flex flex-col items-center gap-2">
+        <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/30">
+          <img src="/joby-192.png" alt="Joby" className="h-14 w-14 rounded-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
         </div>
-        <div className="text-center">
-          <p className="text-sm font-semibold text-foreground">
-            {isConnected ? (conversation.isSpeaking ? "Joby is speaking…" : "Listening to you…") : "Ready to talk"}
-          </p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {isConnected ? `Tell Joby about your ${categoryLabel.toLowerCase()}` : "Click start to begin your voice session"}
-          </p>
-        </div>
+        <p className="text-sm font-semibold text-foreground">
+          {saving ? "Saving your interview…" : isConnected ? (paused ? "Paused — fix any spelling below" : conversation.isSpeaking ? "Joby is speaking…" : "Listening to you…") : "What are we adding today?"}
+        </p>
       </div>
 
-      {isConnected && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Volume2 className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-            <div className="flex items-center gap-[2px] h-8 flex-1 justify-center">
-              {outputBars.map((h, i) => (
-                <div key={`o${i}`} className="w-1.5 rounded-full bg-primary/70 transition-all duration-75" style={{ height: `${h}px` }} />
-              ))}
-            </div>
-            <span className="text-[10px] text-muted-foreground w-12">Speaker</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Mic className="h-3.5 w-3.5 text-verdict-go flex-shrink-0" />
-            <div className="flex items-center gap-[2px] h-8 flex-1 justify-center">
-              {inputBars.map((h, i) => (
-                <div key={`i${i}`} className="w-1.5 rounded-full bg-verdict-go/70 transition-all duration-75" style={{ height: `${h}px` }} />
-              ))}
-            </div>
-            <span className="text-[10px] text-muted-foreground w-12">Mic</span>
-          </div>
-        </div>
+      {!isConnected && !hasContent && (
+        <Select value={topic} onValueChange={setTopic}>
+          <SelectTrigger aria-label="What are we adding today"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {VOICE_TOPICS.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
       )}
 
-      {transcript.length > 0 && (
-        <div className="max-h-32 overflow-y-auto rounded-lg bg-accent/30 p-3 text-xs text-muted-foreground space-y-1">
-          {transcript.slice(-6).map((line, i) => (
-            <p key={i} className={line.startsWith("Joby:") ? "text-primary" : "text-foreground"}>{line}</p>
+      {isConnected && !paused && (
+        <div className="space-y-2">
+          {[{ v: outputVolume, icon: Volume2, cls: "bg-primary/70", label: "Speaker" }, { v: inputVolume, icon: Mic, cls: "bg-verdict-go/70", label: "Mic" }].map(({ v, icon: Icon, cls, label }) => (
+            <div key={label} className="flex items-center gap-2">
+              <Icon className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+              <div className="flex items-center gap-[2px] h-7 flex-1 justify-center">
+                {bars(v).map((h, i) => <div key={i} className={`w-1.5 rounded-full ${cls}`} style={{ height: `${h}px` }} />)}
+              </div>
+              <span className="text-[10px] text-muted-foreground w-12">{label}</span>
+            </div>
           ))}
         </div>
       )}
 
+      {lines.length > 0 && (
+        <div className="max-h-56 overflow-y-auto rounded-lg border border-border bg-accent/30 p-2 space-y-1.5" aria-label="Live transcript">
+          {lines.map((l, i) => (
+            <div key={i} className="text-xs">
+              <span className={`font-semibold ${l.who === "Joby" ? "text-primary" : "text-foreground"}`}>{l.who}: </span>
+              {l.who === "You" && editable ? (
+                <Input value={l.text} className="mt-0.5 h-7 text-xs"
+                  onChange={(e) => setLines((prev) => prev.map((x, j) => j === i ? { ...x, text: e.target.value } : x))} />
+              ) : <span className="text-muted-foreground">{l.text}</span>}
+            </div>
+          ))}
+          <div ref={endRef} />
+        </div>
+      )}
+
+      <div>
+        <button type="button" onClick={() => setShowDict(!showDict)} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+          <BookA className="h-3.5 w-3.5" /> My dictionary ({dictionary.length})
+        </button>
+        {showDict && (
+          <div className="mt-2 space-y-2">
+            <div className="flex gap-2">
+              <Input value={newWord} onChange={(e) => setNewWord(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addWord()}
+                placeholder="Names, companies, technical terms" className="h-8 text-xs" />
+              <Button size="sm" variant="outline" onClick={addWord}>Add</Button>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {dictionary.map((w) => (
+                <span key={w} className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[11px]">
+                  {w}<button aria-label={`Remove ${w}`} onClick={() => setDictionary(dictionary.filter((d) => d !== w))}><X className="h-3 w-3" /></button>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
       <MicrophoneControl microphone={microphone} disabled={isConnecting || isConnected} />
-      <div className="flex justify-center gap-3">
+      <div className="flex flex-wrap justify-center gap-2">
         {!isConnected ? (
-          <Button onClick={startConversation} disabled={isConnecting} className="gap-2">
-            {isConnecting ? <><Loader2 className="h-4 w-4 animate-spin" />Connecting…</> : <><Mic className="h-4 w-4" />Start Talking</>}
+          <Button onClick={startConversation} disabled={isConnecting || saving} variant={hasContent ? "outline" : "default"} className="gap-2">
+            {isConnecting ? <><Loader2 className="h-4 w-4 animate-spin" />Connecting…</> : <><Mic className="h-4 w-4" />{hasContent ? "Continue Talking" : "Start Talking"}</>}
           </Button>
         ) : (
-          <Button variant="destructive" onClick={stopAndExtract} className="gap-2">
-            <MicOff className="h-4 w-4" /> Stop & Extract Data
+          <Button variant="outline" onClick={() => setPaused(!paused)} className="gap-2">
+            {paused ? <><Play className="h-4 w-4" />Resume</> : <><Pause className="h-4 w-4" />Pause</>}
+          </Button>
+        )}
+        {(isConnected || hasContent) && (
+          <Button variant="destructive" onClick={stopAndSave} disabled={saving} className="gap-2">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <MicOff className="h-4 w-4" />} Stop & Save
           </Button>
         )}
       </div>
@@ -181,11 +244,11 @@ const VoiceCVBuilderDialog = ({ category, categoryLabel, onDataExtracted, agentI
         <Mic className="h-3.5 w-3.5" /> Talk to Me
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Mic className="h-4 w-4 text-primary" />
-              Voice CV Builder — {categoryLabel}
+              Voice CV Builder
             </DialogTitle>
           </DialogHeader>
           <ConversationProvider>
