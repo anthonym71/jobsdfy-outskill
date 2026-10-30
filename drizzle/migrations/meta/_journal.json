@@ -15,6 +15,13 @@
       "when": 1793340913607,
       "tag": "0001_outskill_privileged_write_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793343409865,
+      "tag": "0002_migration",
+      "breakpoints": true
     }
   ]
 }
