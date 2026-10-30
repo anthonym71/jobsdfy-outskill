@@ -1,3 +1,4 @@
+import { isEnabled } from "@/lib/features";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Briefcase, GraduationCap, Award, Users, FileText, Database, TrendingUp, BookOpen } from "lucide-react";
 import AboutMeTab from "@/components/profile/AboutMeTab";
@@ -27,7 +28,7 @@ const Profile = () => {
           <TabsTrigger value="cvversions" className="gap-1.5"><FileText className="h-4 w-4" />CV Versions</TabsTrigger>
           <TabsTrigger value="courses" className="gap-1.5"><BookOpen className="h-4 w-4" />Courses</TabsTrigger>
           <TabsTrigger value="references" className="gap-1.5"><Users className="h-4 w-4" />References</TabsTrigger>
-          <TabsTrigger value="achievements" className="gap-1.5"><Award className="h-4 w-4" />Achievements</TabsTrigger>
+          {isEnabled("gamification") && <TabsTrigger value="achievements" className="gap-1.5"><Award className="h-4 w-4" />Achievements</TabsTrigger>}
           <TabsTrigger value="knowledgebase" className="gap-1.5"><Database className="h-4 w-4" />Knowledgebase</TabsTrigger>
         </TabsList>
 
@@ -38,7 +39,7 @@ const Profile = () => {
         <TabsContent value="cvversions"><CVVersionsTab /></TabsContent>
         <TabsContent value="courses"><CoursesTab /></TabsContent>
         <TabsContent value="references"><ReferencesTab /></TabsContent>
-        <TabsContent value="achievements"><AchievementsTab /></TabsContent>
+        {isEnabled("gamification") && <TabsContent value="achievements"><AchievementsTab /></TabsContent>}
         <TabsContent value="knowledgebase"><KnowledgebaseTab /></TabsContent>
       </Tabs>
     </div>

@@ -1,3 +1,4 @@
+import { visibleNav } from "@/lib/features";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, PlusCircle, Briefcase, Settings, LogOut, Menu, X, 
@@ -60,7 +61,7 @@ const AppLayout = () => {
       .then(({ data }) => setProfileName(data?.full_name || ""));
   }, [user]);
 
-  const navItems = isAdmin ? [...baseNavItems, ...adminNavItems] : baseNavItems;
+  const navItems = visibleNav(isAdmin ? [...baseNavItems, ...adminNavItems] : baseNavItems);
 
   const handleSignOut = async () => {
     await signOut();

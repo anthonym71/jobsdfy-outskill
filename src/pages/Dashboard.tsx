@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlusCircle, Briefcase, ShieldOff, Zap, Search, Loader2, Gift, Copy, CalendarCheck, Check } from "lucide-react";
 import { splitToday } from "@/lib/followups";
+import { isEnabled } from "@/lib/features";
 import VerdictBadge from "@/components/VerdictBadge";
 import StatusPill from "@/components/StatusPill";
 import EmptyState from "@/components/EmptyState";
@@ -161,7 +162,8 @@ const Dashboard = () => {
         )}
       </div>
 
-      {/* Referral Widget */}
+      {/* Referral Widget (hidden unless the "referrals" feature is on) */}
+      {isEnabled("referrals") && (
       <div className="rounded-xl border border-primary/20 bg-primary/5 p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <Gift className="h-8 w-8 text-primary shrink-0" />
@@ -180,6 +182,7 @@ const Dashboard = () => {
           </Button>
         </div>
       </div>
+      )}
     </div>
   );
 };

@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useCredits, CREDIT_REWARDS } from "@/hooks/useCredits";
+import { isEnabled } from "@/lib/features";
 import CvImportCard from "@/components/onboarding/CvImportCard";
 import { cvToForm, cvToRows, type ParsedCv } from "@/lib/cvImport";
 import { CURRENCIES, OFFICE_DAY_OPTIONS, extraLimitColumns, salaryInputToAmount, salaryLabel, salaryPlaceholder } from "@/lib/limits";
@@ -184,7 +185,8 @@ const Onboarding = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-6 py-12">
       <div className="w-full max-w-lg">
-        {/* Reward banner */}
+        {/* Reward banner (hidden unless the "gamification" feature is on) */}
+        {isEnabled("gamification") && (
         <div className="mb-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm">
             <Coins className="h-4 w-4 text-amber-500" />
@@ -195,6 +197,7 @@ const Onboarding = () => {
             Complete all steps for bonus XP
           </div>
         </div>
+        )}
 
         <div className="mb-8">
           <h1 className="font-heading text-2xl font-bold text-foreground">Set up your profile</h1>
@@ -206,13 +209,13 @@ const Onboarding = () => {
 
         <div className="rounded-xl border border-border bg-card p-8 shadow-sm space-y-5">
           {/* Step reward indicator */}
-          {currentReward && !completedSteps.has(step) && (
+          {isEnabled("gamification") && currentReward && !completedSteps.has(step) && (
             <div className="flex items-center gap-2 rounded-lg bg-primary/5 px-3 py-2 text-xs text-primary">
               <Zap className="h-3 w-3" />
               <span>Complete this step to earn <strong>+{currentReward.credits} credits</strong> & <strong>+{currentReward.xp} XP</strong></span>
             </div>
           )}
-          {completedSteps.has(step) && (
+          {isEnabled("gamification") && completedSteps.has(step) && (
             <div className="flex items-center gap-2 rounded-lg bg-green-500/10 px-3 py-2 text-xs text-green-600">
               <span>✅ Credits earned for this step!</span>
             </div>

@@ -1,3 +1,4 @@
+import FeatureGate from "@/components/FeatureGate";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { BrowserRouter, Route, Routes, Navigate, Outlet, useLocation } from "react-router-dom";
@@ -100,25 +101,25 @@ const App = () => (
                   <Route path="/app/calendar" element={<Calendar />} />
                   <Route path="/app/pricing" element={<Pricing />} />
                   <Route path="/app/support" element={<Support />} />
-                  <Route path="/app/post-job" element={<PostJob />} />
-                  <Route path="/app/recruiter/candidates" element={<RecruiterCandidates />} />
+                  <Route path="/app/post-job" element={<FeatureGate feature="hiring"><PostJob /></FeatureGate>} />
+                  <Route path="/app/recruiter/candidates" element={<FeatureGate feature="hiring"><RecruiterCandidates /></FeatureGate>} />
                   <Route path="/app/admin" element={<AdminHelpdesk />} />
                   <Route path="/app/admin/users" element={<AdminUsers />} />
                   <Route path="/app/admin/logs" element={<AdminAuditLog />} />
                   <Route path="/app/tasks" element={<Tasks />} />
                   <Route path="/app/extension" element={<ExtensionDownload />} />
-                  <Route path="/app/books" element={<BooksPage />} />
-                  <Route path="/app/movies" element={<MoviesPage />} />
-                  <Route path="/app/memory-dump" element={<MemoryDumpPage />} />
-                  <Route path="/app/social-media" element={<SocialMediaPage />} />
-                  <Route path="/app/assessments" element={<AssessmentsPage />} />
-                  <Route path="/app/autobiography" element={<AutobiographyPage />} />
-                  <Route path="/app/photo-gallery" element={<PhotoGalleryPage />} />
+                  <Route path="/app/books" element={<FeatureGate feature="profileExtras"><BooksPage /></FeatureGate>} />
+                  <Route path="/app/movies" element={<FeatureGate feature="profileExtras"><MoviesPage /></FeatureGate>} />
+                  <Route path="/app/memory-dump" element={<FeatureGate feature="profileExtras"><MemoryDumpPage /></FeatureGate>} />
+                  <Route path="/app/social-media" element={<FeatureGate feature="profileExtras"><SocialMediaPage /></FeatureGate>} />
+                  <Route path="/app/assessments" element={<FeatureGate feature="assessments"><AssessmentsPage /></FeatureGate>} />
+                  <Route path="/app/autobiography" element={<FeatureGate feature="profileExtras"><AutobiographyPage /></FeatureGate>} />
+                  <Route path="/app/photo-gallery" element={<FeatureGate feature="profileExtras"><PhotoGalleryPage /></FeatureGate>} />
                   <Route path="/app/interview" element={<InterviewPage />} />
                   <Route path="/app/training" element={<TrainingPage />} />
-                  <Route path="/app/events" element={<EventsPage />} />
-                  <Route path="/app/companies" element={<CompanyPage />} />
-                  <Route path="/app/event-registrations" element={<EventRegistrationsPage />} />
+                  <Route path="/app/events" element={<FeatureGate feature="events"><EventsPage /></FeatureGate>} />
+                  <Route path="/app/companies" element={<FeatureGate feature="hiring"><CompanyPage /></FeatureGate>} />
+                  <Route path="/app/event-registrations" element={<FeatureGate feature="events"><EventRegistrationsPage /></FeatureGate>} />
                 </Route>
               </Route>
               </Route>
