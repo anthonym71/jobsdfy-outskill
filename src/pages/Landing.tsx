@@ -100,7 +100,9 @@ const faqs = [
 
 const Landing = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const { resolvedTheme, setTheme } = useTheme();
   const [landingTab, setLandingTab] = useState<"home" | "events" | "jobs">("home");
+
   const [publicEvents, setPublicEvents] = useState<any[]>([]);
   const [publicJobs, setPublicJobs] = useState<any[]>([]);
   const [eventSearch, setEventSearch] = useState("");
