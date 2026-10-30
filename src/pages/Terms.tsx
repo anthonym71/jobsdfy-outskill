@@ -1,0 +1,19 @@
+import { Link } from "react-router-dom";
+import Footer from "@/components/layout/Footer";
+import { TERMS_VERSION } from "@/lib/terms";
+
+export default function Terms() {
+  return <div className="min-h-screen bg-background text-foreground">
+    <main className="mx-auto max-w-3xl px-6 py-12 space-y-8">
+      <Link to="/" className="text-sm text-primary underline">JobsDFY Outskill</Link>
+      <header><h1 className="font-heading text-3xl font-bold">Terms &amp; Conditions</h1><p className="mt-3 text-muted-foreground">Version {TERMS_VERSION} · Effective 30 October 2026</p></header>
+      <section className="space-y-3"><h2 className="font-heading text-xl font-semibold">1. Evaluation and testing access</h2><p>JobsDFY Outskill is provided for evaluation and testing only, including hackathon assessment. By creating an account or continuing to use the platform, you agree to these terms. Access is personal, limited, non-exclusive and non-transferable.</p></section>
+      <section className="space-y-3"><h2 className="font-heading text-xl font-semibold">2. Intellectual Property</h2><p>The JobsDFY platform, its code, design, and underlying concept were created by Anthony Mallett and are his intellectual property. Access is granted for evaluation and testing only.</p><p>Nothing may be copied, replicated, forked, reverse-engineered, or duplicated without Anthony Mallett’s explicit written consent. This restriction covers the platform, its source code, designs, workflows, and underlying concept. Access does not transfer ownership or grant a licence to create a derivative platform.</p><p>Third-party software and services remain subject to their respective owners’ licences and rights. Nothing in these terms restricts rights that cannot lawfully be restricted.</p></section>
+      <section className="space-y-3"><h2 className="font-heading text-xl font-semibold">3. Accounts and permitted use</h2><p>Keep your credentials secure. Do not share access, bypass restrictions, extract other users’ data or misuse administrative access. Team members and judges must stay within the permissions assigned to their accounts.</p></section>
+      <section className="space-y-3"><h2 className="font-heading text-xl font-semibold">4. Your content and privacy</h2><p>You retain rights in the content you submit and must have permission to provide it. Use test data where possible. Your content may be processed by connected services to provide requested features. The <a href="http://fflipi.com/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-primary underline">Privacy Policy</a> describes privacy practices.</p></section>
+      <section className="space-y-3"><h2 className="font-heading text-xl font-semibold">5. Test services and limitations</h2><p>The platform is a test release and may contain errors or become unavailable. AI-generated outputs must be reviewed and are not guarantees of employment or professional advice. Payments in JobsDFY Outskill remain in Stripe test mode; test transactions are not real purchases.</p></section>
+      <section className="space-y-3"><h2 className="font-heading text-xl font-semibold">6. Updates and access</h2><p>Access may be suspended for misuse or breach of these terms. If the terms change, you will be asked to accept the new version before continuing. These terms do not exclude any rights or liabilities that cannot legally be excluded.</p></section>
+      <section className="space-y-3"><h2 className="font-heading text-xl font-semibold">7. Written permission and questions</h2><p>Requests for permission must be directed to Anthony Mallett. Contact <a href="mailto:support@jobsdfy.com" className="text-primary underline">support@jobsdfy.com</a>. Permission is not granted unless Anthony Mallett explicitly provides it in writing.</p></section>
+    </main><Footer />
+  </div>;
+}
