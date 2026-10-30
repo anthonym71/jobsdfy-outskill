@@ -5,7 +5,7 @@ export function microphoneConstraints(deviceId: string): MediaStreamConstraints 
 }
 
 export function microphoneError(error: unknown): string {
-  const name = error instanceof Error ? error.name : "";
+  const name = typeof error === "object" && error !== null && "name" in error ? error.name : "";
   if (name === "NotAllowedError" || name === "SecurityError") {
     return "Microphone access is blocked. Allow microphone access in your browser’s site permissions. If you are in the embedded preview, open jobsdfy.com in a separate tab and try there.";
   }
