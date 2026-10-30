@@ -313,8 +313,15 @@ const QuickApply = () => {
 
   if (!pack) {
     return (
-      <div className="p-6 md:p-8 max-w-4xl mx-auto">
-        <p className="text-muted-foreground">Could not generate application pack.</p>
+      <div className="p-6 md:p-8 max-w-4xl mx-auto space-y-4">
+        <h1 className="font-heading text-2xl font-bold text-foreground">Create application pack</h1>
+        <p className="text-muted-foreground">{job?.title || "Job"}{job?.company ? ` · ${job.company}` : ""}</p>
+        <label htmlFor="initial-cv-choice" className="block text-sm font-medium text-foreground">CV to use</label>
+        <select id="initial-cv-choice" value={selectedCv} onChange={e => setSelectedCv(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground">
+          <option value="profile">My main profile</option>
+          {cvOptions.map(cv => <option key={cv.id} value={cv.id}>{cv.version_name}</option>)}
+        </select>
+        <Button onClick={regenerate} disabled={!job}>Generate application pack (3 credits)</Button>
         <Button variant="outline" className="mt-4" onClick={() => navigate("/app")}>Back to Dashboard</Button>
       </div>
     );
