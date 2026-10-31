@@ -1,3 +1,4 @@
+import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Bookmark, Check, HelpCircle, ShieldAlert, ShieldCheck, ShieldQuestion, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import VerdictBadge from "@/components/VerdictBadge";
@@ -25,6 +26,7 @@ interface Props {
 
 /** The verdict screen: what breaks, what the posting does not say, and what fits. Presentational only. */
 const VerdictView = ({ result, risk, onBack, onSave, onSkip, onContinue, onReportWrong }: Props) => {
+  const reduce = useReducedMotion();
   const b = BANNER[result.verdict];
   const Icon = b.icon;
   const breaks = result.blockers.filter((x) => x.state === "fail");
@@ -35,9 +37,11 @@ const VerdictView = ({ result, risk, onBack, onSave, onSkip, onContinue, onRepor
     <div className="mx-auto max-w-4xl space-y-8 p-4 sm:p-6 md:p-8">
       <section className={`rounded-xl border p-6 md:p-8 ${b.box}`} aria-label="Verdict">
         <div className="flex flex-col items-center gap-4 text-center">
-          <Icon className={`h-10 w-10 ${b.text}`} aria-hidden />
-          <VerdictBadge verdict={result.verdict} size="lg" />
-          <p className={`max-w-lg text-base font-medium ${b.text}`}>{result.summary}</p>
+          <motion.div initial={reduce ? false : { scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 260, damping: 18 }} className="flex flex-col items-center gap-4">
+            <Icon className={`h-12 w-12 ${b.text}`} aria-hidden />
+            <VerdictBadge verdict={result.verdict} size="lg" />
+          </motion.div>
+          <motion.p initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25, duration: 0.4 }} className={`max-w-lg text-base font-medium ${b.text}`}>{result.summary}</motion.p>
           <p className="max-w-lg text-sm text-foreground/70">{b.next}</p>
           <ul className="flex flex-wrap justify-center gap-2 text-xs font-medium" aria-label="Summary of limits checked">
             {breaks.length > 0 && <li className="rounded-full bg-verdict-stop-bg px-3 py-1 text-verdict-stop">{breaks.length} broken</li>}

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { SAMPLE_POSTING } from "@/lib/samplePosting";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link2, FileText, Image, Mic, ArrowRight, Sparkles, AlertTriangle, ClipboardPaste, Chrome, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -261,7 +262,8 @@ const NewJob = () => {
                   Go to the job page → Select All (Ctrl+A) → Copy (Ctrl+C) → Paste below. Our AI will extract only the job details.
                 </p>
               </div>
-              <div><Label>Job Description</Label><Textarea placeholder="Paste everything from the job page here — headers, footers, and all. AI will find the job details automatically…" rows={10} value={text} onChange={(e) => setText(e.target.value)} /></div>
+              <div className="flex items-center justify-between gap-3"><Label>Job Description</Label><Button type="button" variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setText(SAMPLE_POSTING)}>Try a sample posting</Button></div>
+              <div><Textarea placeholder="Paste everything from the job page here — headers, footers, and all. AI will find the job details automatically…" rows={10} value={text} onChange={(e) => setText(e.target.value)} /></div>
             </TabsContent>
             <TabsContent value="screenshot" className="mt-4">
               <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-12 text-center">

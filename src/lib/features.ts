@@ -1,18 +1,20 @@
-// Feature flags for the parts of the app that are not the core "check the posting first" product.
-// Everything here is hidden by default, never deleted: set VITE_FEATURES to a comma list to bring a group back,
-// for example VITE_FEATURES="assessments,referrals".
+// Feature flags. Hidden features are never deleted: they are switched off for users and come back with one switch.
+// Hidden by default: profileExtras (Books, Movies, Memory Dump, Autobiography), gamification, referrals, legacyLanding.
+// Visible by default: the job flow, Quick Apply, interview, calendar, tasks, events, training, assessments,
+// recruiter side, photo gallery, social / thought leadership, pricing and credits.
+// VITE_FEATURES is a comma list: "profileExtras" turns a group on, "-events" turns a default-on group off.
 
-export type FeatureKey = "profileExtras" | "assessments" | "gamification" | "referrals" | "hiring" | "events";
+export type FeatureKey = "profileExtras" | "assessments" | "gamification" | "referrals" | "hiring" | "events" | "legacyLanding";
 
-export const ALL_FEATURES: FeatureKey[] = ["profileExtras", "assessments", "gamification", "referrals", "hiring", "events"];
+export const ALL_FEATURES: FeatureKey[] = ["profileExtras", "assessments", "gamification", "referrals", "hiring", "events", "legacyLanding"];
+
+export const DEFAULT_ON: FeatureKey[] = ["assessments", "hiring", "events"];
 
 /** Which feature group owns each app route. Routes not listed here are core and always on. */
 const ROUTE_FEATURES: Array<[string, FeatureKey]> = [
   ["/app/books", "profileExtras"],
   ["/app/movies", "profileExtras"],
   ["/app/memory-dump", "profileExtras"],
-  ["/app/social-media", "profileExtras"],
-  ["/app/photo-gallery", "profileExtras"],
   ["/app/autobiography", "profileExtras"],
   ["/app/assessments", "assessments"],
   ["/app/post-job", "hiring"],
@@ -23,10 +25,14 @@ const ROUTE_FEATURES: Array<[string, FeatureKey]> = [
 ];
 
 export function parseFeatures(raw: string | undefined | null): Set<FeatureKey> {
-  const on = new Set<FeatureKey>();
+  const on = new Set<FeatureKey>(DEFAULT_ON);
   for (const part of (raw ?? "").split(",")) {
-    const key = part.trim() as FeatureKey;
-    if (ALL_FEATURES.includes(key)) on.add(key);
+    const name = part.trim();
+    const off = name.startsWith("-");
+    const key = (off ? name.slice(1) : name) as FeatureKey;
+    if (!ALL_FEATURES.includes(key)) continue;
+    if (off) on.delete(key);
+    else on.add(key);
   }
   return on;
 }

@@ -83,7 +83,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={isEnabled("events") || isEnabled("hiring") ? <LandingLegacy /> : <Landing />} />
+            <Route path="/" element={isEnabled("legacyLanding") ? <LandingLegacy /> : <Landing />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/r/:slug" element={<SlugRedirect type="ref" />} />
@@ -118,10 +118,10 @@ const App = () => (
                   <Route path="/app/books" element={<FeatureGate feature="profileExtras"><BooksPage /></FeatureGate>} />
                   <Route path="/app/movies" element={<FeatureGate feature="profileExtras"><MoviesPage /></FeatureGate>} />
                   <Route path="/app/memory-dump" element={<FeatureGate feature="profileExtras"><MemoryDumpPage /></FeatureGate>} />
-                  <Route path="/app/social-media" element={<FeatureGate feature="profileExtras"><SocialMediaPage /></FeatureGate>} />
+                  <Route path="/app/social-media" element={<SocialMediaPage />} />
                   <Route path="/app/assessments" element={<FeatureGate feature="assessments"><AssessmentsPage /></FeatureGate>} />
                   <Route path="/app/autobiography" element={<FeatureGate feature="profileExtras"><AutobiographyPage /></FeatureGate>} />
-                  <Route path="/app/photo-gallery" element={<FeatureGate feature="profileExtras"><PhotoGalleryPage /></FeatureGate>} />
+                  <Route path="/app/photo-gallery" element={<PhotoGalleryPage />} />
                   <Route path="/app/interview" element={<InterviewPage />} />
                   <Route path="/app/training" element={<TrainingPage />} />
                   <Route path="/app/events" element={<FeatureGate feature="events"><EventsPage /></FeatureGate>} />

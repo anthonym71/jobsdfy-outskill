@@ -6,14 +6,23 @@ import FeatureGate from "@/components/FeatureGate";
 import { ALL_FEATURES, featureForPath, isPathEnabled, parseFeatures, visibleNav } from "@/lib/features";
 
 describe("feature flags", () => {
-  it("everything optional is off by default", () => {
-    expect(parseFeatures(undefined).size).toBe(0);
-    expect(parseFeatures("").size).toBe(0);
+  it("hides the four profile extras by default and keeps the rest of the app visible", () => {
+    const on = parseFeatures(undefined);
+    expect(on.has("profileExtras")).toBe(false);
+    for (const k of ["assessments", "hiring", "events"] as const) expect(on.has(k), k).toBe(true);
   });
 
-  it("turns groups on from a comma list and ignores unknown names", () => {
-    expect([...parseFeatures(" assessments, referrals ,nope")].sort()).toEqual(["assessments", "referrals"]);
+  it("one switch brings a hidden group back; a minus switches a visible one off; unknown names are ignored", () => {
+    expect(parseFeatures("profileExtras").has("profileExtras")).toBe(true);
+    expect(parseFeatures(" referrals ,nope").has("referrals")).toBe(true);
+    expect(parseFeatures("-events").has("events")).toBe(false);
     expect(parseFeatures(ALL_FEATURES.join(",")).size).toBe(ALL_FEATURES.length);
+  });
+
+  it("Books, Movies, Memory Dump and Autobiography are hidden; photo gallery, social, events and assessments stay", () => {
+    const on = parseFeatures(undefined);
+    for (const p of ["/app/books", "/app/movies", "/app/memory-dump", "/app/autobiography"]) expect(isPathEnabled(p, on), p).toBe(false);
+    for (const p of ["/app/photo-gallery", "/app/social-media", "/app/events", "/app/assessments", "/app/recruiter/candidates", "/app/pricing"]) expect(isPathEnabled(p, on), p).toBe(true);
   });
 
   it("maps routes to their group, and leaves core routes alone", () => {
@@ -29,7 +38,7 @@ describe("feature flags", () => {
   it("hides gated nav items but keeps the core product", () => {
     const nav = [{ to: "/app" }, { to: "/app/new-job" }, { to: "/app/books" }, { to: "/app/assessments" }, { to: "/app/tasks" }, { to: "/app/companies" }];
     expect(visibleNav(nav, new Set()).map((n) => n.to)).toEqual(["/app", "/app/new-job", "/app/tasks"]);
-    expect(visibleNav(nav, parseFeatures("assessments")).map((n) => n.to)).toContain("/app/assessments");
+    expect(visibleNav(nav, parseFeatures("-assessments")).map((n) => n.to)).not.toContain("/app/assessments");
     expect(isPathEnabled("/app/books", parseFeatures("profileExtras"))).toBe(true);
   });
 
@@ -53,15 +62,15 @@ describe("feature flags", () => {
 describe("FeatureGate", () => {
   it("sends the user to the dashboard when the group is off", () => {
     render(
-      <MemoryRouter initialEntries={["/app/assessments"]}>
+      <MemoryRouter initialEntries={["/app/books"]}>
         <Routes>
           <Route path="/app" element={<p>dashboard</p>} />
-          <Route path="/app/assessments" element={<FeatureGate feature="assessments"><p>assessments page</p></FeatureGate>} />
+          <Route path="/app/books" element={<FeatureGate feature="profileExtras"><p>books page</p></FeatureGate>} />
         </Routes>
       </MemoryRouter>,
     );
     expect(screen.getByText("dashboard")).toBeInTheDocument();
-    expect(screen.queryByText("assessments page")).not.toBeInTheDocument();
+    expect(screen.queryByText("books page")).not.toBeInTheDocument();
   });
 });
 

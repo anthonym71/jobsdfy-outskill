@@ -31,6 +31,14 @@ const EXAMPLE_CARDS = [
   },
 ];
 
+// Honest numbers: the rules are checked against postings we wrote and labelled ourselves, not against live data.
+const PROOF = [
+  { value: "53", label: "labelled postings in our test set (23 Indian)" },
+  { value: "100%", label: "of labels reproduced by the rules, given a correct reading" },
+  { value: "9", label: "hard limits checked, each with a quoted line" },
+  { value: "0", label: "jobs applied to without you pressing send" },
+];
+
 const STEPS = [
   { icon: ClipboardPaste, title: "Paste the posting", text: "A link, the text, or a page copied from LinkedIn, Naukri or a careers page. We read it into fields you can correct." },
   { icon: FileSearch, title: "See what breaks, and what it doesn't say", text: "Each of your hard limits is checked one by one. You get the line from the posting that decided it, or a plain \"the posting doesn't say\"." },
@@ -116,10 +124,10 @@ const Landing = () => {
           <div className="mx-auto grid max-w-6xl grid-cols-1 gap-12 px-4 pb-16 pt-14 sm:px-6 md:pt-20 lg:grid-cols-[1.05fr_1fr] lg:items-start lg:gap-14">
             <motion.div initial="hidden" animate="visible" className="min-w-0 space-y-6 lg:pt-6">
               <motion.p variants={fadeUp} custom={0} className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
-                <ShieldCheck className="h-3.5 w-3.5 text-verdict-go" aria-hidden />Notice period, CTC, office days: checked before you tailor
+                <ShieldCheck className="h-3.5 w-3.5 text-highlight" aria-hidden />Notice period, CTC, office days: checked before you tailor
               </motion.p>
               <motion.h1 variants={fadeUp} custom={1} className="font-heading text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl lg:text-[3.4rem]">
-                Check the posting first.
+                Check the posting <span className="text-primary">first.</span>
               </motion.h1>
               <motion.p variants={fadeUp} custom={2} className="max-w-xl text-lg leading-relaxed text-muted-foreground">
                 Paste a job posting. We compare it with your hard limits and tell you <strong className="text-foreground">GO</strong>, <strong className="text-foreground">REVIEW</strong> or <strong className="text-foreground">STOP</strong>, naming the limit that broke and quoting the line that broke it.
@@ -150,6 +158,19 @@ const Landing = () => {
               <p className="mt-4 flex items-center gap-2 text-xs text-muted-foreground"><Check className="h-3.5 w-3.5 text-verdict-go" aria-hidden />Also checked and fine: employment type, location, language, travel.</p>
             </motion.div>
           </div>
+        </section>
+
+        {/* Proof strip */}
+        <section aria-label="Proof" className="border-y border-border bg-card/60">
+          <dl className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-4 py-8 text-center sm:px-6 md:grid-cols-4">
+            {PROOF.map((p) => (
+              <div key={p.label}>
+                <dt className="sr-only">{p.label}</dt>
+                <dd className="font-heading text-3xl font-bold text-primary">{p.value}</dd>
+                <dd className="mt-1 text-xs text-muted-foreground">{p.label}</dd>
+              </div>
+            ))}
+          </dl>
         </section>
 
         {/* How it works */}
