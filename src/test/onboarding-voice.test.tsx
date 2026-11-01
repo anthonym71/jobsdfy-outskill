@@ -48,4 +48,29 @@ describe("onboarding voice answers", () => {
     expect(upload).toHaveBeenCalledTimes(1);
     expect(mock.fill).not.toHaveBeenCalled();
   });
+  it("rejects separate first/last-name questions instead of putting a surname into location", async () => {
+    render(<ConversationalVoiceFill fields={[{ key: "fullName", question: "What's your full name?" }, { key: "location", question: "Where are you based?" }]} values={{}} onFill={mock.fill} onContinue={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Voice Input" }));
+    await waitFor(() => expect(mock.start).toHaveBeenCalled());
+    act(() => mock.callbacks.onMessage({ source: "ai", message: "What's your first name?" }));
+    act(() => mock.callbacks.onMessage({ source: "user", message: "Anthony" }));
+    expect(mock.fill).not.toHaveBeenCalled();
+    act(() => mock.callbacks.onMessage({ source: "ai", message: "What's your full name?" }));
+    act(() => mock.callbacks.onMessage({ source: "user", message: "Anthony Mallett" }));
+    expect(mock.fill).toHaveBeenCalledWith("fullName", "Anthony Mallett");
+    act(() => mock.callbacks.onMessage({ source: "ai", message: "What's your last name?" }));
+    act(() => mock.callbacks.onMessage({ source: "user", message: "Mallett" }));
+    expect(mock.fill).toHaveBeenCalledTimes(1);
+  });
+  it("fills the summary and automatically continues exactly once", async () => {
+    const next = vi.fn();
+    render(<ConversationalVoiceFill autoContinue fields={[{ key: "summary", question: "Give me a summary of your job description and what you did." }]} values={{}} onFill={mock.fill} onContinue={next} />);
+    fireEvent.click(screen.getByRole("button", { name: "Voice Input" }));
+    await waitFor(() => expect(mock.start).toHaveBeenCalled());
+    act(() => mock.callbacks.onMessage({ source: "user", message: "I managed the sales team." }));
+    expect(mock.fill).toHaveBeenCalledWith("summary", "I managed the sales team.");
+    expect(next).toHaveBeenCalledTimes(1);
+    act(() => mock.callbacks.onMessage({ source: "user", message: "More speech" }));
+    expect(next).toHaveBeenCalledTimes(1);
+  });
 });
