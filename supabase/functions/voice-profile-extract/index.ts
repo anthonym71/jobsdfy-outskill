@@ -101,7 +101,7 @@ Rules:
       requestBody.response_format = { type: "json_object" };
     }
 
-    const response = await fetch("https://ai-gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
@@ -112,7 +112,9 @@ Rules:
 
     if (!response.ok) {
       const text = await response.text();
-      throw new Error(`AI Gateway error [${response.status}]: ${text}`);
+      let message = "Unable to extract your interview. Please try again.";
+      try { const failure = JSON.parse(text); message = failure.message || failure.error?.message || (typeof failure.error === "string" ? failure.error : message); } catch { /* Do not expose upstream internals. */ }
+      return new Response(JSON.stringify({ error: message }), { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const aiData = await response.json();
@@ -141,7 +143,7 @@ Rules:
     // Store in knowledgebase
     const entries = Array.isArray(parsed) ? parsed : [parsed];
     for (const entry of entries) {
-      await supabase.from("knowledgebase_entries").insert({
+      const { error: saveError } = await supabase.from("knowledgebase_entries").insert({
         user_id: userData.user.id,
         category,
         title: entry.title || entry.name || entry.achievement_key || `${category} entry`,
@@ -149,6 +151,7 @@ Rules:
         source_type: "voice",
         source_name: "Voice CV Builder",
       });
+      if (saveError) throw new Error("Your interview could not be stored. Your transcript is still available; please try saving again.");
     }
 
     return new Response(JSON.stringify({ success: true, data: parsed }), {

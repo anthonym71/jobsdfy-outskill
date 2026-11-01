@@ -26,7 +26,6 @@ const baseNavItems: { to: string; icon: any; label: string; end?: boolean }[] = 
   { to: "/app/jobs", icon: Briefcase, label: "Jobs" },
   { to: "/app/profile", icon: UserCircle, label: "Profile - Onboarding" },
   { to: "/app/events", icon: CalendarDays, label: "Calendar / Events" },
-  { to: "/app/calendar", icon: CalendarDays, label: "Calendar" },
   { to: "/app/rewards", icon: Coins, label: "Rewards & Leaderboard" },
   { to: "/app/tasks", icon: ListTodo, label: "Tasks" },
 { to: "/app/books", icon: BookOpen, label: "Intellectual Foundation" },
