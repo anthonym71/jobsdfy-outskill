@@ -2,6 +2,7 @@
 
 | Date | Change | Suggested by | Implemented by | Notes |
 | --- | --- | --- | --- | --- |
+| 2026-11-01 | Fixed onboarding voice startup configuration, added CV-first spoken choice and persistent microphone level | Anthony | Lovable | Enable first-message/prompt overrides on existing ElevenLabs agent; use SDK input level without opening an additional microphone stream; yes opens CV upload, no begins one-question intake |
 | 2026-11-01 | Restored Profile-first onboarding, explicit Begin onboarding, side navigation and Back/Home, CV-or-questions intake and immediate voice field population | Anthony | Lovable | Existing profile values loaded; CV can be reviewed and saved without the questionnaire |
 | 2026-11-01 | Added top plus shortcut, gamification rules, demo leaderboard and proposed awards | Anthony | Lovable | Existing reward amounts unchanged; illustrative participants and prizes, no automatic extra grants |
 | 2026-11-01 | Added calendar date view and creator edit/cancel/delete controls for events and meetings | Anthony | Lovable | Cancel retains registration records; creator policies verified; read-only judges preserved |

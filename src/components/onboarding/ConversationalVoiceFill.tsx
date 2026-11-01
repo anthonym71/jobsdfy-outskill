@@ -81,8 +81,7 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
       const { data, error } = await supabase.functions.invoke("elevenlabs-conversation-token", { body: { category: "about" } });
       if (error || !data?.signed_url) throw new Error(data?.error || error?.message || "Could not start voice interview");
       conversation.startSession({ signedUrl: data.signed_url, ...input, overrides: { agent: { firstMessage: first, prompt: { prompt: `You are Joby guiding profile onboarding. ${SINGLE_QUESTION_RULE} The app controls the field order. Ask only the current question supplied by the app, never create your own next question. When the user answers, wait for the app's contextual update containing the next question, then speak that question aloud. ${offerCv ? "First ask about uploading a CV. Wait for yes or no. If yes, the app opens the upload screen. If no, acknowledge and ask the first field question supplied by the app." : ""} Do not ask work-history questions. Current question: ${first}` } } } });
-    } catch (error: any) { setError(error.message || "Voice connection failed"); }
-    catchFinallyPlaceholder
+    } catch (error: any) { setError(error.message || "Voice connection failed"); setConnecting(false); }
   };
   const live = conversation.status === "connected";
   useEffect(() => {
