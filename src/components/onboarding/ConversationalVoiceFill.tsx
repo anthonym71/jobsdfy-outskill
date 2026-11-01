@@ -11,7 +11,7 @@ import { SINGLE_QUESTION_RULE, voiceMessage } from "@/lib/conversationRules";
 
 export const CV_FIRST_PROMPT = "Do you have a CV? Uploading it is the fastest, easiest way to get your information into the system. If not, we can continue with the voice interview.";
 
-function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv, autoContinue = false }: { fields: GuidedField[]; values: Record<string, string>; onFill: (key: string, value: string) => void; onContinue: () => void; offerCv?: boolean; onUploadCv?: () => void; autoContinue?: boolean }) {
+function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv, autoContinue = false, askAll = false, autoStart = false }: { fields: GuidedField[]; values: Record<string, string>; onFill: (key: string, value: string) => void; onContinue: () => void; offerCv?: boolean; onUploadCv?: () => void; autoContinue?: boolean; askAll?: boolean; autoStart?: boolean }) {
   const microphone = useMicrophone();
   const [connecting, setConnecting] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -19,7 +19,8 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
   const [error, setError] = useState("");
   const index = useRef(0);
   const pending = useRef<Record<string, string>>({});
-  const relevant = useRef<GuidedField[]>([]);
+  const relevant = useRef<(GuidedField & { confirmValue?: string })[]>([]);
+  const autoStarted = useRef(false);
   const awaitingAnswer = useRef(false);
   const cvChoice = useRef(false);
   const completed = useRef(false);
@@ -67,7 +68,8 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
       }
       const field = relevant.current[index.current];
       if (!field || !awaitingAnswer.current || paused) return;
-      if (!isSkipCommand(text)) {
+      const confirmed = !!field.confirmValue && /\b(yes|yeah|yep|correct|right|that's it|keep it|fine)\b/i.test(text) && !/\b(no|nope|not|change|wrong)\b/i.test(text);
+      if (!isSkipCommand(text) && !confirmed) {
         let value = field.type === "number" ? spokenNumber(text) : text;
         if (field.options) value = field.options.find(option => option.words.some(word => text.toLowerCase().includes(word)))?.value || "";
         if (!value) { conversation.sendContextualUpdate(`Please ask this question again: ${field.question}`); return; }
@@ -90,7 +92,10 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
   const apply = () => Object.entries(pending.current).forEach(([key, value]) => onFill(key, value));
   const start = async () => {
     setConnecting(true); setError(""); setPaused(false);
-    relevant.current = fields.filter(field => !values[field.key]?.trim()); index.current = 0; pending.current = {}; completed.current = false;
+    relevant.current = askAll
+      ? fields.map(field => { const current = values[field.key]?.trim(); return current ? { ...field, question: `${field.question} I have ${current}. Is that correct, or what should it be?`, confirmValue: current } : field; })
+      : fields.filter(field => !values[field.key]?.trim());
+    index.current = 0; pending.current = {}; completed.current = false;
     cvChoice.current = offerCv;
     const first = offerCv ? CV_FIRST_PROMPT : relevant.current[0]?.question || "Your answers are complete. Say continue to proceed.";
     setCurrentQuestion(first); awaitingAnswer.current = true;
@@ -101,6 +106,11 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
       await conversation.startSession({ signedUrl: data.signed_url, ...input, overrides: { agent: { firstMessage: first, prompt: { prompt: `You are Joby guiding profile onboarding. ${SINGLE_QUESTION_RULE} The app controls the field order. Speak the supplied question EXACTLY as written. Never split full name into first and last names. Never create your own next question. When the user answers, wait for the app's contextual update containing the next question, then speak that question aloud. ${offerCv ? "First ask about uploading a CV. Wait for yes or no. If yes, the app opens the upload screen. If no, acknowledge and ask the first field question supplied by the app." : ""} Do not ask work-history questions. Current question: ${first}` } } } });
     } catch (error: any) { setError(error.message || "Voice connection failed"); setConnecting(false); }
   };
+  useEffect(() => {
+    if (!autoStart || autoStarted.current) return;
+    autoStarted.current = true;
+    void start();
+  }, [autoStart]);
   const live = conversation.status === "connected";
   useEffect(() => {
     if (!live) return;

@@ -261,8 +261,10 @@ const AboutMeTab = () => {
           </div>
         </div>
 
-        {voiceOpen && <ConversationalVoiceFill fields={[
+        {voiceOpen && <ConversationalVoiceFill autoStart askAll fields={[
           { key: "fullName", question: "What's your full name?" },
+          { key: "emailConfirm", question: `Is ${user?.email || "your sign-in email"} the right email for your account?` },
+          { key: "phoneNumber", question: "What's your phone number?" },
           { key: "location", question: "Where are you based?" },
           { key: "headline", question: "What's your job title?" },
           { key: "yearsExp", question: "How many years of experience do you have?", type: "number" },
