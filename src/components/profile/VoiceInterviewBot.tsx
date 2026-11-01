@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useMicrophone } from "@/hooks/useMicrophone";
 import MicrophoneControl from "./MicrophoneControl";
+import { SINGLE_QUESTION_RULE, voiceMessage } from "@/lib/conversationRules";
 
 interface VoiceInterviewBotProps {
   jobTitle?: string;
@@ -23,10 +24,10 @@ const VoiceInterviewBotInner = ({ jobTitle, company, jobId, onSaved }: VoiceInte
 
   const conversation = useConversation({
     onMessage: (message: any) => {
-      const user = message?.user_transcription_event?.user_transcript;
-      const agent = message?.agent_response_event?.agent_response;
-      if (message?.type === "user_transcript" && user) setLines(prev => [...prev, `Candidate: ${user}`]);
-      if (message?.type === "agent_response" && agent) setLines(prev => [...prev, `Interviewer: ${agent}`]);
+      const received = voiceMessage(message);
+      if (!received) return;
+      setLines(prev => [...prev, `${received.speaker === "user" ? "Candidate" : "Interviewer"}: ${received.text}`]);
+      if (received.speaker === "user") conversation.sendContextualUpdate(SINGLE_QUESTION_RULE);
     },
     onConnect: () => {
       toast({ title: "Connected", description: "Voice AI interviewer is ready. Start speaking!" });
@@ -54,6 +55,7 @@ const VoiceInterviewBotInner = ({ jobTitle, company, jobId, onSaved }: VoiceInte
       await conversation.startSession({
         signedUrl: data.signed_url,
         ...input,
+        overrides: { agent: { firstMessage: "Tell me about your most recent role.", prompt: { prompt: `You are a supportive interview coach${jobTitle ? ` for ${jobTitle}` : ""}. ${SINGLE_QUESTION_RULE} Ask about the candidate's real experience and assess using STAR. Start with their most recent role.` } } },
       });
     } catch (e: any) {
       console.error("Voice AI error:", e);

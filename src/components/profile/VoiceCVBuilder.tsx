@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useMicrophone } from "@/hooks/useMicrophone";
 import MicrophoneControl from "./MicrophoneControl";
 import { isStopCommand } from "@/lib/voiceCommands";
+import { SINGLE_QUESTION_RULE, voiceMessage } from "@/lib/conversationRules";
 import { PROFILE_UPDATED_EVENT, VOICE_DICTIONARY_KEY, VOICE_TOPICS, saveVoiceData } from "@/lib/voiceSave";
 
 interface VoiceCVBuilderProps {
@@ -50,12 +51,15 @@ const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose
     onConnect: () => toast({ title: "Joby is ready!", description: `Tell me about your ${topicLabel.toLowerCase()}.` }),
     onDisconnect: () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); },
     onMessage: (message: any) => {
-      if (message?.type === "user_transcript") {
-        const t = message?.user_transcription_event?.user_transcript || "";
+      const received = voiceMessage(message);
+      if (!received) return;
+      if (received.speaker === "user") {
+        const t = received.text;
         if (t && isStopCommand(t)) { setPaused(true); setAskUpdate(true); return; }
         if (t) setLines((prev) => [...prev, { who: "You", text: t }]);
-      } else if (message?.type === "agent_response") {
-        const t = message?.agent_response_event?.agent_response || "";
+        conversation.sendContextualUpdate(SINGLE_QUESTION_RULE);
+      } else {
+        const t = received.text;
         if (t) setLines((prev) => [...prev, { who: "Joby", text: t }]);
       }
     },
@@ -90,6 +94,7 @@ const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose
       await conversation.startSession({
         signedUrl: data.signed_url, ...input,
         dynamicVariables: { topic: topicLabel },
+        overrides: { agent: { firstMessage: `What would you like to add to your ${topicLabel.toLowerCase()}?`, prompt: { prompt: `You are Joby helping record the user's ${topicLabel}. ${SINGLE_QUESTION_RULE} Collect only relevant factual details for this selected topic. Respect stop/pause and allow spelling corrections.` } } },
       } as any);
     } catch (e: any) {
       if (e.name === "NotAllowedError") {
