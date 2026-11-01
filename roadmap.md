@@ -1,4 +1,5 @@
 # Tasks
+- [ ] Fix silent onboarding voice startup, CV-first spoken prompt and persistent live microphone level.
 - [x] Restore profile-first onboarding with side menus, exit controls and upfront CV/questions choice; signed-in navigation checked.
 - [x] Add prominent rewards plus button, rules and illustrative leaderboard.
 - [x] Show calendar dates and add creator edit/cancel/delete controls; signed-in create/edit/cancel/reload/delete checked.
