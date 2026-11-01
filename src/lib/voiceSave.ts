@@ -30,7 +30,7 @@ export async function saveVoiceData(userId: string, category: string, data: any)
   if (category === "about" || category === "skills") {
     const { data: existing, error: readError } = await supabase.from("user_profiles").select("*").eq("user_id", userId).maybeSingle();
     if (readError) throw readError;
-    const p = existing || {};
+    const p: Record<string, any> = existing || {};
     const upd: Record<string, any> = {};
     const text = (k: string, src: string) => { if (!p[k as keyof typeof p] && d[src]) upd[k] = String(d[src]); };
     if (category === "about") {
