@@ -2,6 +2,7 @@
 
 | Date | Change | Suggested by | Implemented by | Notes |
 | --- | --- | --- | --- | --- |
+| 2026-11-01 | Fixed voice extraction address and missing-profile saves; Basic Information Talk follows its form; field mic streams words into inputs; credit panel opens rewards and refreshes XP; removed duplicate Calendar | Anthony | Lovable | Preserved extraction model; surfaced real save errors; Job title wording already updated in preview; browser dictation uses browser default microphone |
 | 2026-11-01 | Kept My Profile sections above onboarding; aligned full-name, job-title and summary voice questions with forms and automatic page continuation | Anthony | Lovable | Sidebar preserved; salary and sponsorship voice fields match visible work preferences; Job title replaces Headline in forms and exported user labels |
 | 2026-11-01 | Fixed onboarding voice startup configuration, added CV-first spoken choice and persistent microphone level | Anthony | Lovable | Enable first-message/prompt overrides on existing ElevenLabs agent; use SDK input level without opening an additional microphone stream; yes opens CV upload, no begins one-question intake |
 | 2026-11-01 | Restored Profile-first onboarding, explicit Begin onboarding, side navigation and Back/Home, CV-or-questions intake and immediate voice field population | Anthony | Lovable | Existing profile values loaded; CV can be reviewed and saved without the questionnaire |

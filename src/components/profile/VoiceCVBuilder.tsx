@@ -119,7 +119,14 @@ const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose
       const { data, error } = await supabase.functions.invoke("voice-profile-extract", {
         body: { transcript, category: topic, dictionary },
       });
-      if (error || data?.error) throw new Error(data?.error || error?.message);
+      if (error) {
+        let message = error.message;
+        if ("context" in error && error.context instanceof Response) {
+          try { const failure = await error.context.json(); message = failure.error || failure.message || message; } catch { /* Preserve the available message. */ }
+        }
+        throw new Error(message);
+      }
+      if (data?.error) throw new Error(data.error);
       let msg = "Saved to your Knowledgebase";
       if (onDataExtracted && topic === category) {
         onDataExtracted(data.data);
@@ -232,7 +239,7 @@ const VoiceCVBuilderInner = ({ category, categoryLabel, onDataExtracted, onClose
         )}
       </div>
 
-      <MicrophoneControl microphone={microphone} disabled={isConnecting || isConnected} />
+      <MicrophoneControl microphone={microphone} disabled={isConnecting || isConnected} liveLevel={isConnected ? inputVolume * 100 : undefined} paused={paused} />
       <div className="flex flex-wrap justify-center gap-2">
         {!isConnected ? (
           <Button onClick={startConversation} disabled={isConnecting || saving} variant={hasContent ? "outline" : "default"} className="gap-2">
