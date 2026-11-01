@@ -50,7 +50,7 @@ const OnboardingGuard = () => {
     if (location.pathname === "/app/new-job" && location.search) {
       localStorage.setItem("jobsdfy-pending-import", location.pathname + location.search);
     }
-    navigate("/onboarding");
+    navigate("/app/profile");
   };
 
   if (canViewAdmin && !accessLoading) return <Outlet />;
