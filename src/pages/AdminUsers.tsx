@@ -318,7 +318,7 @@ const AdminUsers = () => {
   };
 
   const exportCSV = () => {
-    const headers = ["Name","Email","Phone","Location","Headline","Status","User Type","Balance","Lifetime Earned","Tags","Groups","Joined"];
+    const headers = ["Name","Email","Phone","Location","Job title","Status","User Type","Balance","Lifetime Earned","Tags","Groups","Joined"];
     const rows = filtered.map(u => [
       u.full_name, u.email, u.phone_number || "", u.location || "",
       u.headline || "", u.status, u.user_type, u.balance, u.lifetime_earned, u.tags.join("; "), u.groups.join("; "),
