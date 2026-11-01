@@ -1,5 +1,6 @@
 # Architecture rules
 - Keep Profile accessible before onboarding; the questionnaire is an explicit opt-in within AppLayout so navigation stays available without bypassing job-workflow onboarding checks.
+- Profile sections share query-addressable navigation; onboarding voice uses the visible field order and retains its connected session across automatic page transitions so answers cannot drift into unrelated fields.
 - Normalize ElevenLabs messages through the shared conversation adapter and apply single-question instructions before session startup; the installed SDK emits source/message rather than raw socket events.
 - Use the voice SDK's input-volume analyser for connected microphone levels rather than starting a second capture; hosted first-message and prompt overrides must be enabled for app-controlled onboarding questions.
 - Reuse events and creator-scoped writes for calendar event/meeting management; preserve cancelled records and keep judges read-only.

@@ -10,9 +10,13 @@ import KnowledgebaseTab from "@/components/profile/KnowledgebaseTab";
 import TimelineTab from "@/components/profile/TimelineTab";
 import CoursesTab from "@/components/profile/CoursesTab";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import { PROFILE_SECTIONS } from "@/components/profile/ProfileSectionNav";
 
 const Profile = () => {
+  const [params, setParams] = useSearchParams();
+  const selected = params.get("tab") || "about";
+  const tab = PROFILE_SECTIONS.some(section => section.value === selected) ? selected : "about";
   return (
     <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -23,7 +27,7 @@ const Profile = () => {
         <Button asChild><Link to="/onboarding?begin=1">Begin onboarding</Link></Button>
       </div>
 
-      <Tabs defaultValue="about" className="space-y-6">
+      <Tabs value={tab} onValueChange={value => setParams({ tab: value }, { replace: true })} className="space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1">
           <TabsTrigger value="about" className="gap-1.5"><User className="h-4 w-4" />About Me</TabsTrigger>
           <TabsTrigger value="work" className="gap-1.5"><Briefcase className="h-4 w-4" />Work History</TabsTrigger>

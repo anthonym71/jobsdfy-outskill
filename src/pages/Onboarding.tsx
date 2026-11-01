@@ -15,6 +15,7 @@ import { parsedCvContent } from "@/lib/cvContent";
 import ConversationalVoiceFill from "@/components/onboarding/ConversationalVoiceFill";
 import OnboardingCVUpload from "@/components/onboarding/OnboardingCVUpload";
 import { spokenNumber } from "@/lib/voiceCommands";
+import ProfileSectionNav from "@/components/profile/ProfileSectionNav";
 import { Coins, Zap, Trophy, Phone, Loader2, CheckCircle, ArrowLeft, Home, MessageSquare } from "lucide-react";
 
 const totalSteps = 5;
@@ -29,20 +30,24 @@ const STEP_REWARDS: Record<number, string> = {
 const NUMBER_KEYS = new Set(["salaryMin", "salaryTarget", "yearsExp", "nonNegSalaryMin", "nonNegMaxTravel"]);
 const yesNo = [{ value: "yes", words: ["yes", "yeah", "yep", "i do"] }, { value: "no", words: ["no", "nope", "don't", "do not"] }];
 
-const VOICE_STEPS: Record<number, GuidedField[]> = {
+export const VOICE_STEPS: Record<number, GuidedField[]> = {
   1: [
     { key: "fullName", question: "What's your full name?" },
     { key: "location", question: "Where are you based?" },
-    { key: "headline", question: "What's your job title or headline?" },
-    { key: "summary", question: "Give me a short summary of what you do." },
+    { key: "headline", question: "What's your job title?" },
+    { key: "summary", question: "Give me a summary of your job description and what you did." },
   ],
   2: [
     { key: "salaryMin", question: "What's the minimum salary you'd accept?", type: "number" },
     { key: "salaryTarget", question: "And your target salary?", type: "number" },
+    { key: "salaryCurrency", question: "Which salary currency do you use?", options: [
+      { value: "USD", words: ["usd", "us dollar", "american dollar"] }, { value: "EUR", words: ["eur", "euro"] },
+      { value: "GBP", words: ["gbp", "pound", "sterling"] }, { value: "CAD", words: ["cad", "canadian dollar"] }] },
     { key: "remotePreference", question: "Do you want remote, hybrid, onsite, or flexible?", options: [
       { value: "remote", words: ["remote"] }, { value: "hybrid", words: ["hybrid"] },
       { value: "onsite", words: ["onsite", "on site", "office"] }, { value: "flexible", words: ["flexible", "any", "either"] }] },
     { key: "workAuth", question: "What's your work authorization, for example citizen or visa?" },
+    { key: "sponsorshipRequired", question: "Do you require visa sponsorship?", options: yesNo },
     { key: "languages", question: "Which languages do you speak?" },
   ],
   3: [
@@ -55,7 +60,6 @@ const VOICE_STEPS: Record<number, GuidedField[]> = {
     { key: "nonNegCountries", question: "Which countries or regions are you willing to work in?" },
     { key: "nonNegRemote", question: "Is your work model remote only, hybrid OK, or any?", options: [
       { value: "remote", words: ["remote"] }, { value: "hybrid", words: ["hybrid"] }, { value: "any", words: ["any", "either", "don't mind"] }] },
-    { key: "nonNegVisa", question: "Do you need visa sponsorship? Yes or no.", options: yesNo },
     { key: "nonNegLanguages", question: "Which working languages are required for you?" },
     { key: "nonNegEmploymentType", question: "Full-time, part-time, or contract?" },
     { key: "nonNegMaxTravel", question: "What's the most travel you'd accept, as a percentage?", type: "number" },
@@ -254,7 +258,9 @@ const Onboarding = () => {
   if (hydrating) return <div className="p-8 text-muted-foreground">Loading your profile…</div>;
 
   return (
-    <div className="flex justify-center bg-background px-4 md:px-6 py-8">
+    <div className="bg-background px-4 md:px-6 py-8 space-y-6">
+      <div className="max-w-5xl mx-auto"><ProfileSectionNav /></div>
+      <div className="flex justify-center">
       <div className="w-full max-w-lg">
         <div className="flex flex-wrap gap-2 mb-5"><Button variant="outline" onClick={() => navigate("/app/profile")}><ArrowLeft className="h-4 w-4 mr-1" />Back to Profile</Button><Button variant="ghost" onClick={() => navigate("/")}><Home className="h-4 w-4 mr-1" />Home</Button></div>
         {intake === "choice" ? <section className="space-y-5 py-6">
@@ -308,8 +314,8 @@ const Onboarding = () => {
               <div className="space-y-4">
                 <div><div className="flex items-center justify-between"><Label>Full Name</Label><VoiceFieldInput label="Full Name" onResult={(t) => voiceSet("fullName", t)} /></div><Input value={form.fullName} onChange={(e) => update("fullName", e.target.value)} placeholder="Jane Doe" /></div>
                 <div><div className="flex items-center justify-between"><Label>Location</Label><VoiceFieldInput label="Location" onResult={(t) => voiceSet("location", t)} /></div><Input value={form.location} onChange={(e) => update("location", e.target.value)} placeholder="Berlin, Germany" /></div>
-                <div><div className="flex items-center justify-between"><Label>Headline</Label><VoiceFieldInput label="Headline" onResult={(t) => voiceSet("headline", t)} /></div><Input value={form.headline} onChange={(e) => update("headline", e.target.value)} placeholder="Senior Product Designer" /></div>
-                <div><div className="flex items-center justify-between"><Label>Summary</Label><VoiceFieldInput label="Summary" onResult={(t) => voiceSet("summary", t)} /></div><Textarea value={form.summary} onChange={(e) => update("summary", e.target.value)} placeholder="Brief professional summary…" rows={3} /></div>
+                <div><div className="flex items-center justify-between"><Label>Job title</Label><VoiceFieldInput label="Job title" onResult={(t) => voiceSet("headline", t)} /></div><Input value={form.headline} onChange={(e) => update("headline", e.target.value)} placeholder="Senior Product Designer" /></div>
+                <div><div className="flex items-center justify-between"><Label>Summary</Label><VoiceFieldInput label="Summary" onResult={(t) => { voiceSet("summary", t); void next(); }} /></div><Textarea value={form.summary} onChange={(e) => update("summary", e.target.value)} placeholder="A summary of your job description and what you did…" rows={3} /></div>
               </div>
             </>
           )}
@@ -451,7 +457,7 @@ const Onboarding = () => {
             </>
           )}
 
-          {intake === "questions" && VOICE_STEPS[step] && <ConversationalVoiceFill key={`voice-${step}`} fields={VOICE_STEPS[step]} values={form} onFill={voiceSet} onContinue={next} offerCv={step === 1} onUploadCv={() => setVoiceCvUpload(true)} />}
+          {intake === "questions" && VOICE_STEPS[step] && <ConversationalVoiceFill fields={VOICE_STEPS[step]} values={form} onFill={voiceSet} onContinue={next} autoContinue offerCv={step === 1} onUploadCv={() => setVoiceCvUpload(true)} />}
           <div className="flex flex-wrap justify-between gap-3 pt-2">
             <Button variant="outline" onClick={back}>Back</Button>
             <div className="flex flex-wrap items-start gap-2">
@@ -474,6 +480,7 @@ const Onboarding = () => {
           </div>
         </div>
         </>}
+      </div>
       </div>
     </div>
   );
