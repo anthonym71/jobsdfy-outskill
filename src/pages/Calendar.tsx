@@ -4,6 +4,8 @@ import { Loader2, CalendarDays, MapPin, ExternalLink } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import EventCalendar from "@/components/events/EventCalendar";
+import { Link } from "react-router-dom";
 
 const Calendar = () => {
   const { user } = useAuth();
@@ -17,7 +19,7 @@ const Calendar = () => {
   }, [user]);
 
   const loadEvents = async () => {
-    const { data: eventsData } = await supabase.from("events").select("*").order("event_date");
+    const { data: eventsData } = await supabase.from("events").select("*").eq("is_active", true).order("event_date");
     if (eventsData) setEvents(eventsData);
 
     if (user) {
@@ -52,6 +54,9 @@ const Calendar = () => {
         <h1 className="font-heading text-2xl font-bold text-foreground">Events & Calendar</h1>
         <p className="text-sm text-muted-foreground mt-1">Upcoming events hosted by AI Job OS.</p>
       </div>
+
+      <Button variant="outline" asChild><Link to="/app/events">Add or manage events / meetings</Link></Button>
+      <EventCalendar events={events} />
 
       {/* Courses link */}
       <div className="rounded-xl border border-border bg-card p-5 flex items-center justify-between">

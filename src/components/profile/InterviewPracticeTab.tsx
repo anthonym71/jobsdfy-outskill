@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import VoiceInterviewBot from "./VoiceInterviewBot";
 import InterviewHistory from "./InterviewHistory";
 import { interviewAnalytics } from "@/lib/interviewAnalytics";
+import { nextUnanswered, singleQuestion } from "@/lib/conversationRules";
 
 const InterviewPracticeTab = () => {
   const { user } = useAuth();
@@ -23,6 +24,7 @@ const InterviewPracticeTab = () => {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [scoringIndex, setScoringIndex] = useState<number | null>(null);
   const [historyKey, setHistoryKey] = useState(0);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
   const overview = interviewAnalytics(feedback);
 
   useEffect(() => {
@@ -41,7 +43,8 @@ const InterviewPracticeTab = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setQuestions(data?.data?.questions || []);
+      setQuestions((data?.data?.questions || []).map(singleQuestion));
+      setCurrentQuestion(0);
       setSessionId(data?.data?.sessionId || null);
       setAnswers({});
       setFeedback({});
@@ -103,9 +106,10 @@ const InterviewPracticeTab = () => {
       </section>}
       {questions.length > 0 && (
         <div className="space-y-4">
-          {questions.map((q, i) => (
+          {questions.slice(currentQuestion, currentQuestion + 1).map((q, offset) => { const i = currentQuestion + offset; return (
             <div key={i} className="rounded-xl border border-border bg-card p-5 space-y-3">
               <div className="flex items-start gap-2">
+                <span className="text-xs text-muted-foreground shrink-0">{i + 1}/{questions.length}</span>
                 <MessageSquare className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                 <p className="text-sm font-medium text-foreground">{q}</p>
               </div>
@@ -167,8 +171,9 @@ const InterviewPracticeTab = () => {
                   )}
                 </div>
               )}
+              <div className="flex justify-between gap-3"><Button variant="ghost" disabled={i === 0} onClick={() => setCurrentQuestion(i - 1)}>Previous</Button>{i < questions.length - 1 && <Button disabled={!answers[i]?.trim() || !feedback[i]} onClick={() => setCurrentQuestion(i + 1)}>Next question</Button>}</div>
             </div>
-          ))}
+          ); })}
         </div>
       )}
       {/* Voice AI Section */}
@@ -180,7 +185,7 @@ const InterviewPracticeTab = () => {
       />
       <InterviewHistory refreshKey={historyKey} onOpen={saved => {
         setSessionId(saved.id); setSelectedJobId(saved.job_id || "general");
-        setQuestions(saved.questions || []); setAnswers(saved.answers || {}); setFeedback(saved.feedback || {});
+        setQuestions((saved.questions || []).map(singleQuestion)); setAnswers(saved.answers || {}); setFeedback(saved.feedback || {}); setCurrentQuestion(nextUnanswered(saved.questions || [], saved.answers || {}));
       }} />
     </div>
   );

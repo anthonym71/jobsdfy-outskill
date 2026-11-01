@@ -26,6 +26,8 @@ const baseNavItems: { to: string; icon: any; label: string; end?: boolean }[] = 
   { to: "/app/jobs", icon: Briefcase, label: "Jobs" },
   { to: "/app/profile", icon: UserCircle, label: "Profile - Onboarding" },
   { to: "/app/events", icon: CalendarDays, label: "Calendar / Events" },
+  { to: "/app/calendar", icon: CalendarDays, label: "Calendar" },
+  { to: "/app/rewards", icon: Coins, label: "Rewards & Leaderboard" },
   { to: "/app/tasks", icon: ListTodo, label: "Tasks" },
 { to: "/app/books", icon: BookOpen, label: "Intellectual Foundation" },
   { to: "/app/movies", icon: Film, label: "Character & Media Insights" },
@@ -109,7 +111,7 @@ const AppLayout = () => {
             key={item.to}
             to={item.to}
             end={item.end}
-            onClick={(e) => { setMobileOpen(false); if (item.to === "/app/profile" && !onboarded) { e.preventDefault(); navigate("/onboarding"); } }}
+            onClick={() => setMobileOpen(false)}
             className={({ isActive }) => cn(
               "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
               hidden && "opacity-50",
@@ -154,6 +156,7 @@ const AppLayout = () => {
           <CreditBalance compact />
         </div>
         <div className="flex items-center gap-3">
+          <Button variant="outline" size="icon" aria-label="Open rewards and leaderboard" title="Rewards and leaderboard" onClick={() => navigate("/app/rewards")}><PlusCircle className="h-7 w-7 text-primary" /></Button>
           {userInfoBlock}
           <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -164,6 +167,7 @@ const AppLayout = () => {
       <div className="hidden md:flex fixed top-0 left-60 right-0 z-40 items-center justify-between border-b border-border bg-card px-6 py-2 gap-4">
         <AppSearch pages={navItems.map(({ to, label }) => ({ to, label }))} />
         <div className="flex items-center gap-3">
+          <Button variant="outline" size="icon" aria-label="Open rewards and leaderboard" title="Rewards and leaderboard" onClick={() => navigate("/app/rewards")}><PlusCircle className="h-7 w-7 text-primary" /></Button>
           {userInfoBlock}
           <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-muted-foreground hover:text-foreground">
             <LogOut className="h-4 w-4 mr-1" />Logout

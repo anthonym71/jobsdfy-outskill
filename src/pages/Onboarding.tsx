@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +15,7 @@ import { parsedCvContent } from "@/lib/cvContent";
 import ConversationalVoiceFill from "@/components/onboarding/ConversationalVoiceFill";
 import OnboardingCVUpload from "@/components/onboarding/OnboardingCVUpload";
 import { spokenNumber } from "@/lib/voiceCommands";
-import { Coins, Zap, Trophy, Phone, Loader2, CheckCircle } from "lucide-react";
+import { Coins, Zap, Trophy, Phone, Loader2, CheckCircle, ArrowLeft, Home, MessageSquare } from "lucide-react";
 
 const totalSteps = 5;
 
@@ -64,6 +64,9 @@ const VOICE_STEPS: Record<number, GuidedField[]> = {
 };
 
 const Onboarding = () => {
+  const [searchParams] = useSearchParams();
+  const [intake, setIntake] = useState<"choice" | "questions" | "review">("choice");
+  const [hydrating, setHydrating] = useState(true);
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [cvData, setCvData] = useState<any>(null);
@@ -94,6 +97,29 @@ const Onboarding = () => {
 
   const update = (key: string, value: string) => setForm((p) => ({ ...p, [key]: value }));
   const voiceSet = (key: string, value: string) => update(key, NUMBER_KEYS.has(key) ? spokenNumber(value) : value);
+
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    Promise.all([
+      supabase.from("user_profiles").select("*").eq("user_id", user.id).maybeSingle(),
+      supabase.from("user_non_negotiables").select("*").eq("user_id", user.id).maybeSingle(),
+    ]).then(([profile, preferences]) => {
+      if (!active) return;
+      const p = profile.data; const n = preferences.data;
+      setForm(current => ({ ...current, fullName: p?.full_name || "", location: p?.location || "", headline: p?.headline || "", summary: p?.summary || "", yearsExp: p?.years_of_experience?.toString() || "", topSkills: p?.top_skills?.join(", ") || "", industries: p?.industries?.join(", ") || "", languages: p?.languages_spoken?.join(", ") || "", nonNegSalaryMin: n?.min_salary?.toString() || "", salaryCurrency: n?.salary_currency || "USD", nonNegCountries: n?.allowed_countries?.join(", ") || "", nonNegRemote: n?.remote_preference || "", nonNegVisa: n?.requires_visa_sponsorship ? "yes" : "no", nonNegEmploymentType: n?.employment_type_preferences?.join(", ") || "", nonNegMaxTravel: n?.max_travel_percent?.toString() || "", nonNegIndustryExclusions: n?.industry_exclusions?.join(", ") || "" }));
+      setPhoneNumber(p?.phone_number || ""); setPhoneVerified(!!p?.phone_verified); setHydrating(false);
+    });
+    return () => { active = false; };
+  }, [user?.id]);
+
+  const acceptCv = (data: any) => {
+    setCvData(data);
+    setForm(current => ({ ...current, fullName: data.fullName || current.fullName, headline: data.headline || current.headline, summary: data.summary || current.summary, location: data.location || current.location, topSkills: data.topSkills?.join(", ") || current.topSkills, languages: data.languages?.join(", ") || current.languages, industries: data.industries?.join(", ") || current.industries, yearsExp: data.yearsOfExperience?.toString() || current.yearsExp }));
+    if (data.phone) { setPhoneNumber(data.phone); if (data.phone !== phoneNumber) setPhoneVerified(false); }
+    setIntake("review"); setStep(1);
+    toast({ title: "CV populated", description: "Review your details and save, or add anything missing." });
+  };
 
   const awardStepCredits = async (stepNum: number) => {
     if (completedSteps.has(stepNum)) return;
@@ -154,7 +180,7 @@ const Onboarding = () => {
     if (step < totalSteps) setStep(step + 1);
   };
 
-  const back = () => { if (step > 1) setStep(step - 1); };
+  const back = () => { if (step > 1) setStep(step - 1); else navigate("/app/profile"); };
 
   const finish = async () => {
     if (!user) return;
@@ -223,9 +249,19 @@ const Onboarding = () => {
   const totalEarnable = Object.values(STEP_REWARDS).reduce((sum, key) => sum + (CREDIT_REWARDS[key]?.credits || 0), 0);
   const earnedSoFar = Array.from(completedSteps).reduce((sum, s) => sum + (CREDIT_REWARDS[STEP_REWARDS[s]]?.credits || 0), 0);
 
+  if (searchParams.get("begin") !== "1") return <Navigate to="/app/profile" replace />;
+  if (hydrating) return <div className="p-8 text-muted-foreground">Loading your profile…</div>;
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-6 py-12">
+    <div className="flex justify-center bg-background px-4 md:px-6 py-8">
       <div className="w-full max-w-lg">
+        <div className="flex flex-wrap gap-2 mb-5"><Button variant="outline" onClick={() => navigate("/app/profile")}><ArrowLeft className="h-4 w-4 mr-1" />Back to Profile</Button><Button variant="ghost" onClick={() => navigate("/")}><Home className="h-4 w-4 mr-1" />Home</Button></div>
+        {intake === "choice" ? <section className="space-y-5 py-6">
+          <h1 className="font-heading text-2xl font-bold">Welcome to JobsDFY</h1>
+          <h2 className="font-heading text-lg font-semibold">Do you have a CV you'd like to upload?</h2>
+          <p className="text-sm text-muted-foreground">Upload your CV to populate your details, or begin with questions.</p>
+          <div className="flex flex-wrap gap-3"><OnboardingCVUpload onParsed={acceptCv} /><Button onClick={() => setIntake("questions")}><MessageSquare className="h-4 w-4 mr-1" />Begin with questions</Button></div>
+        </section> : <>
         {/* Reward banner */}
         <div className="mb-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm">
@@ -249,11 +285,8 @@ const Onboarding = () => {
         <div className="rounded-xl border border-border bg-card p-8 shadow-sm space-y-5">
           {step === 1 && <div className="space-y-3 border-b border-border pb-5">
             <h2 className="font-heading text-base font-semibold text-foreground">Do you have a CV that you'd like to upload?</h2>
-            <OnboardingCVUpload onParsed={data => {
-              setCvData(data);
-              setForm(current => ({ ...current, fullName: data.fullName || current.fullName, headline: data.headline || current.headline, summary: data.summary || current.summary, location: data.location || current.location, topSkills: data.topSkills?.join(", ") || current.topSkills, languages: data.languages?.join(", ") || current.languages }));
-              if (data.phone) setPhoneNumber(data.phone);
-            }} />
+            <OnboardingCVUpload onParsed={acceptCv} />
+            {intake === "review" && <div className="space-y-3"><p className="text-sm text-muted-foreground">Your CV details are filled in. You can save without the questionnaire.</p><Button onClick={finish} disabled={saving || !form.fullName.trim()}>{saving ? "Saving…" : "Save uploaded CV & finish"}</Button></div>}
           </div>}
           {/* Step reward indicator */}
           {currentReward && !completedSteps.has(step) && (
@@ -417,11 +450,11 @@ const Onboarding = () => {
             </>
           )}
 
-          {VOICE_STEPS[step] && <ConversationalVoiceFill key={`voice-${step}`} fields={VOICE_STEPS[step]} values={form} onFill={voiceSet} onContinue={next} />}
+          {intake === "questions" && VOICE_STEPS[step] && <ConversationalVoiceFill key={`voice-${step}`} fields={VOICE_STEPS[step]} values={form} onFill={voiceSet} onContinue={next} />}
           <div className="flex flex-wrap justify-between gap-3 pt-2">
-            <Button variant="outline" onClick={back} disabled={step === 1}>Back</Button>
+            <Button variant="outline" onClick={back}>Back</Button>
             <div className="flex flex-wrap items-start gap-2">
-            <OnboardingCVUpload onParsed={data => { setCvData(data); setForm(current => ({ ...current, fullName: data.fullName || current.fullName, headline: data.headline || current.headline, summary: data.summary || current.summary, location: data.location || current.location, topSkills: data.topSkills?.join(", ") || current.topSkills, languages: data.languages?.join(", ") || current.languages })); }} />
+            <OnboardingCVUpload onParsed={acceptCv} />
             {step < totalSteps ? (
               <Button onClick={next}>
                 Continue
@@ -439,6 +472,7 @@ const Onboarding = () => {
             </div>
           </div>
         </div>
+        </>}
       </div>
     </div>
   );

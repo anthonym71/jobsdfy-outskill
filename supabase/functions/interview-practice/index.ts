@@ -160,6 +160,7 @@ Generate questions that:
 - Include behavioral questions that reveal competency
 - If a job is provided, include role-specific questions
 - Mix general and specific questions
+- Every array item must contain exactly one short, single-part question. Never combine questions or ask for two things in one item. The app presents one question and waits for the answer before presenting the next.
 - Include at least one question about gaps or transitions if relevant`;
 
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {

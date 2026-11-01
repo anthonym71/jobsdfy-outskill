@@ -49,6 +49,7 @@ import EventRegistrationsPage from "./pages/EventRegistrationsPage";
 import Terms from "./pages/Terms";
 import TermsGate from "./components/TermsGate";
 import FeatureGate from "./components/FeatureGate";
+import Rewards from "./pages/Rewards";
 
 const queryClient = new QueryClient();
 
@@ -87,7 +88,11 @@ const App = () => (
             <Route path="/terms" element={<Terms />} />
             <Route element={<ProtectedRoute />}>
               <Route element={<TermsGate />}>
-              <Route path="/onboarding" element={<Onboarding />} />
+              <Route element={<AppLayout />}>
+                <Route path="/onboarding" element={<Onboarding />} />
+                <Route path="/app/profile" element={<Profile />} />
+                <Route path="/app/rewards" element={<Rewards />} />
+              </Route>
               <Route element={<OnboardingGuard />}>
                 <Route element={<AppLayout />}>
                   <Route path="/app" element={<Dashboard />} />
@@ -98,7 +103,6 @@ const App = () => (
                   <Route path="/app/jobs" element={<Jobs />} />
                   <Route path="/app/jobs/:id" element={<JobDetail />} />
                   <Route path="/app/settings" element={<Settings />} />
-                  <Route path="/app/profile" element={<Profile />} />
                   <Route path="/app/calendar" element={<Calendar />} />
                   <Route path="/app/pricing" element={<Pricing />} />
                   <Route path="/app/support" element={<Support />} />

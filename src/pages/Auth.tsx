@@ -44,7 +44,7 @@ const Auth = () => {
         });
         if (error) throw error;
         if (data.session) {
-          navigate("/onboarding");
+          navigate("/app/profile");
         } else {
           setEmailSent(true);
         }

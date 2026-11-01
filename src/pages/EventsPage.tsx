@@ -4,16 +4,23 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, CalendarDays, MapPin, Plus, Search, Ticket, Users, Upload } from "lucide-react";
+import { Loader2, CalendarDays, MapPin, Plus, Search, Ticket, Pencil, Trash2, Ban } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { format } from "date-fns";
+import EventCalendar from "@/components/events/EventCalendar";
+import { canManageEvent } from "@/lib/eventRules";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 
 const EventsPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { access } = useAdminAccess();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [action, setAction] = useState<{ event: any; type: "cancel" | "delete" } | null>(null);
   const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState<any[]>([]);
   const [registrations, setRegistrations] = useState<Record<string, any>>({});
@@ -30,8 +37,8 @@ const EventsPage = () => {
   useEffect(() => { loadEvents(); }, [user]);
 
   const loadEvents = async () => {
-    const { data } = await supabase.from("events").select("*").eq("is_active", true).order("event_date");
-    if (data) setEvents(data);
+    const { data } = await supabase.from("events").select("*").order("event_date");
+    if (data) setEvents(data.filter(event => event.is_active || event.created_by === user?.id));
     if (user) {
       const { data: regs } = await supabase.from("event_registrations").select("*").eq("user_id", user.id);
       if (regs) {
@@ -46,29 +53,49 @@ const EventsPage = () => {
   const handleCreate = async () => {
     if (!user || !form.title || !form.event_date) return;
     setCreating(true);
-    const { error } = await supabase.from("events").insert({
+    const payload = {
       title: form.title,
       description: form.description,
       location: form.location,
       area: form.area,
-      event_date: form.event_date,
-      event_end_date: form.event_end_date || null,
+      event_date: new Date(form.event_date).toISOString(),
+      event_end_date: form.event_end_date ? new Date(form.event_end_date).toISOString() : null,
       is_free: form.is_free,
       ticket_price: form.is_free ? 0 : form.ticket_price,
       currency: form.currency,
       organizer_name: form.organizer_name,
       max_attendees: form.max_attendees ? parseInt(form.max_attendees) : null,
       created_by: user.id,
-    } as any);
+    };
+    if (access === "judge") { setCreating(false); return; }
+    const request = editingId
+      ? supabase.from("events").update(payload).eq("id", editingId).eq("created_by", user.id)
+      : supabase.from("events").insert(payload);
+    const { data: saved, error } = await request.select("id").single();
     setCreating(false);
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+    if (error || !saved) {
+      toast({ title: "Could not save event", description: error?.message || "No event was updated.", variant: "destructive" });
     } else {
-      toast({ title: "Event created!" });
+      toast({ title: editingId ? "Event updated!" : "Event created!" });
+      setEditingId(null);
       setShowCreate(false);
       setForm({ title: "", description: "", location: "", area: "", event_date: "", event_end_date: "", is_free: true, ticket_price: 0, currency: "USD", organizer_name: "", max_attendees: "" });
       loadEvents();
     }
+  };
+
+  const editEvent = (event: any) => {
+    if (!canManageEvent(event.created_by, user?.id, access)) return;
+    setEditingId(event.id);
+    setForm({ title: event.title, description: event.description || "", location: event.location || "", area: event.area || "", event_date: format(new Date(event.event_date), "yyyy-MM-dd'T'HH:mm"), event_end_date: event.event_end_date ? format(new Date(event.event_end_date), "yyyy-MM-dd'T'HH:mm") : "", is_free: event.is_free, ticket_price: event.ticket_price || 0, currency: event.currency || "USD", organizer_name: event.organizer_name || "", max_attendees: event.max_attendees?.toString() || "" });
+    setShowCreate(true);
+  };
+  const confirmAction = async () => {
+    if (!action || !user || !canManageEvent(action.event.created_by, user.id, access)) return;
+    const request = action.type === "cancel" ? supabase.from("events").update({ is_active: false }).eq("id", action.event.id).eq("created_by", user.id) : supabase.from("events").delete().eq("id", action.event.id).eq("created_by", user.id);
+    const { data, error } = await request.select("id");
+    if (error || !data?.length) { toast({ title: "Could not change event", description: error?.message || "No event was changed.", variant: "destructive" }); return; }
+    toast({ title: action.type === "cancel" ? "Event cancelled" : "Event deleted" }); setAction(null); await loadEvents();
   };
 
   const handleRegister = async (event: any) => {
@@ -113,10 +140,10 @@ const EventsPage = () => {
         </div>
         <Dialog open={showCreate} onOpenChange={setShowCreate}>
           <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-1" />Create Event</Button>
+            <Button disabled={access === "judge"} onClick={() => { setEditingId(null); setForm({ title: "", description: "", location: "", area: "", event_date: "", event_end_date: "", is_free: true, ticket_price: 0, currency: "USD", organizer_name: "", max_attendees: "" }); }}><Plus className="h-4 w-4 mr-1" />Add Event / Meeting</Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-            <DialogHeader><DialogTitle>Create Event</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{editingId ? "Edit Event / Meeting" : "Add Event / Meeting"}</DialogTitle></DialogHeader>
             <div className="space-y-4 pt-2">
               <div><Label>Title *</Label><Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} /></div>
               <div><Label>Description</Label><Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} /></div>
@@ -141,12 +168,15 @@ const EventsPage = () => {
                 </div>
               )}
               <Button onClick={handleCreate} disabled={creating || !form.title || !form.event_date} className="w-full">
-                {creating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}Create Event
+                {creating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}{editingId ? "Save changes" : "Create Event / Meeting"}
               </Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
+
+      <EventCalendar events={events} />
+      <AlertDialog open={!!action} onOpenChange={open => { if (!open) setAction(null); }}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{action?.type === "cancel" ? "Cancel this event?" : "Delete this event?"}</AlertDialogTitle><AlertDialogDescription>{action?.type === "cancel" ? "It will no longer appear as an active event. Existing registration records are kept." : "Deletion is permanent. Events with registrations may need to be cancelled instead to preserve ticket records."}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Keep event</AlertDialogCancel><AlertDialogAction onClick={e => { e.preventDefault(); void confirmAction(); }}>Confirm</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -166,6 +196,7 @@ const EventsPage = () => {
               <div key={event.id} className="rounded-xl border border-border bg-card p-5 space-y-3">
                 <div>
                   <h3 className="font-heading text-base font-semibold text-foreground">{event.title}</h3>
+                  {!event.is_active && <p className="text-xs font-semibold text-destructive">Cancelled</p>}
                   <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1"><CalendarDays className="h-3 w-3" />{new Date(event.event_date).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</span>
                     {event.location && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{event.location}</span>}
@@ -180,9 +211,10 @@ const EventsPage = () => {
                   {isRegistered ? (
                     <span className="text-xs text-verdict-go font-medium flex items-center gap-1"><Ticket className="h-3 w-3" />Registered</span>
                   ) : (
-                    <Button size="sm" onClick={() => handleRegister(event)}>Register</Button>
+                    <Button size="sm" disabled={!event.is_active} onClick={() => handleRegister(event)}>Register</Button>
                   )}
                 </div>
+                {canManageEvent(event.created_by, user?.id, access) && <div className="flex gap-2 border-t border-border pt-3"><Button variant="outline" size="icon" aria-label={`Edit ${event.title}`} title="Edit event" onClick={() => editEvent(event)}><Pencil className="h-4 w-4" /></Button>{event.is_active && <Button variant="outline" size="icon" aria-label={`Cancel ${event.title}`} title="Cancel event" onClick={() => setAction({ event, type: "cancel" })}><Ban className="h-4 w-4" /></Button>}<Button variant="outline" size="icon" aria-label={`Delete ${event.title}`} title="Delete event" onClick={() => setAction({ event, type: "delete" })}><Trash2 className="h-4 w-4 text-destructive" /></Button></div>}
               </div>
             );
           })}

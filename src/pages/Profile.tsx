@@ -9,13 +9,18 @@ import CVVersionsTab from "@/components/profile/CVVersionsTab";
 import KnowledgebaseTab from "@/components/profile/KnowledgebaseTab";
 import TimelineTab from "@/components/profile/TimelineTab";
 import CoursesTab from "@/components/profile/CoursesTab";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const Profile = () => {
   return (
     <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6">
-      <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
         <h1 className="font-heading text-2xl font-bold text-foreground">My Profile</h1>
         <p className="text-sm text-muted-foreground mt-1">Build your professional profile, manage your CV, and track your career.</p>
+        </div>
+        <Button asChild><Link to="/onboarding?begin=1">Begin onboarding</Link></Button>
       </div>
 
       <Tabs defaultValue="about" className="space-y-6">
