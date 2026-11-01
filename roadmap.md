@@ -1,4 +1,6 @@
 # Tasks
+- [ ] Keep profile tabs visible in onboarding, align spoken questions to form fields and automatically advance after summary.
+- [ ] Replace user-facing Headline with Job title in profile forms and documents; investigate reported voice-save error.
 - [x] Fix silent onboarding voice startup, CV-first spoken prompt and persistent live microphone level; real agent greeting/audio and simulated microphone level verified, 10 tests pass.
 - [x] Restore profile-first onboarding with side menus, exit controls and upfront CV/questions choice; signed-in navigation checked.
 - [x] Add prominent rewards plus button, rules and illustrative leaderboard.
