@@ -264,17 +264,17 @@ const AboutMeTab = () => {
           </div>
         </div>
 
-        {voiceOpen && <ConversationalVoiceFill autoStart askAll fields={[
-          { key: "fullName", question: "What's your full name?" },
-          { key: "emailConfirm", question: `Is ${user?.email || "your sign-in email"} the right email for your account?` },
-          { key: "phoneNumber", question: "What's your phone number?" },
-          { key: "location", question: "Where are you based?" },
-          { key: "headline", question: "What's your job title?" },
-          { key: "yearsExp", question: "How many years of experience do you have?", type: "number" },
-          { key: "summary", question: "Give me a summary of your job description and what you did." },
-          { key: "topSkills", question: "What are your top skills?" },
-          { key: "industries", question: "Which industries have you worked in?" },
-          { key: "languages", question: "Which languages do you speak?" },
+        {voiceOpen && <ConversationalVoiceFill autoStart askAll onCancel={() => setVoiceOpen(false)} fields={[
+          { key: "fullName", question: "What's your full name?", match: "name" },
+          { key: "emailConfirm", question: `Is ${user?.email || "your sign-in email"} the right email for your account?`, match: "email" },
+          { key: "phoneNumber", question: "What's your phone number?", match: "phone|number" },
+          { key: "location", question: "Where are you based?", match: "based|located|location|live" },
+          { key: "headline", question: "What's your job title?", match: "job title|title|role" },
+          { key: "yearsExp", question: "How many years of experience do you have?", type: "number", match: "years" },
+          { key: "summary", question: "Give me a summary of your job description and what you did.", match: "summary|describe" },
+          { key: "topSkills", question: "What are your top skills?", match: "skills" },
+          { key: "industries", question: "Which industries have you worked in?", match: "industr" },
+          { key: "languages", question: "Which languages do you speak?", match: "language" },
         ]} values={profile} onFill={(key, value) => setProfile(current => { const next = { ...current, [key]: value }; profileRef.current = next; return next; })} onContinue={() => { window.setTimeout(() => { void handleSave(); setVoiceOpen(false); }, 300); }} />}
 
         {/* Photo upload */}

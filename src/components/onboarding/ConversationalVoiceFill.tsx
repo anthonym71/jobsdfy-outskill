@@ -11,7 +11,7 @@ import { SINGLE_QUESTION_RULE, voiceMessage } from "@/lib/conversationRules";
 
 export const CV_FIRST_PROMPT = "Do you have a CV? Uploading it is the fastest, easiest way to get your information into the system. If not, we can continue with the voice interview.";
 
-function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv, autoContinue = false, askAll = false, autoStart = false }: { fields: GuidedField[]; values: Record<string, string>; onFill: (key: string, value: string) => void; onContinue: () => void; offerCv?: boolean; onUploadCv?: () => void; autoContinue?: boolean; askAll?: boolean; autoStart?: boolean }) {
+function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv, autoContinue = false, askAll = false, autoStart = false, onCancel }: { fields: (GuidedField & { match?: string })[]; onCancel?: () => void; values: Record<string, string>; onFill: (key: string, value: string) => void; onContinue: () => void; offerCv?: boolean; onUploadCv?: () => void; autoContinue?: boolean; askAll?: boolean; autoStart?: boolean }) {
   const microphone = useMicrophone();
   const [connecting, setConnecting] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -19,7 +19,8 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
   const [error, setError] = useState("");
   const index = useRef(0);
   const pending = useRef<Record<string, string>>({});
-  const relevant = useRef<(GuidedField & { confirmValue?: string })[]>([]);
+  const relevant = useRef<(GuidedField & { confirmValue?: string; match?: string })[]>([]);
+  const pausedRef = useRef(false);
   const autoStarted = useRef(false);
   const awaitingAnswer = useRef(false);
   const cvChoice = useRef(false);
@@ -28,7 +29,7 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
   const [currentQuestion, setCurrentQuestion] = useState("");
   const [inputLevel, setInputLevel] = useState(0);
   const conversation = useConversation({
-    micMuted: paused,
+    micMuted: false,
     onConnect: () => { setConnecting(false); setStatus("Connected — microphone is listening"); },
     onDisconnect: (details: any) => { setConnecting(false); setStatus("Voice session ended"); if (details?.reason === "error") setError(details.message || "The voice session could not start. Please check the agent settings."); },
     onError: (error: any) => { setError(typeof error === "string" ? error : "Voice connection failed. Please try again."); setConnecting(false); },
@@ -39,12 +40,26 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
         setStatus(received.text);
         const expected = cvChoice.current ? "Do you have a CV?" : relevant.current[index.current]?.question;
         const normalize = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+        if (askAll && received.text.includes("?")) {
+          const lower = received.text.toLowerCase().split("?")[0];
+          const at = relevant.current.findIndex(f => f.match && new RegExp(f.match, "i").test(lower));
+          if (at >= 0) { index.current = at; setCurrentQuestion(relevant.current[at].question); awaitingAnswer.current = true; return; }
+        }
         if (expected && (received.text.includes("?") || normalize(received.text).includes(normalize(expected)))) awaitingAnswer.current = true;
         return;
       }
       const text = received.text;
-      if (isStopCommand(text)) { setPaused(true); setStatus("Paused. Update with your answers so far, or carry on?"); return; }
-      if (paused) return;
+      const said = text.trim().toLowerCase().replace(/[.!?,]/g, "");
+      if (/^(please )?(cancel|cancel that|never mind|forget it|quit|exit)( please)?$/.test(said)) { pausedRef.current = false; setPaused(false); void conversation.endSession(); onCancel?.(); return; }
+      if (/^(please )?(update and stop|update & stop|save and stop|update and save|save and finish)( please)?$/.test(said)) { apply(); pausedRef.current = false; setPaused(false); void conversation.endSession(); onContinue(); return; }
+      if (pausedRef.current) {
+        if (/\b(carry on|resume|continue|go on|keep going)\b/.test(said)) {
+          pausedRef.current = false; setPaused(false);
+          conversation.sendContextualUpdate(`We are carrying on. Ask ONLY: ${relevant.current[index.current]?.question || "Please say update and stop."}`);
+        }
+        return;
+      }
+      if (isStopCommand(text)) { pausedRef.current = true; setPaused(true); setStatus("Paused — say \"carry on\" to resume, \"update and stop\" to save, or \"cancel\"."); conversation.sendContextualUpdate("The user paused. Say nothing at all until the user says carry on."); return; }
       if (cvChoice.current && awaitingAnswer.current) {
         if (/\b(yes|yeah|yep|upload|i do|have a cv)\b/i.test(text) && !/\b(no|not|don't|do not)\b/i.test(text)) {
           cvChoice.current = false; awaitingAnswer.current = false;
@@ -66,7 +81,8 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
       if (!field || !awaitingAnswer.current || paused) return;
       const confirmed = !!field.confirmValue && /\b(yes|yeah|yep|correct|right|that's it|keep it|fine)\b/i.test(text) && !/\b(no|nope|not|change|wrong)\b/i.test(text);
       if (!isSkipCommand(text) && !confirmed) {
-        let value = field.type === "number" ? spokenNumber(text) : text;
+        const cleaned = text.trim().replace(/^(yes,?\s+)?(it's|it is|my name is|my name's|i'm|i am|i live in|i'm based in|i am based in|that's|that is)\s+/i, "").replace(/[.!]+$/, "").trim();
+        let value = field.type === "number" ? spokenNumber(text) : cleaned;
         if (field.options) value = field.options.find(option => option.words.some(word => text.toLowerCase().includes(word)))?.value || "";
         if (!value) { conversation.sendContextualUpdate(`Please ask this question again: ${field.question}`); return; }
         pending.current[field.key] = value;
@@ -132,8 +148,9 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
     <MicrophoneControl microphone={microphone} disabled={live || connecting} liveLevel={live ? inputLevel : undefined} paused={paused} />
     <div className="flex flex-wrap gap-2">
       {!live ? <Button type="button" variant="secondary" onClick={start} disabled={connecting}><Mic className="h-4 w-4 mr-1" />{connecting ? "Connecting…" : "Voice Input"}</Button>
-        : <Button type="button" variant="outline" onClick={() => { setPaused(!paused); if (paused) conversation.sendContextualUpdate(`We are carrying on. Ask: ${relevant.current[index.current]?.question || 'Please say continue.'}`); }}>{paused ? <Play className="h-4 w-4 mr-1" /> : <Pause className="h-4 w-4 mr-1" />}{paused ? "Carry on" : "Pause"}</Button>}
-      {live && <Button type="button" variant="outline" onClick={() => { apply(); void conversation.endSession(); setPaused(false); }}><Save className="h-4 w-4 mr-1" />Update & stop</Button>}
+        : <Button type="button" variant="outline" onClick={() => { pausedRef.current = !paused; setPaused(!paused); if (paused) conversation.sendContextualUpdate(`We are carrying on. Ask: ${relevant.current[index.current]?.question || 'Please say continue.'}`); }}>{paused ? <Play className="h-4 w-4 mr-1" /> : <Pause className="h-4 w-4 mr-1" />}{paused ? "Carry on" : "Pause"}</Button>}
+      {live && <Button type="button" variant="outline" onClick={() => { apply(); void conversation.endSession(); setPaused(false); pausedRef.current = false; if (askAll) onContinue(); }}><Save className="h-4 w-4 mr-1" />Update & stop</Button>}
+      {live && <Button type="button" variant="ghost" onClick={() => { void conversation.endSession(); setPaused(false); pausedRef.current = false; onCancel?.(); }}>Cancel</Button>}
       {live && index.current >= relevant.current.length && !offerCv && <Button type="button" onClick={() => { apply(); void conversation.endSession(); onContinue(); }}><Save className="h-4 w-4 mr-1" />Save form</Button>}
     </div>
     {status && <p className="text-xs text-muted-foreground" aria-live="polite">{status}</p>}
