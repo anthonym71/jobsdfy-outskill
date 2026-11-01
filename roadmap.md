@@ -1,4 +1,6 @@
 # Tasks
+- [ ] Repair voice extraction saving and direct About Me form questions; verify saved results read back.
+- [ ] Repair per-field microphone transcription, remove duplicate Calendar and link credit panel to rewards with live XP updates.
 - [x] Keep profile tabs visible in onboarding, align spoken questions to form fields and automatically advance after summary; signed-in navigation checked and 10 voice sequencing tests pass.
 - [x] Replace user-facing Headline with Job title in profile forms, CV review, account exports and guide.
 - [ ] Reported About Me voice-save error — recent function logs show no failure detail; extraction response needs reproduction before claiming a fix.
