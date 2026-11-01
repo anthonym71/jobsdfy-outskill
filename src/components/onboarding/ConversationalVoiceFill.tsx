@@ -39,11 +39,7 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
         setStatus(received.text);
         const expected = cvChoice.current ? "Do you have a CV?" : relevant.current[index.current]?.question;
         const normalize = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-        if (expected && normalize(received.text).includes(normalize(expected))) awaitingAnswer.current = true;
-        else if (expected && received.text.includes("?")) {
-          awaitingAnswer.current = false;
-          conversation.sendContextualUpdate(`That question does not match the form. Ask this exact question only: ${expected} Never split full name into first name and last name.`);
-        }
+        if (expected && (received.text.includes("?") || normalize(received.text).includes(normalize(expected)))) awaitingAnswer.current = true;
         return;
       }
       const text = received.text;
@@ -79,7 +75,10 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
       index.current++;
       awaitingAnswer.current = false;
       const next = relevant.current[index.current];
-      if (!next && autoContinue && !completed.current) {
+      if (!next && (autoContinue || askAll) && !completed.current) {
+        completed.current = true;
+        setCurrentQuestion("All done — saving your profile.");
+        if (askAll) { apply(); conversation.sendContextualUpdate("All questions are complete. Say: Thanks, your profile is saved. Then stop."); window.setTimeout(() => { void conversation.endSession(); onContinue(); }, 2500); return; }
         completed.current = true;
         setCurrentQuestion("");
         onContinue();
@@ -103,7 +102,7 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
       const input = await microphone.prepare();
       const { data, error } = await supabase.functions.invoke("elevenlabs-conversation-token", { body: { category: "about" } });
       if (error || !data?.signed_url) throw new Error(data?.error || error?.message || "Could not start voice interview");
-      await conversation.startSession({ signedUrl: data.signed_url, ...input, overrides: { agent: { firstMessage: first, prompt: { prompt: `You are Joby guiding profile onboarding. ${SINGLE_QUESTION_RULE} The app controls the field order. Speak the supplied question EXACTLY as written. Never split full name into first and last names. Never create your own next question. When the user answers, wait for the app's contextual update containing the next question, then speak that question aloud. ${offerCv ? "First ask about uploading a CV. Wait for yes or no. If yes, the app opens the upload screen. If no, acknowledge and ask the first field question supplied by the app." : ""} Do not ask work-history questions. Current question: ${first}` } } } });
+      await conversation.startSession({ signedUrl: data.signed_url, ...input, overrides: { agent: { firstMessage: first, prompt: { prompt: `You are Joby guiding profile onboarding. ${SINGLE_QUESTION_RULE} The app controls the field order. Speak the supplied question EXACTLY as written. Never split full name into first and last names. Never create your own next question. Keep every reply very short: no small talk, no recap, ask the next question immediately. When the user answers, wait for the app's contextual update containing the next question, then speak that question aloud. ${offerCv ? "First ask about uploading a CV. Wait for yes or no. If yes, the app opens the upload screen. If no, acknowledge and ask the first field question supplied by the app." : ""} Do not ask work-history questions. Current question: ${first}` } } } });
     } catch (error: any) { setError(error.message || "Voice connection failed"); setConnecting(false); }
   };
   useEffect(() => {

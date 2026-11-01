@@ -192,7 +192,10 @@ const AboutMeTab = () => {
     }
   };
 
+  const profileRef = useRef(profile);
+  profileRef.current = profile;
   const handleSave = async () => {
+    const profile = profileRef.current;
     if (!user) return;
     setSaving(true);
     try {
@@ -272,7 +275,7 @@ const AboutMeTab = () => {
           { key: "topSkills", question: "What are your top skills?" },
           { key: "industries", question: "Which industries have you worked in?" },
           { key: "languages", question: "Which languages do you speak?" },
-        ]} values={profile} onFill={(key, value) => setProfile(current => ({ ...current, [key]: value }))} onContinue={() => { setVoiceOpen(false); void handleSave(); }} />}
+        ]} values={profile} onFill={(key, value) => setProfile(current => { const next = { ...current, [key]: value }; profileRef.current = next; return next; })} onContinue={() => { window.setTimeout(() => { void handleSave(); setVoiceOpen(false); }, 300); }} />}
 
         {/* Photo upload */}
         <div className="flex items-center gap-4">
