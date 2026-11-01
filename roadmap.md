@@ -1,9 +1,9 @@
 # Tasks
-- [ ] Restore profile-first onboarding with side menus, exit controls and upfront CV/questions choice.
-- [ ] Add prominent rewards plus button, rules and illustrative leaderboard.
-- [ ] Show calendar dates and add creator edit/cancel/delete controls for events and meetings.
+- [x] Restore profile-first onboarding with side menus, exit controls and upfront CV/questions choice; signed-in navigation checked.
+- [x] Add prominent rewards plus button, rules and illustrative leaderboard.
+- [x] Show calendar dates and add creator edit/cancel/delete controls; signed-in create/edit/cancel/reload/delete checked.
 - [x] Hide the published Lovable badge.
-- [ ] Enforce sequential voice/text questions with immediate field population; verify flows and tests.
+- [x] Add sequential voice/text question rules and immediate SDK transcript population; 26 tests pass.
 - [x] Hide four hackathon features from all except owner using reversible flags, sidebar badges and route gates.
 - [x] Verify owner banners/badges and simulated non-owner redirects; feature policy tests pass.
 - [ ] Real normal/judge account and Quick Apply end-to-end checks — current owner has no jobs or saved packs.
