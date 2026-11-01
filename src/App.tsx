@@ -51,6 +51,11 @@ import TermsGate from "./components/TermsGate";
 import FeatureGate from "./components/FeatureGate";
 import Rewards from "./pages/Rewards";
 
+const ExternalRedirect = ({ to }: { to: string }) => {
+  if (typeof window !== "undefined") window.location.replace(to);
+  return <p style={{ padding: 24, fontFamily: "sans-serif" }}>Opening the JobsDFY video walkthrough… <a href={to}>Click here if it doesn't open</a>.</p>;
+};
+
 const queryClient = new QueryClient();
 
 const ProtectedRoute = () => {
@@ -81,6 +86,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/loom" element={<ExternalRedirect to="https://www.loom.com/share/32a013f7164b4ab99fe3c48ac7ddc521" />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/r/:slug" element={<SlugRedirect type="ref" />} />
             <Route path="/a/:slug" element={<SlugRedirect type="aff" />} />
