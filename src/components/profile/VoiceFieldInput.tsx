@@ -25,8 +25,7 @@ const VoiceFieldInput = ({ onResult, options, label, className, currentValue }: 
   const handledRef = useRef(false);
   const transcriptRef = useRef("");
   const resultRef = useRef(onResult);
-  const valueRef = useRef(currentValue);
-  resultRef.current = onResult; valueRef.current = currentValue;
+  resultRef.current = onResult;
 
   useEffect(() => {
     const stopOther = (event: Event) => {
