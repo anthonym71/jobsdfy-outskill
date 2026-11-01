@@ -1,7 +1,9 @@
 # Tasks
+- [x] Repair voice extraction saving and direct About Me form questions; extraction returns 200 and temporary saved profile reads back in About Me, original profile restored.
+- [x] Repair per-field interim/final transcription and input switching; remove duplicate Calendar and link credit panel to rewards with shared XP refresh; 16 tests pass and signed-in navigation verified.
 - [x] Keep profile tabs visible in onboarding, align spoken questions to form fields and automatically advance after summary; signed-in navigation checked and 10 voice sequencing tests pass.
 - [x] Replace user-facing Headline with Job title in profile forms, CV review, account exports and guide.
-- [ ] Reported About Me voice-save error — recent function logs show no failure detail; extraction response needs reproduction before claiming a fix.
+- [x] Reported About Me voice-save error reproduced: obsolete gateway hostname; corrected deployed endpoint, checked storage errors and missing-profile writes.
 - [x] Fix silent onboarding voice startup, CV-first spoken prompt and persistent live microphone level; real agent greeting/audio and simulated microphone level verified, 10 tests pass.
 - [x] Restore profile-first onboarding with side menus, exit controls and upfront CV/questions choice; signed-in navigation checked.
 - [x] Add prominent rewards plus button, rules and illustrative leaderboard.

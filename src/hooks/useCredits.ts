@@ -101,7 +101,13 @@ export function useCredits() {
     setLoading(false);
   }, [user]);
 
-  useEffect(() => { loadCredits(); }, [loadCredits]);
+  useEffect(() => {
+    void loadCredits();
+    const refresh = () => { void loadCredits(); };
+    window.addEventListener("jobsdfy:credits-updated", refresh);
+    window.addEventListener("focus", refresh);
+    return () => { window.removeEventListener("jobsdfy:credits-updated", refresh); window.removeEventListener("focus", refresh); };
+  }, [loadCredits]);
 
   const earnCredits = useCallback(async (reason: string) => {
     if (!user || !credits) return false;
@@ -126,6 +132,7 @@ export function useCredits() {
       xp: newXp,
       level: getLevelFromXp(newXp),
     });
+    window.dispatchEvent(new Event("jobsdfy:credits-updated"));
     return true;
   }, [user, credits]);
 
@@ -142,6 +149,7 @@ export function useCredits() {
     if (!success) return false;
 
     setCredits({ ...credits, balance: credits.balance - amount });
+    window.dispatchEvent(new Event("jobsdfy:credits-updated"));
     return true;
   }, [user, credits]);
 

@@ -13,6 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useRef } from "react";
+import ConversationalVoiceFill from "@/components/onboarding/ConversationalVoiceFill";
+import { Mic } from "lucide-react";
 
 interface SocialAccount {
   id?: string;
@@ -29,6 +31,7 @@ const AboutMeTab = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [voiceOpen, setVoiceOpen] = useState(false);
   const [improvingSummary, setImprovingSummary] = useState(false);
   const [suggestingKeywords, setSuggestingKeywords] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -58,10 +61,11 @@ const AboutMeTab = () => {
   }, [user]);
 
   const loadData = async () => {
+    if (!user) return;
     const [profileRes, nonNegRes, socialsRes] = await Promise.all([
-      supabase.from("user_profiles").select("*").eq("user_id", user!.id).single(),
-      supabase.from("user_non_negotiables").select("*").eq("user_id", user!.id).single(),
-      supabase.from("social_accounts").select("*").eq("user_id", user!.id),
+      supabase.from("user_profiles").select("*").eq("user_id", user.id).maybeSingle(),
+      supabase.from("user_non_negotiables").select("*").eq("user_id", user.id).maybeSingle(),
+      supabase.from("social_accounts").select("*").eq("user_id", user.id),
     ]);
 
     if (profileRes.data) {
@@ -189,10 +193,11 @@ const AboutMeTab = () => {
   };
 
   const handleSave = async () => {
+    if (!user) return;
     setSaving(true);
     try {
       const { error: profileError } = await supabase.from("user_profiles").upsert({
-        user_id: user!.id,
+        user_id: user.id,
         full_name: profile.fullName,
         location: profile.location,
         headline: profile.headline,
@@ -209,7 +214,7 @@ const AboutMeTab = () => {
       if (profileError) throw profileError;
 
       const { error: nonNegError } = await supabase.from("user_non_negotiables").upsert({
-        user_id: user!.id,
+        user_id: user.id,
         min_salary: parseInt(nonNegs.minSalary) || 0,
         salary_currency: nonNegs.salaryCurrency,
         allowed_countries: splitArray(nonNegs.allowedCountries),
@@ -221,10 +226,10 @@ const AboutMeTab = () => {
       }, { onConflict: "user_id" });
       if (nonNegError) throw nonNegError;
 
-      await supabase.from("social_accounts").delete().eq("user_id", user!.id);
+      await supabase.from("social_accounts").delete().eq("user_id", user.id);
       if (socials.length > 0) {
         const { error: socialError } = await supabase.from("social_accounts").insert(
-          socials.map(s => ({ user_id: user!.id, platform: s.platform, url: s.url, followers: s.followers, friends: s.friends }))
+          socials.map(s => ({ user_id: user.id, platform: s.platform, url: s.url, followers: s.followers, friends: s.friends }))
         );
         if (socialError) throw socialError;
       }
@@ -252,9 +257,20 @@ const AboutMeTab = () => {
             <Button variant="outline" size="sm" onClick={() => document.getElementById("cv-upload-section")?.scrollIntoView({ behavior: "smooth" })}>
               <FileUp className="h-4 w-4 mr-1" />Upload CV
             </Button>
-            <VoiceCVBuilderDialog category="about" categoryLabel="About Me" />
+            <Button variant="outline" size="sm" onClick={() => setVoiceOpen(value => !value)}><Mic className="h-3.5 w-3.5 mr-1" />Talk to Me</Button>
           </div>
         </div>
+
+        {voiceOpen && <ConversationalVoiceFill fields={[
+          { key: "fullName", question: "What's your full name?" },
+          { key: "location", question: "Where are you based?" },
+          { key: "headline", question: "What's your job title?" },
+          { key: "yearsExp", question: "How many years of experience do you have?", type: "number" },
+          { key: "summary", question: "Give me a summary of your job description and what you did." },
+          { key: "topSkills", question: "What are your top skills?" },
+          { key: "industries", question: "Which industries have you worked in?" },
+          { key: "languages", question: "Which languages do you speak?" },
+        ]} values={profile} onFill={(key, value) => setProfile(current => ({ ...current, [key]: value }))} onContinue={() => { setVoiceOpen(false); void handleSave(); }} />}
 
         {/* Photo upload */}
         <div className="flex items-center gap-4">

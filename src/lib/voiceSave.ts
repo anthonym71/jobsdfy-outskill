@@ -28,11 +28,13 @@ export function mergeList(existing: string[] | null | undefined, incoming: strin
 export async function saveVoiceData(userId: string, category: string, data: any): Promise<string> {
   const d = Array.isArray(data) ? data[0] ?? {} : data ?? {};
   if (category === "about" || category === "skills") {
-    const { data: p } = await supabase.from("user_profiles").select("*").eq("user_id", userId).maybeSingle();
-    if (!p) return "Saved to your Knowledgebase (finish onboarding to fill your profile)";
+    const { data: existing, error: readError } = await supabase.from("user_profiles").select("*").eq("user_id", userId).maybeSingle();
+    if (readError) throw readError;
+    const p: Record<string, any> = existing || {};
     const upd: Record<string, any> = {};
     const text = (k: string, src: string) => { if (!p[k as keyof typeof p] && d[src]) upd[k] = String(d[src]); };
     if (category === "about") {
+      text("full_name", "full_name");
       text("location", "location"); text("headline", "headline"); text("summary", "summary");
       if (!p.years_of_experience && Number(d.years_of_experience)) upd.years_of_experience = Number(d.years_of_experience);
       for (const k of ["industries", "languages_spoken", "hobbies", "interests", "sports"]) {
@@ -42,7 +44,9 @@ export async function saveVoiceData(userId: string, category: string, data: any)
     const skills = arr(d.top_skills ?? d.skills);
     if (skills.length) upd.top_skills = mergeList(p.top_skills, skills);
     if (!Object.keys(upd).length) return "Nothing new to add — kept your existing details";
-    const { error } = await supabase.from("user_profiles").update(upd as never).eq("user_id", userId);
+    const { error } = existing
+      ? await supabase.from("user_profiles").update(upd as never).eq("user_id", userId)
+      : await supabase.from("user_profiles").upsert({ user_id: userId, ...upd } as never, { onConflict: "user_id" });
     if (error) throw error;
     return `Updated ${Object.keys(upd).length} profile field(s)`;
   }

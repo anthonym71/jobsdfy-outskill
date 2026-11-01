@@ -125,6 +125,7 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
       {!live ? <Button type="button" variant="secondary" onClick={start} disabled={connecting}><Mic className="h-4 w-4 mr-1" />{connecting ? "Connecting…" : "Voice Input"}</Button>
         : <Button type="button" variant="outline" onClick={() => { setPaused(!paused); if (paused) conversation.sendContextualUpdate(`We are carrying on. Ask: ${relevant.current[index.current]?.question || 'Please say continue.'}`); }}>{paused ? <Play className="h-4 w-4 mr-1" /> : <Pause className="h-4 w-4 mr-1" />}{paused ? "Carry on" : "Pause"}</Button>}
       {live && <Button type="button" variant="outline" onClick={() => { apply(); void conversation.endSession(); setPaused(false); }}><Save className="h-4 w-4 mr-1" />Update & stop</Button>}
+      {live && index.current >= relevant.current.length && !offerCv && <Button type="button" onClick={() => { apply(); void conversation.endSession(); onContinue(); }}><Save className="h-4 w-4 mr-1" />Save form</Button>}
     </div>
     {status && <p className="text-xs text-muted-foreground" aria-live="polite">{status}</p>}
     {error && <p role="alert" className="text-xs text-destructive">{error}</p>}

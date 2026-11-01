@@ -2,6 +2,7 @@ import { Coins, Zap, Flame, Trophy } from "lucide-react";
 import { useCredits, getXpProgress, ACHIEVEMENTS } from "@/hooks/useCredits";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
+import { Link } from "react-router-dom";
 
 export const CreditBalance = ({ compact = false }: { compact?: boolean }) => {
   const { credits, loading } = useCredits();
@@ -9,17 +10,17 @@ export const CreditBalance = ({ compact = false }: { compact?: boolean }) => {
 
   if (compact) {
     return (
-      <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+      <Link to="/app/rewards" aria-label="Your rewards and leaderboard" className="flex items-center gap-1.5 text-sm font-medium text-foreground">
         <Coins className="h-4 w-4 text-amber-500" />
         <span>{credits.balance}</span>
-      </div>
+      </Link>
     );
   }
 
   const xpProgress = getXpProgress(credits.xp);
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+    <Link to="/app/rewards" aria-label="Your rewards and leaderboard" className="block rounded-lg border border-border bg-card p-4 space-y-3 hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Coins className="h-5 w-5 text-amber-500" />
@@ -44,7 +45,7 @@ export const CreditBalance = ({ compact = false }: { compact?: boolean }) => {
         </div>
         <Progress value={xpProgress.percent} className="h-2" />
       </div>
-    </div>
+    </Link>
   );
 };
 
