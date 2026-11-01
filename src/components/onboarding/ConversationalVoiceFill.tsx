@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ConversationProvider, useConversation } from "@elevenlabs/react";
 import { Mic, Pause, Play, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,9 @@ import { isContinueCommand, isStopCommand, isSkipCommand, spokenNumber } from "@
 import type { GuidedField } from "./GuidedVoiceFill";
 import { SINGLE_QUESTION_RULE, voiceMessage } from "@/lib/conversationRules";
 
-function Inner({ fields, values, onFill, onContinue }: { fields: GuidedField[]; values: Record<string, string>; onFill: (key: string, value: string) => void; onContinue: () => void }) {
+export const CV_FIRST_PROMPT = "Do you have a CV? Uploading it is the fastest, easiest way to get your information into the system. If not, we can continue with the voice interview.";
+
+function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv }: { fields: GuidedField[]; values: Record<string, string>; onFill: (key: string, value: string) => void; onContinue: () => void; offerCv?: boolean; onUploadCv?: () => void }) {
   const microphone = useMicrophone();
   const [connecting, setConnecting] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -19,10 +21,13 @@ function Inner({ fields, values, onFill, onContinue }: { fields: GuidedField[]; 
   const pending = useRef<Record<string, string>>({});
   const relevant = useRef<GuidedField[]>([]);
   const awaitingAnswer = useRef(false);
+  const cvChoice = useRef(false);
   const [currentQuestion, setCurrentQuestion] = useState("");
+  const [inputLevel, setInputLevel] = useState(0);
   const conversation = useConversation({
     micMuted: paused,
-    onConnect: () => setStatus("Connected — microphone is listening"),
+    onConnect: () => { setConnecting(false); setStatus("Connected — microphone is listening"); },
+    onDisconnect: (details: any) => { setConnecting(false); setStatus("Voice session ended"); if (details?.reason === "error") setError(details.message || "The voice session could not start. Please check the agent settings."); },
     onError: (error: any) => { setError(typeof error === "string" ? error : "Voice connection failed. Please try again."); setConnecting(false); },
     onMessage: (message: any) => {
       const received = voiceMessage(message);
@@ -30,6 +35,20 @@ function Inner({ fields, values, onFill, onContinue }: { fields: GuidedField[]; 
       if (received.speaker === "agent") { setStatus(received.text); awaitingAnswer.current = true; return; }
       const text = received.text;
       if (isStopCommand(text)) { setPaused(true); setStatus("Paused. Update with your answers so far, or carry on?"); return; }
+      if (paused) return;
+      if (cvChoice.current && awaitingAnswer.current) {
+        if (/\b(yes|yeah|yep|upload|i do|have a cv)\b/i.test(text) && !/\b(no|not|don't|do not)\b/i.test(text)) {
+          cvChoice.current = false; awaitingAnswer.current = false;
+          void conversation.endSession(); onUploadCv?.(); return;
+        }
+        if (/\b(no|nope|not|don't|do not|continue|interview|questions)\b/i.test(text)) {
+          cvChoice.current = false; awaitingAnswer.current = false;
+          const first = relevant.current[0]?.question || "Your answers are complete. Say continue to proceed.";
+          setCurrentQuestion(first);
+          conversation.sendContextualUpdate(`CV upload declined. ${SINGLE_QUESTION_RULE} Ask ONLY: ${first}`);
+        } else conversation.sendContextualUpdate("Wait for a yes or no about uploading a CV. Ask only: Do you have a CV to upload?");
+        return;
+      }
       if (isContinueCommand(text)) {
         if (index.current >= relevant.current.length) { apply(); void conversation.endSession(); onContinue(); }
         return;
@@ -54,20 +73,25 @@ function Inner({ fields, values, onFill, onContinue }: { fields: GuidedField[]; 
   const start = async () => {
     setConnecting(true); setError(""); setPaused(false);
     relevant.current = fields.filter(field => !values[field.key]); index.current = 0; pending.current = {};
-    const first = relevant.current[0]?.question || "Your answers are complete. Say continue to proceed.";
+    cvChoice.current = offerCv;
+    const first = offerCv ? CV_FIRST_PROMPT : relevant.current[0]?.question || "Your answers are complete. Say continue to proceed.";
     setCurrentQuestion(first); awaitingAnswer.current = true;
     try {
       const input = await microphone.prepare();
       const { data, error } = await supabase.functions.invoke("elevenlabs-conversation-token", { body: { category: "about" } });
       if (error || !data?.signed_url) throw new Error(data?.error || error?.message || "Could not start voice interview");
-      await conversation.startSession({ signedUrl: data.signed_url, ...input, overrides: { agent: { firstMessage: first, prompt: { prompt: `You are Joby guiding profile onboarding. ${SINGLE_QUESTION_RULE} The app controls the field order. Ask only the current question supplied by the app, never create your own next question. Do not ask work-history questions. Current question: ${first}` } } } });
-    } catch (error: any) { setError(error.message || "Voice connection failed"); }
-    finally { setConnecting(false); }
+      conversation.startSession({ signedUrl: data.signed_url, ...input, overrides: { agent: { firstMessage: first, prompt: { prompt: `You are Joby guiding profile onboarding. ${SINGLE_QUESTION_RULE} The app controls the field order. Ask only the current question supplied by the app, never create your own next question. When the user answers, wait for the app's contextual update containing the next question, then speak that question aloud. ${offerCv ? "First ask about uploading a CV. Wait for yes or no. If yes, the app opens the upload screen. If no, acknowledge and ask the first field question supplied by the app." : ""} Do not ask work-history questions. Current question: ${first}` } } } });
+    } catch (error: any) { setError(error.message || "Voice connection failed"); setConnecting(false); }
   };
   const live = conversation.status === "connected";
+  useEffect(() => {
+    if (!live || paused) { setInputLevel(0); return; }
+    const timer = window.setInterval(() => setInputLevel(Math.min(100, Math.max(0, conversation.getInputVolume() * 100))), 80);
+    return () => window.clearInterval(timer);
+  }, [live, paused, conversation.getInputVolume]);
   return <div className="space-y-3">
     {currentQuestion && <p className="text-sm font-medium text-foreground" aria-live="polite">{currentQuestion}</p>}
-    <MicrophoneControl microphone={microphone} disabled={live || connecting} />
+    <MicrophoneControl microphone={microphone} disabled={live || connecting} liveLevel={live ? inputLevel : undefined} paused={paused} />
     <div className="flex flex-wrap gap-2">
       {!live ? <Button type="button" variant="secondary" onClick={start} disabled={connecting}><Mic className="h-4 w-4 mr-1" />{connecting ? "Connecting…" : "Voice Input"}</Button>
         : <Button type="button" variant="outline" onClick={() => { setPaused(!paused); if (paused) conversation.sendContextualUpdate(`We are carrying on. Ask: ${relevant.current[index.current]?.question || 'Please say continue.'}`); }}>{paused ? <Play className="h-4 w-4 mr-1" /> : <Pause className="h-4 w-4 mr-1" />}{paused ? "Carry on" : "Pause"}</Button>}

@@ -1,6 +1,7 @@
 # Architecture rules
 - Keep Profile accessible before onboarding; the questionnaire is an explicit opt-in within AppLayout so navigation stays available without bypassing job-workflow onboarding checks.
 - Normalize ElevenLabs messages through the shared conversation adapter and apply single-question instructions before session startup; the installed SDK emits source/message rather than raw socket events.
+- Use the voice SDK's input-volume analyser for connected microphone levels rather than starting a second capture; hosted first-message and prompt overrides must be enabled for app-controlled onboarding questions.
 - Reuse events and creator-scoped writes for calendar event/meeting management; preserve cancelled records and keep judges read-only.
 - Demo leaderboard data is local and clearly illustrative; reward explanations derive from the existing credit catalogue rather than granting new credits.
  - Normalize uploaded CVs through the shared CV-content adapter; destination-specific imports must not implicitly overwrite the main profile.

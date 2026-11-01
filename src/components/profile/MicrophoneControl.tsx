@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMicrophone } from "@/hooks/useMicrophone";
 
-export default function MicrophoneControl({ microphone, disabled }: { microphone: ReturnType<typeof useMicrophone>; disabled: boolean }) {
+export default function MicrophoneControl({ microphone, disabled, liveLevel, paused = false }: { microphone: ReturnType<typeof useMicrophone>; disabled: boolean; liveLevel?: number; paused?: boolean }) {
   const unavailable = microphone.deviceId !== "default" && !microphone.devices.some(d => d.deviceId === microphone.deviceId);
   return (
     <div className="space-y-2">
@@ -23,10 +23,10 @@ export default function MicrophoneControl({ microphone, disabled }: { microphone
           {microphone.testing ? "Stop test" : "Test mic"}
         </Button>
       </div>
-      {(microphone.testing || microphone.detected) && <div className="space-y-1">
-        <progress aria-label="Microphone input level" max={100} value={microphone.level} className="h-2 w-full accent-primary" />
-        <p role="status" className="text-xs text-muted-foreground">{microphone.detected ? "Microphone sound detected" : "Waiting for microphone sound…"}</p>
-      </div>}
+      <div className="space-y-1">
+        <progress aria-label="Microphone input level" max={100} value={paused ? 0 : liveLevel ?? microphone.level} className="h-2 w-full accent-primary" />
+        <p role="status" className="text-xs text-muted-foreground">{paused ? "Microphone paused" : liveLevel !== undefined ? liveLevel > 1 ? "Listening — microphone sound detected" : "Listening — waiting for microphone sound…" : microphone.testing ? microphone.detected ? "Microphone sound detected" : "Waiting for microphone sound…" : "Microphone idle"}</p>
+      </div>
       {microphone.error && <p role="alert" className="text-xs text-destructive">{microphone.error}</p>}
     </div>
   );

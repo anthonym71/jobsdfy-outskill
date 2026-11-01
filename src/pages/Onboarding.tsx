@@ -66,6 +66,7 @@ const VOICE_STEPS: Record<number, GuidedField[]> = {
 const Onboarding = () => {
   const [searchParams] = useSearchParams();
   const [intake, setIntake] = useState<"choice" | "questions" | "review">("choice");
+  const [voiceCvUpload, setVoiceCvUpload] = useState(false);
   const [hydrating, setHydrating] = useState(true);
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
@@ -450,11 +451,11 @@ const Onboarding = () => {
             </>
           )}
 
-          {intake === "questions" && VOICE_STEPS[step] && <ConversationalVoiceFill key={`voice-${step}`} fields={VOICE_STEPS[step]} values={form} onFill={voiceSet} onContinue={next} />}
+          {intake === "questions" && VOICE_STEPS[step] && <ConversationalVoiceFill key={`voice-${step}`} fields={VOICE_STEPS[step]} values={form} onFill={voiceSet} onContinue={next} offerCv={step === 1} onUploadCv={() => setVoiceCvUpload(true)} />}
           <div className="flex flex-wrap justify-between gap-3 pt-2">
             <Button variant="outline" onClick={back}>Back</Button>
             <div className="flex flex-wrap items-start gap-2">
-            <OnboardingCVUpload onParsed={acceptCv} />
+            <OnboardingCVUpload onParsed={acceptCv} open={voiceCvUpload} onOpenChange={setVoiceCvUpload} />
             {step < totalSteps ? (
               <Button onClick={next}>
                 Continue
