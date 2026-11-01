@@ -16,6 +16,7 @@
       "title": "2. Building your profile",
       "body": [
         "Profile holds About Me, Work History, Education, Achievements, References and CV Versions.",
+        "My Profile tabs and the side menu remain available during onboarding. Voice asks for your full name once, location, job title and a summary of your job description and what you did. Each answer fills its matching field; after the summary, onboarding continues automatically to work preferences.",
         "Upload CV: use the Upload CV button at the top of About Me. Your CV is read and the fields are filled in for you to check before saving.",
         "Talk to Me: every section has a voice button. Joby, the voice assistant, asks questions and you answer out loud.",
         "Choose what you are adding at the start (About Me, a job, a skill, an achievement, education).",

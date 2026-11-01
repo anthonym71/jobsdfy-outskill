@@ -11,7 +11,7 @@ import { SINGLE_QUESTION_RULE, voiceMessage } from "@/lib/conversationRules";
 
 export const CV_FIRST_PROMPT = "Do you have a CV? Uploading it is the fastest, easiest way to get your information into the system. If not, we can continue with the voice interview.";
 
-function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv }: { fields: GuidedField[]; values: Record<string, string>; onFill: (key: string, value: string) => void; onContinue: () => void; offerCv?: boolean; onUploadCv?: () => void }) {
+function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv, autoContinue = false }: { fields: GuidedField[]; values: Record<string, string>; onFill: (key: string, value: string) => void; onContinue: () => void; offerCv?: boolean; onUploadCv?: () => void; autoContinue?: boolean }) {
   const microphone = useMicrophone();
   const [connecting, setConnecting] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -22,6 +22,8 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
   const relevant = useRef<GuidedField[]>([]);
   const awaitingAnswer = useRef(false);
   const cvChoice = useRef(false);
+  const completed = useRef(false);
+  const fieldPage = fields.map(field => field.key).join(",");
   const [currentQuestion, setCurrentQuestion] = useState("");
   const [inputLevel, setInputLevel] = useState(0);
   const conversation = useConversation({
@@ -32,7 +34,17 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
     onMessage: (message: any) => {
       const received = voiceMessage(message);
       if (!received) return;
-      if (received.speaker === "agent") { setStatus(received.text); awaitingAnswer.current = true; return; }
+      if (received.speaker === "agent") {
+        setStatus(received.text);
+        const expected = cvChoice.current ? "Do you have a CV?" : relevant.current[index.current]?.question;
+        const normalize = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+        if (expected && normalize(received.text).includes(normalize(expected))) awaitingAnswer.current = true;
+        else if (expected && received.text.includes("?")) {
+          awaitingAnswer.current = false;
+          conversation.sendContextualUpdate(`That question does not match the form. Ask this exact question only: ${expected} Never split full name into first name and last name.`);
+        }
+        return;
+      }
       const text = received.text;
       if (isStopCommand(text)) { setPaused(true); setStatus("Paused. Update with your answers so far, or carry on?"); return; }
       if (paused) return;
@@ -65,6 +77,12 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
       index.current++;
       awaitingAnswer.current = false;
       const next = relevant.current[index.current];
+      if (!next && autoContinue && !completed.current) {
+        completed.current = true;
+        setCurrentQuestion("");
+        onContinue();
+        return;
+      }
       setCurrentQuestion(next?.question || "Review your answers, then continue.");
       conversation.sendContextualUpdate(next ? `The app recorded that answer. ${SINGLE_QUESTION_RULE} Ask ONLY: ${next.question}` : 'All questions are complete. Do not ask more questions. Invite the user to review and say "continue".');
     },
@@ -72,7 +90,7 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
   const apply = () => Object.entries(pending.current).forEach(([key, value]) => onFill(key, value));
   const start = async () => {
     setConnecting(true); setError(""); setPaused(false);
-    relevant.current = fields.filter(field => !values[field.key]); index.current = 0; pending.current = {};
+    relevant.current = fields.filter(field => !values[field.key]?.trim()); index.current = 0; pending.current = {}; completed.current = false;
     cvChoice.current = offerCv;
     const first = offerCv ? CV_FIRST_PROMPT : relevant.current[0]?.question || "Your answers are complete. Say continue to proceed.";
     setCurrentQuestion(first); awaitingAnswer.current = true;
@@ -80,10 +98,21 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
       const input = await microphone.prepare();
       const { data, error } = await supabase.functions.invoke("elevenlabs-conversation-token", { body: { category: "about" } });
       if (error || !data?.signed_url) throw new Error(data?.error || error?.message || "Could not start voice interview");
-      conversation.startSession({ signedUrl: data.signed_url, ...input, overrides: { agent: { firstMessage: first, prompt: { prompt: `You are Joby guiding profile onboarding. ${SINGLE_QUESTION_RULE} The app controls the field order. Ask only the current question supplied by the app, never create your own next question. When the user answers, wait for the app's contextual update containing the next question, then speak that question aloud. ${offerCv ? "First ask about uploading a CV. Wait for yes or no. If yes, the app opens the upload screen. If no, acknowledge and ask the first field question supplied by the app." : ""} Do not ask work-history questions. Current question: ${first}` } } } });
+      await conversation.startSession({ signedUrl: data.signed_url, ...input, overrides: { agent: { firstMessage: first, prompt: { prompt: `You are Joby guiding profile onboarding. ${SINGLE_QUESTION_RULE} The app controls the field order. Speak the supplied question EXACTLY as written. Never split full name into first and last names. Never create your own next question. When the user answers, wait for the app's contextual update containing the next question, then speak that question aloud. ${offerCv ? "First ask about uploading a CV. Wait for yes or no. If yes, the app opens the upload screen. If no, acknowledge and ask the first field question supplied by the app." : ""} Do not ask work-history questions. Current question: ${first}` } } } });
     } catch (error: any) { setError(error.message || "Voice connection failed"); setConnecting(false); }
   };
   const live = conversation.status === "connected";
+  useEffect(() => {
+    if (!live) return;
+    relevant.current = fields;
+    index.current = 0; pending.current = {}; completed.current = false;
+    cvChoice.current = false; awaitingAnswer.current = false;
+    const question = fields[0]?.question;
+    if (question) {
+      setCurrentQuestion(question);
+      conversation.sendContextualUpdate(`The app moved to the next form page. ${SINGLE_QUESTION_RULE} Ask ONLY: ${question}`);
+    }
+  }, [fieldPage]);
   useEffect(() => {
     if (!live || paused) { setInputLevel(0); return; }
     const timer = window.setInterval(() => setInputLevel(Math.min(100, Math.max(0, conversation.getInputVolume() * 100))), 80);

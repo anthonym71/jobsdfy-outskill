@@ -345,7 +345,7 @@ const CVUploadParser = ({ onImportComplete, onReviewComplete }: CVUploadParserPr
             <div><span className="text-muted-foreground">Email: </span><span className="text-foreground">{parsedData.email || "—"}</span></div>
             <div><span className="text-muted-foreground">Phone: </span><span className="text-foreground">{parsedData.phone || "—"}</span></div>
             <div><span className="text-muted-foreground">Location: </span><span className="text-foreground">{parsedData.location || "—"}</span></div>
-            <div className="col-span-2"><span className="text-muted-foreground">Headline: </span>
+            <div className="col-span-2"><span className="text-muted-foreground">Job title: </span>
               {editingField === "headline" ? (
                 <Input className="h-6 text-xs inline-flex w-full" value={parsedData.headline || ""} onChange={e => updateParsedField("headline", e.target.value)} onBlur={() => setEditingField(null)} autoFocus />
               ) : (
@@ -366,7 +366,7 @@ const CVUploadParser = ({ onImportComplete, onReviewComplete }: CVUploadParserPr
           <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Profile Fields</h4>
           {conflicts.profileConflicts.map((c: any, i: number) => (
             <div key={i} className="rounded-lg bg-accent/30 p-3 space-y-1">
-              <p className="text-xs font-medium text-foreground">{c.field}</p>
+              <p className="text-xs font-medium text-foreground">{c.field === "headline" ? "Job title" : c.field}</p>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div><span className="text-muted-foreground">Current: </span><span className="text-foreground">{c.existingValue || "—"}</span></div>
                 <div><span className="text-muted-foreground">CV: </span><span className="text-primary">{c.newValue || "—"}</span></div>

@@ -2,6 +2,7 @@
 
 | Date | Change | Suggested by | Implemented by | Notes |
 | --- | --- | --- | --- | --- |
+| 2026-11-01 | Kept My Profile sections above onboarding; aligned full-name, job-title and summary voice questions with forms and automatic page continuation | Anthony | Lovable | Sidebar preserved; salary and sponsorship voice fields match visible work preferences; Job title replaces Headline in forms and exported user labels |
 | 2026-11-01 | Fixed onboarding voice startup configuration, added CV-first spoken choice and persistent microphone level | Anthony | Lovable | Enable first-message/prompt overrides on existing ElevenLabs agent; use SDK input level without opening an additional microphone stream; yes opens CV upload, no begins one-question intake |
 | 2026-11-01 | Restored Profile-first onboarding, explicit Begin onboarding, side navigation and Back/Home, CV-or-questions intake and immediate voice field population | Anthony | Lovable | Existing profile values loaded; CV can be reviewed and saved without the questionnaire |
 | 2026-11-01 | Added top plus shortcut, gamification rules, demo leaderboard and proposed awards | Anthony | Lovable | Existing reward amounts unchanged; illustrative participants and prizes, no automatic extra grants |

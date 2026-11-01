@@ -283,7 +283,7 @@ const AboutMeTab = () => {
             <p className="text-xs text-muted-foreground mt-1">Phone changes require admin approval.</p>
           </div>
           <div><VoiceLabel onVoiceResult={v => setProfile(p => ({ ...p, location: v }))}>Location</VoiceLabel><Input value={profile.location} onChange={e => setProfile(p => ({ ...p, location: e.target.value }))} className="mt-1" /></div>
-          <div><VoiceLabel onVoiceResult={v => setProfile(p => ({ ...p, headline: v }))}>Headline</VoiceLabel><Input value={profile.headline} onChange={e => setProfile(p => ({ ...p, headline: e.target.value }))} className="mt-1" /></div>
+          <div><VoiceLabel onVoiceResult={v => setProfile(p => ({ ...p, headline: v }))}>Job title</VoiceLabel><Input value={profile.headline} onChange={e => setProfile(p => ({ ...p, headline: e.target.value }))} className="mt-1" /></div>
           <div><VoiceLabel onVoiceResult={v => setProfile(p => ({ ...p, yearsExp: v.replace(/\D/g, "") }))}>Years of Experience</VoiceLabel><Input type="number" value={profile.yearsExp} onChange={e => setProfile(p => ({ ...p, yearsExp: e.target.value }))} className="mt-1" /></div>
           <div className="sm:col-span-2">
             <div className="flex items-center justify-between">
@@ -293,7 +293,7 @@ const AboutMeTab = () => {
                 Improve with AI
               </Button>
             </div>
-            <Textarea value={profile.summary} onChange={e => setProfile(p => ({ ...p, summary: e.target.value }))} className="mt-1" rows={3} />
+            <Textarea value={profile.summary} onChange={e => setProfile(p => ({ ...p, summary: e.target.value }))} placeholder="A summary of your job description and what you did…" className="mt-1" rows={3} />
           </div>
           <div>
             <div className="flex items-center justify-between">
