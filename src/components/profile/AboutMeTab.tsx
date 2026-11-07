@@ -265,9 +265,10 @@ const AboutMeTab = () => {
         </div>
 
         {voiceOpen && <ConversationalVoiceFill autoStart askAll onCancel={() => setVoiceOpen(false)} fields={[
+          // Only fields this form actually saves. Email is the sign-in identity (not a profile
+          // field) and phone changes require admin approval, so the voice interview must not
+          // ask for them - answers were previously recorded then silently discarded on save.
           { key: "fullName", question: "What's your full name?", match: "name" },
-          { key: "emailConfirm", question: `Is ${user?.email || "your sign-in email"} the right email for your account?`, match: "email" },
-          { key: "phoneNumber", question: "What's your phone number?", match: "phone|number" },
           { key: "location", question: "Where are you based?", match: "based|located|location|live" },
           { key: "headline", question: "What's your job title?", match: "job title|title|role" },
           { key: "yearsExp", question: "How many years of experience do you have?", type: "number", match: "years" },
