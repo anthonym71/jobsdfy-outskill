@@ -38,14 +38,31 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
       if (!received) return;
       if (received.speaker === "agent") {
         setStatus(received.text);
-        const expected = cvChoice.current ? "Do you have a CV?" : relevant.current[index.current]?.question;
+        // The app owns the field order. The agent's spoken text NEVER moves the pointer:
+        // answers always land in the field the app is currently asking about (relevant[index]).
+        // Agent speech is used only to arm/disarm capture for the current app question.
+        const field = relevant.current[index.current];
+        const expected = cvChoice.current ? "Do you have a CV?" : field?.question;
+        if (!expected) return;
         const normalize = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-        if (askAll && received.text.includes("?")) {
-          const lower = received.text.toLowerCase().split("?")[0];
-          const at = relevant.current.findIndex(f => f.match && new RegExp(f.match, "i").test(lower));
-          if (at >= 0) { index.current = at; setCurrentQuestion(relevant.current[at].question); awaitingAnswer.current = true; return; }
+        const said = received.text;
+        const saidNorm = normalize(said);
+        const expectedNorm = normalize(expected);
+        // On-script when the agent speaks the app's question verbatim, speaks its field's
+        // first question part (confirm wrapper trimmed), or names the current field's topic.
+        const firstPart = expected.includes("?") ? expected.slice(0, expected.indexOf("?") + 1) : expected;
+        // The agent is told never to split the full-name question; treat those asks as off-script.
+        const splitName = /first name|last name|surname|family name|given name/i.test(said) && !/full name/i.test(said) && /full name/i.test(expected);
+        const onScript = !splitName && (saidNorm.includes(expectedNorm)
+          || saidNorm.includes(normalize(firstPart))
+          || (!!field?.match && new RegExp(field.match, "i").test(said.toLowerCase().split("?")[0])));
+        if (onScript) { awaitingAnswer.current = true; setCurrentQuestion(expected); return; }
+        if (said.includes("?")) {
+          // Off-script question (split-name, bundled or invented questions, paraphrase of a
+          // different field): do NOT capture the next answer; steer back to the app's question.
+          awaitingAnswer.current = false;
+          conversation.sendContextualUpdate(`That was not the question the app asked. ${SINGLE_QUESTION_RULE} Ask ONLY: ${expected}`);
         }
-        if (expected && (received.text.includes("?") || normalize(received.text).includes(normalize(expected)))) awaitingAnswer.current = true;
         return;
       }
       const text = received.text;
