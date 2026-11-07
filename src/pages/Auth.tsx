@@ -31,6 +31,25 @@ const Auth = () => {
 
   const [emailSent, setEmailSent] = useState(false);
 
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast({ title: "Enter your email first", description: "Type your email above, then tap Forgot password.", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast({ title: "Reset email sent", description: "Check your inbox for a password reset link." });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSignUp && !termsChecked) return;
@@ -105,6 +124,13 @@ const Auth = () => {
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
             </div>
+            {!isSignUp && (
+              <div className="text-right">
+                <button type="button" onClick={handleForgotPassword} className="text-sm text-muted-foreground hover:text-foreground hover:underline">
+                  Forgot password?
+                </button>
+              </div>
+            )}
             {isSignUp && <TermsCheckbox checked={termsChecked} onChange={setTermsChecked} />}
             <Button type="submit" className="w-full" disabled={loading || (isSignUp && !termsChecked)}>
               {loading ? (
