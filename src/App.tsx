@@ -128,6 +128,7 @@ const App = () => (
                   <Route path="/app/autobiography" element={<FeatureGate feature="autobiography"><AutobiographyPage /></FeatureGate>} />
                   <Route path="/app/photo-gallery" element={<PhotoGalleryPage />} />
                   <Route path="/app/interview" element={<InterviewPage />} />
+                  <Route path="/app/interview-practice" element={<Navigate to="/app/interview" replace />} />
                   <Route path="/app/training" element={<TrainingPage />} />
                   <Route path="/app/events" element={<EventsPage />} />
                   <Route path="/app/companies" element={<CompanyPage />} />
