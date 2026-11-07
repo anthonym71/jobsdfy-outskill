@@ -120,6 +120,44 @@ describe("Talk to Me (askAll) field alignment", () => {
     expect(mock.fill).toHaveBeenCalledTimes(1);
   });
 
+  it("recovers from an agent nudge disarm: user speech re-issues steering, re-ask re-arms, next answer lands", async () => {
+    await startTalkToMe(filledProfile);
+    agent(wrap(FIELDS[0], filledProfile).question);          // armed on full name confirm
+    agent("Are you still there? If you need more time, just let me know when you're ready to continue."); // nudge: off-script, disarms
+    user("yes");                                             // must NOT be captured while disarmed
+    expect(mock.fill).not.toHaveBeenCalled();
+    // but the app must not stay silent: it steers the agent to re-ask the current question
+    expect(mock.context).toHaveBeenLastCalledWith(expect.stringContaining(`Ask ONLY: ${wrap(FIELDS[0], filledProfile).question}`));
+    agent(wrap(FIELDS[0], filledProfile).question);          // agent re-asks verbatim -> re-armed
+    user("yes");                                             // confirmation now lands, pointer advances
+    expect(mock.context).toHaveBeenLastCalledWith(expect.stringContaining("Where are you based?"));
+  });
+
+  it("steers only once per disarmed stretch, then re-arms cleanly", async () => {
+    await startTalkToMe(filledProfile);
+    agent(wrap(FIELDS[0], filledProfile).question);
+    agent("Are you still there?");
+    user("yes");
+    user("hello");                                            // second stray reply: no steering spam
+    const steers = mock.context.mock.calls.filter(([m]: any[]) => String(m).includes("The user is present and just replied"));
+    expect(steers.length).toBe(1);
+    agent(wrap(FIELDS[0], filledProfile).question);          // re-ask re-arms and resets the flag
+    user("yes");
+    expect(mock.context).toHaveBeenLastCalledWith(expect.stringContaining("Where are you based?"));
+  });
+
+  it("ignores placeholder ellipsis/blank user turns: no capture, no advance, no steering", async () => {
+    await startTalkToMe(filledProfile);
+    agent(wrap(FIELDS[0], filledProfile).question);
+    const callsBefore = mock.context.mock.calls.length;
+    user("...");
+    user("   ");
+    expect(mock.fill).not.toHaveBeenCalled();
+    expect(mock.context.mock.calls.length).toBe(callsBefore);
+    user("yes");                                             // still armed on full name: answer lands
+    expect(mock.context).toHaveBeenLastCalledWith(expect.stringContaining("Where are you based?"));
+  });
+
   it("skip advances without writing; empty re-ask does not advance", async () => {
     await startTalkToMe({});
     agent(FIELDS[0].question);

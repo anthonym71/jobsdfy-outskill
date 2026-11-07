@@ -25,6 +25,7 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
   const awaitingAnswer = useRef(false);
   const cvChoice = useRef(false);
   const completed = useRef(false);
+  const reaskSent = useRef(false);
   const fieldPage = fields.map(field => field.key).join(",");
   const [currentQuestion, setCurrentQuestion] = useState("");
   const [inputLevel, setInputLevel] = useState(0);
@@ -56,7 +57,7 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
         const onScript = !splitName && (saidNorm.includes(expectedNorm)
           || saidNorm.includes(normalize(firstPart))
           || (!!field?.match && new RegExp(field.match, "i").test(said.toLowerCase().split("?")[0])));
-        if (onScript) { awaitingAnswer.current = true; setCurrentQuestion(expected); return; }
+        if (onScript) { awaitingAnswer.current = true; reaskSent.current = false; setCurrentQuestion(expected); return; }
         if (said.includes("?")) {
           // Off-script question (split-name, bundled or invented questions, paraphrase of a
           // different field): do NOT capture the next answer; steer back to the app's question.
@@ -66,6 +67,8 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
         return;
       }
       const text = received.text;
+      // Empty or placeholder STT turns ("...", whitespace): no command, no capture, no steering.
+      if (!text || !text.trim() || /^[\s.…·•\-–—…]*$/.test(text)) return;
       const said = text.trim().toLowerCase().replace(/[.!?,]/g, "");
       if (/^(please )?(cancel|cancel that|never mind|forget it|quit|exit)( please)?$/.test(said)) { pausedRef.current = false; setPaused(false); void conversation.endSession(); onCancel?.(); return; }
       if (/^(please )?(update and stop|update & stop|save and stop|update and save|save and finish)( please)?$/.test(said)) { apply(); pausedRef.current = false; setPaused(false); void conversation.endSession(); onContinue(); return; }
@@ -95,7 +98,16 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
         return;
       }
       const field = relevant.current[index.current];
-      if (!field || !awaitingAnswer.current || paused) return;
+      if (!field || !awaitingAnswer.current || paused) {
+        // Disarmed (agent went off-script or nudged): never capture this speech, but do not
+        // stay silent either - a live user reply proves presence, so steer the agent to re-ask
+        // the app's question. Re-asking verbatim re-arms capture. Once per disarmed stretch.
+        if (field && !paused && !reaskSent.current) {
+          reaskSent.current = true;
+          conversation.sendContextualUpdate(`The user is present and just replied, but you have not asked the app's current question yet. ${SINGLE_QUESTION_RULE} Ask ONLY: ${field.question}`);
+        }
+        return;
+      }
       const confirmed = !!field.confirmValue && /\b(yes|yeah|yep|correct|right|that's it|keep it|fine)\b/i.test(text) && !/\b(no|nope|not|change|wrong)\b/i.test(text);
       if (!isSkipCommand(text) && !confirmed) {
         const cleaned = text.trim().replace(/^(yes,?\s+)?(it's|it is|my name is|my name's|i'm|i am|i live in|i'm based in|i am based in|that's|that is)\s+/i, "").replace(/[.!]+$/, "").trim();
@@ -127,7 +139,7 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
     relevant.current = askAll
       ? fields.map(field => { const current = values[field.key]?.trim(); return current ? { ...field, question: `${field.question} I have ${current}. Is that correct, or what should it be?`, confirmValue: current } : field; })
       : fields.filter(field => !values[field.key]?.trim());
-    index.current = 0; pending.current = {}; completed.current = false;
+    index.current = 0; pending.current = {}; completed.current = false; reaskSent.current = false;
     cvChoice.current = offerCv;
     const first = offerCv ? CV_FIRST_PROMPT : relevant.current[0]?.question || "Your answers are complete. Say continue to proceed.";
     setCurrentQuestion(first); awaitingAnswer.current = true;
@@ -147,7 +159,7 @@ function Inner({ fields, values, onFill, onContinue, offerCv = false, onUploadCv
   useEffect(() => {
     if (!live) return;
     relevant.current = fields;
-    index.current = 0; pending.current = {}; completed.current = false;
+    index.current = 0; pending.current = {}; completed.current = false; reaskSent.current = false;
     cvChoice.current = false; awaitingAnswer.current = false;
     const question = fields[0]?.question;
     if (question) {
