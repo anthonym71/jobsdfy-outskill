@@ -68,7 +68,7 @@ describe("onboarding voice answers", () => {
     fireEvent.click(screen.getByRole("button", { name: "Voice Input" }));
     await waitFor(() => expect(mock.start).toHaveBeenCalled());
     act(() => mock.callbacks.onMessage({ source: "user", message: "I managed the sales team." }));
-    expect(mock.fill).toHaveBeenCalledWith("summary", "I managed the sales team.");
+    expect(mock.fill).toHaveBeenCalledWith("summary", "I managed the sales team"); // answer cleaner strips trailing full stop (intended, Nov 1)
     expect(next).toHaveBeenCalledTimes(1);
     act(() => mock.callbacks.onMessage({ source: "user", message: "More speech" }));
     expect(next).toHaveBeenCalledTimes(1);
